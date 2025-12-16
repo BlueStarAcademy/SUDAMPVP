@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "next build",
-    "postbuild": "prisma generate && prisma db push --accept-data-loss",
+    "postbuild": "prisma generate",
     "start": "tsx server.ts",
     "lint": "next lint"
   },
