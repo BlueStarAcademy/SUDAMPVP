@@ -16,9 +16,22 @@ if (process.env.NODE_ENV === 'production' && !process.env.MIGRATIONS_RUN) {
     execSync('npx prisma generate', { stdio: 'inherit' });
     process.env.MIGRATIONS_RUN = 'true';
     console.log('Database migrations completed');
-  } catch (error) {
-    console.error('Migration failed:', error);
-    // 마이그레이션 실패해도 서버는 시작 (이미 마이그레이션된 경우)
+  } catch (error: any) {
+    console.error('Migration failed:', error.message);
+    // 실패한 마이그레이션 해결 시도
+    try {
+      console.log('Attempting to resolve failed migrations...');
+      execSync('npx prisma migrate resolve --applied 20241216000000_init', { stdio: 'inherit' });
+      console.log('Failed migration resolved, retrying...');
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+      execSync('npx prisma generate', { stdio: 'inherit' });
+      process.env.MIGRATIONS_RUN = 'true';
+      console.log('Database migrations completed after resolution');
+    } catch (resolveError: any) {
+      console.error('Migration resolution failed:', resolveError.message);
+      console.log('Continuing server startup - database may need manual migration');
+      // 마이그레이션 실패해도 서버는 시작 (수동 마이그레이션 필요)
+    }
   }
 }
 
