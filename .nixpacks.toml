@@ -1,6 +1,8 @@
 [phases.setup]
 nixPkgs = ["nodejs-20_x", "npm"]
 
+# Node.js 버전은 package.json의 engines 필드에서 읽습니다 (>=20.19.0)
+
 [phases.install]
 cmds = ["npm ci"]
 

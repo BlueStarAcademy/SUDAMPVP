@@ -110,6 +110,7 @@ model Spectator {
   joinedAt      DateTime @default(now())
   
   game          Game     @relation(fields: [gameId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
   
   @@unique([gameId, userId])
   @@index([gameId])
