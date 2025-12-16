@@ -51,10 +51,11 @@ export async function POST(request: NextRequest) {
         username: user.username,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
+    console.error('Error details:', error.message, error.stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: process.env.NODE_ENV === 'development' ? error.message : undefined },
       { status: 500 }
     );
   }

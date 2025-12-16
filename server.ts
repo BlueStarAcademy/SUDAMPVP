@@ -29,8 +29,19 @@ if (process.env.NODE_ENV === 'production' && !process.env.MIGRATIONS_RUN) {
       console.log('Database migrations completed after resolution');
     } catch (resolveError: any) {
       console.error('Migration resolution failed:', resolveError.message);
-      console.log('Continuing server startup - database may need manual migration');
-      // 마이그레이션 실패해도 서버는 시작 (수동 마이그레이션 필요)
+      console.log('Attempting to resolve admin role migration...');
+      try {
+        // admin role 마이그레이션도 해결 시도
+        execSync('npx prisma migrate resolve --applied 20241216000001_add_admin_role', { stdio: 'inherit' });
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        execSync('npx prisma generate', { stdio: 'inherit' });
+        process.env.MIGRATIONS_RUN = 'true';
+        console.log('Database migrations completed after admin role resolution');
+      } catch (finalError: any) {
+        console.error('Final migration resolution failed:', finalError.message);
+        console.log('Continuing server startup - database may need manual migration');
+        // 마이그레이션 실패해도 서버는 시작 (수동 마이그레이션 필요)
+      }
     }
   }
 }
