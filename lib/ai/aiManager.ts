@@ -1,5 +1,5 @@
-import { getGnuGoMove, checkGnuGoServer } from './gnugo';
-import { getKataGoMove, getKataGoScoring, checkKataGoServer } from './katago';
+import { getGnuGoMove, checkGnuGoServer, GnuGoRequest } from './gnugo';
+import { getKataGoMove, getKataGoScoring, checkKataGoServer, KataGoScoringRequest } from './katago';
 import { BoardState } from '../game/board';
 
 export type AIType = 'gnugo' | 'katago';
@@ -42,15 +42,15 @@ function boardStateToAIFormat(boardState: BoardState): string[][] {
  */
 export async function getAIMove(request: AIMoveRequest): Promise<{ x: number; y: number } | null> {
   const board = boardStateToAIFormat(request.boardState);
-  const currentPlayer = request.currentPlayer === 1 ? 'black' : 'white';
+  const currentPlayer: 'black' | 'white' = request.currentPlayer === 1 ? 'black' : 'white';
 
-  const aiRequest = {
+  const aiRequest: GnuGoRequest = {
     board,
     currentPlayer,
     moveHistory: request.boardState.moveHistory.map((move) => ({
       x: move.position?.x || -1,
       y: move.position?.y || -1,
-      player: move.player === 1 ? 'black' : 'white',
+      player: (move.player === 1 ? 'black' : 'white') as 'black' | 'white',
     })),
     level: request.aiLevel || 5, // 기본 난이도 5
   };
@@ -73,15 +73,15 @@ export async function getAIScoring(
   request: AIScoringRequest
 ): Promise<{ winner: 1 | 2; score: number } | null> {
   const board = boardStateToAIFormat(request.boardState);
-  const currentPlayer = request.currentPlayer === 1 ? 'black' : 'white';
+  const currentPlayer: 'black' | 'white' = request.currentPlayer === 1 ? 'black' : 'white';
 
-  const scoringRequest = {
+  const scoringRequest: KataGoScoringRequest = {
     board,
     currentPlayer,
     moveHistory: request.boardState.moveHistory.map((move) => ({
       x: move.position?.x || -1,
       y: move.position?.y || -1,
-      player: move.player === 1 ? 'black' : 'white',
+      player: (move.player === 1 ? 'black' : 'white') as 'black' | 'white',
     })),
   };
 

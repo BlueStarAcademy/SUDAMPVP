@@ -46,7 +46,7 @@ export class GameManager {
         aiLevel: aiLevel || null,
         status: 'WAITING',
         moves: [],
-        boardState: createEmptyBoard(),
+        boardState: createEmptyBoard() as any,
         timeLimit,
         player1Time: timeLimit,
         player2Time: player2Id || aiType ? timeLimit : null,
@@ -145,8 +145,8 @@ export class GameManager {
     await prisma.game.update({
       where: { id: gameId },
       data: {
-        moves: game.boardState.moveHistory,
-        boardState: game.boardState,
+        moves: game.boardState.moveHistory as any,
+        boardState: game.boardState as any,
         currentPlayer: game.currentPlayer,
       },
     });
@@ -170,7 +170,7 @@ export class GameManager {
     await prisma.game.update({
       where: { id: gameId },
       data: {
-        moves: game.boardState.moveHistory,
+        moves: game.boardState.moveHistory as any,
         currentPlayer: game.currentPlayer,
       },
     });

@@ -4,7 +4,7 @@ import { gameManager } from '@/lib/game/gameManager';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { gameId: string } }
+  { params }: { params: Promise<{ gameId: string }> }
 ) {
   try {
     const user = requireAuth(request);
@@ -15,7 +15,7 @@ export async function GET(
       );
     }
 
-    const gameId = params.gameId;
+    const { gameId } = await params;
     let game = gameManager.getGame(gameId);
 
     // If not in memory, try to load from database
