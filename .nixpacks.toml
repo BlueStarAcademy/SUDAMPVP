@@ -7,7 +7,7 @@ nixPkgs = ["nodejs-20_x", "npm"]
 cmds = ["npm ci"]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = ["npm run build", "npx prisma generate", "npx prisma db push --accept-data-loss --skip-generate"]
 
 [start]
 cmd = "npm start"
