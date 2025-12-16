@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GameMode {
+  STRATEGY  // 전략바둑
+  PLAY      // 놀이바둑
+}
+
+enum GameStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+  ABANDONED
+}
+
+enum GameResult {
+  PLAYER1_WIN
+  PLAYER2_WIN
+  DRAW
+  TIMEOUT
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String
+  createdAt     DateTime @default(now())
+  
+  gamesAsPlayer1  Game[]  @relation("Player1Games")
+  gamesAsPlayer2  Game[]  @relation("Player2Games")
+  ratings         Rating[]
+  sessions        Session[]
+  spectating      Spectator[]
+  aiProgress      AIProgress?
+}
+
+model Game {
+  id            String      @id @default(cuid())
+  mode          GameMode
+  season        Int         // 시즌 번호
+  player1Id     String
+  player2Id     String?
+  aiType        String?     // "gnugo", null (KataGo는 대결에 사용 안 함)
+  aiLevel       Int?         // GnuGo 난이도 (1-10)
+  status        GameStatus  @default(WAITING)
+  moves         Json        @default("[]") // 수순 기록
+  boardState    Json?       // 현재 바둑판 상태
+  timeLimit     Int         // 초 단위
+  player1Time   Int         // 남은 시간 (초)
+  player2Time   Int?        // 남은 시간 (초)
+  currentPlayer Int         @default(1) // 1 or 2
+  winnerId      String?
+  result        GameResult?
+  createdAt     DateTime    @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  
+  player1       User        @relation("Player1Games", fields: [player1Id], references: [id])
+  player2       User?        @relation("Player2Games", fields: [player2Id], references: [id])
+  spectators    Spectator[]
+  
+  @@index([status])
+  @@index([season, mode])
+}
+
+model Rating {
+  id            String   @id @default(cuid())
+  userId        String
+  season        Int
+  mode          GameMode
+  rating        Int      @default(1500)
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  draws         Int      @default(0)
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, season, mode])
+  @@index([season, mode, rating])
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  userId        String
+  socketId      String   @unique
+  isOnline      Boolean  @default(true)
+  lastSeen      DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([isOnline])
+}
+
+model Spectator {
+  id            String   @id @default(cuid())
+  gameId        String
+  userId        String
+  joinedAt      DateTime @default(now())
+  
+  game          Game     @relation(fields: [gameId], references: [id])
+  
+  @@unique([gameId, userId])
+  @@index([gameId])
+}
+
+model AIProgress {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  currentLevel  Int      @default(1) // 1-10 단계
+  highestLevel  Int      @default(1)
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+}
+
