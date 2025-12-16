@@ -18,8 +18,9 @@
 
 #### Build 설정
 1. Settings → Build 탭
-2. **Build Command**: `npm run build`
-3. **Start Command**: `npm start` 또는 `tsx server.ts`
+2. **Builder**: `Nixpacks` 선택 ⚠️ **중요!** (Dockerfile이 아님)
+3. **Build Command**: `npm run build`
+4. **Start Command**: `npm start` 또는 `tsx server.ts`
 
 #### 환경 변수 (Variables 탭)
 다음 환경 변수를 추가하세요:
