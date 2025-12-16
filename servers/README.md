@@ -84,7 +84,7 @@ npm start
    - `KATAGO_MODEL_PATH=/katago-models/kata1.bin.gz` (선택사항)
    - `KATAGO_CONFIG_PATH=/katago-configs/gtp_example.cfg` (선택사항)
 
-**주의**: KataGo는 GPU가 있으면 훨씬 빠릅니다. Railway의 GPU 인스턴스 사용을 고려하세요.
+**주의**: 이 KataGo 서버는 CPU 전용 모드로 설정되어 있습니다. GPU 없이도 작동하며, 저렴한 인스턴스에서 사용 가능합니다.
 
 ### API 엔드포인트
 

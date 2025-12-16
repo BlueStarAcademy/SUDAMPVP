@@ -1,7 +1,7 @@
 {
   "name": "katago-server",
   "version": "1.0.0",
-  "description": "KataGo AI server for SUDAM PVP (scoring and hints)",
+  "description": "KataGo AI server for SUDAM PVP (CPU only, scoring and hints)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

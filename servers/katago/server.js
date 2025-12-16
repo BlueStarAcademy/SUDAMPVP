@@ -15,7 +15,7 @@ app.get('/health', (req, res) => {
 // Get hint (suggested move)
 app.post('/move', async (req, res) => {
   try {
-    const { board, currentPlayer, moveHistory, maxVisits = 50 } = req.body;
+    const { board, currentPlayer, moveHistory, maxVisits = 30 } = req.body; // CPU용으로 기본값 낮춤
 
     if (!board || !currentPlayer) {
       return res.status(400).json({ error: 'board and currentPlayer are required' });
@@ -58,14 +58,19 @@ app.post('/score', async (req, res) => {
   }
 });
 
-// Run KataGo for move/hint
+// Run KataGo for move/hint (CPU only mode)
 function runKataGo(board, moveHistory, currentPlayer, maxVisits, isScoring) {
   return new Promise((resolve, reject) => {
-    // KataGo GTP 프로토콜 사용
+    // KataGo GTP 프로토콜 사용 (CPU 전용)
+    // -cpu-only 플래그로 GPU 사용 안 함
+    const configPath = process.env.KATAGO_CONFIG_PATH || '/app/config_gtp.cfg';
+    const modelPath = process.env.KATAGO_MODEL_PATH || '/katago-models/kata1-b40c256-s11101799168-d2715431527.bin.gz';
+    
     const katago = spawn('katago', [
       'gtp',
-      '-model', process.env.KATAGO_MODEL_PATH || '/katago-models/g170e-b20c256x2-s5303129600-d1228401921.bin.gz',
-      '-config', process.env.KATAGO_CONFIG_PATH || '/katago-configs/gtp_example.cfg'
+      '-model', modelPath,
+      '-config', configPath,
+      '-cpu-only'  // GPU 비활성화, CPU만 사용
     ]);
 
     let output = '';
@@ -102,10 +107,13 @@ function runKataGo(board, moveHistory, currentPlayer, maxVisits, isScoring) {
     setupBoard(katago, board, moveHistory);
     
     if (isScoring) {
+      // 계가: 더 많은 계산 허용 (하지만 CPU이므로 제한적)
+      katago.stdin.write(`kata-set-param maxVisits 200\n`);
       katago.stdin.write('final_score\n');
     } else {
-      katago.stdin.write(`time_settings 0 1 1\n`); // Quick thinking for hints
-      katago.stdin.write(`kata-set-param maxVisits ${maxVisits}\n`);
+      // 힌트: 빠른 응답을 위해 적은 계산
+      katago.stdin.write(`time_settings 0 5 1\n`); // 5초 제한
+      katago.stdin.write(`kata-set-param maxVisits ${Math.min(maxVisits, 50)}\n`); // CPU이므로 최대 50으로 제한
       katago.stdin.write(`genmove ${currentPlayer === 'black' ? 'B' : 'W'}\n`);
     }
     
@@ -116,7 +124,7 @@ function runKataGo(board, moveHistory, currentPlayer, maxVisits, isScoring) {
 
 // Run KataGo for scoring
 function runKataGoScoring(board, moveHistory, currentPlayer) {
-  return runKataGo(board, moveHistory, currentPlayer, 100, true);
+  return runKataGo(board, moveHistory, currentPlayer, 200, true); // 계가는 더 많은 계산 허용
 }
 
 // Setup board in KataGo

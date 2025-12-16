@@ -151,9 +151,10 @@ curl https://your-katago-service.railway.app/health
 3. 로그 확인: Railway 대시보드 → Deploy Logs
 
 ### KataGo 서버가 느림
-1. GPU 인스턴스 사용 고려
-2. `maxVisits` 값 줄이기 (힌트용)
-3. 모델 크기 확인 (작은 모델 사용)
+1. CPU 전용 모드이므로 GPU보다 느릴 수 있음 (정상)
+2. `maxVisits` 값 줄이기 (힌트용, 기본값: 30)
+3. 작은 모델 사용 중 (kata1-b40c256)
+4. 힌트는 빠르게, 계가는 더 많은 시간 허용
 
 ### 연결 오류
 1. 환경 변수 `GNUGO_SERVER_URL`, `KATAGO_SERVER_URL` 확인
@@ -163,7 +164,7 @@ curl https://your-katago-service.railway.app/health
 ## 비용 최적화
 
 - **GnuGo**: CPU만 필요, 저렴한 인스턴스 사용 가능
-- **KataGo**: GPU 권장, 사용하지 않을 때는 스케일 다운
+- **KataGo**: CPU 전용 모드, GPU 불필요, 저렴한 인스턴스 사용 가능
 - **메인 앱**: 항상 실행 필요
 
 ## 보안
