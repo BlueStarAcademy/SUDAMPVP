@@ -43,6 +43,13 @@ export async function POST(request: NextRequest) {
         email,
         username,
         passwordHash,
+        role: 'USER', // 기본값으로 USER 설정
+      },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        role: true,
       },
     });
 

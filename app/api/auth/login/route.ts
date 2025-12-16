@@ -15,9 +15,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user
+    // Find user (role 필드가 없어도 작동하도록 select 사용)
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        passwordHash: true,
+        role: true, // role 필드가 있으면 선택, 없으면 null
+      },
     });
 
     if (!user) {
