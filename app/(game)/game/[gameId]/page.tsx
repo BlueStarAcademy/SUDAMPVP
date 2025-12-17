@@ -225,7 +225,7 @@ export default function GamePage() {
                 currentPlayer={game.currentPlayer}
                 onMakeMove={handleMakeMove}
                 isMyTurn={
-                  currentUserId &&
+                  !!currentUserId &&
                   ((game.currentPlayer === 1 && game.player1?.id === currentUserId) ||
                     (game.currentPlayer === 2 && game.player2?.id === currentUserId))
                 }
