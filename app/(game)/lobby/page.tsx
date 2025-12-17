@@ -122,20 +122,26 @@ export default function LobbyPage() {
         </div>
 
         <div className="flex-1 grid grid-rows-3 gap-2 overflow-hidden">
-          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널, AI봇 대결 패널 */}
-          <div className={`grid grid-cols-1 gap-2 ${selectedMode === 'STRATEGY' ? 'md:grid-cols-3' : 'md:grid-cols-2'} min-h-0`}>
+          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널, AI봇 대결 패널 (항상 3개 가로 배치) */}
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3 min-h-0">
             <ProfilePanel />
             <RatingDisplay mode={selectedMode} />
-            {selectedMode === 'STRATEGY' && <AIBattleButton />}
+            {selectedMode === 'STRATEGY' ? (
+              <AIBattleButton />
+            ) : (
+              <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex items-center justify-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">놀이바둑 AI는 준비 중입니다.</p>
+              </div>
+            )}
           </div>
 
-          {/* 두 번째 줄: 경기중인 대국실 목록 패널, 유저목록 패널 */}
+          {/* 두 번째 줄: 경기중인 대국실 목록 패널, 접속중인 유저목록 패널 (2개 가로 배치) */}
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 min-h-0">
             <OngoingGamesList mode={selectedMode} />
             <OnlineUsersList mode={selectedMode} />
           </div>
 
-          {/* 세 번째 줄: 랭킹전 매칭 패널, 랭킹전 순위 패널 */}
+          {/* 세 번째 줄: 랭킹전 매칭 패널, 랭킹전 순위 패널 (2개 가로 배치) */}
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 min-h-0">
             <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
               <div className="mb-2 flex items-center gap-2 border-b-2 border-gray-200 pb-2 dark:border-gray-700">
