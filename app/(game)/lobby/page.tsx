@@ -120,35 +120,41 @@ export default function LobbyPage() {
           </button>
         </div>
 
-        <div className="flex-1 grid grid-rows-3 gap-3 overflow-hidden">
-          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널 (2개 가로 균등 배치) */}
-          <div className="grid grid-cols-2 gap-3 overflow-hidden">
-            <div className="h-full min-w-0">
+        <div className="flex-1 grid grid-cols-2 gap-3 overflow-hidden">
+          {/* 좌측 레이아웃: 프로필, 레이팅+랭킹전 매칭, 진행중인 대국, 채팅 */}
+          <div className="flex flex-col gap-3 overflow-hidden">
+            {/* 프로필 패널 */}
+            <div className="flex-shrink-0">
               <ProfilePanel />
             </div>
-            <div className="h-full min-w-0">
+            
+            {/* 레이팅 점수 + 랭킹전 매칭 버튼 (크게) */}
+            <div className="flex-shrink-0">
               <RatingDisplay mode={selectedMode} />
             </div>
-          </div>
-
-          {/* 두 번째 줄: 진행중인 대국 패널, 유저목록 패널 (2개 가로 배치, 유저목록이 우측에 길게) */}
-          <div className="grid grid-cols-2 gap-3 overflow-hidden">
-            <div className="h-full min-w-0">
+            
+            {/* 진행중인 대국 패널 */}
+            <div className="flex-1 min-h-0">
               <OngoingGamesList mode={selectedMode} />
             </div>
-            <div className="h-full min-w-0 flex flex-col gap-3">
-              <div className="flex-1 min-h-0">
-                <OnlineUsersList mode={selectedMode} />
-              </div>
-              <div className="flex-1 min-h-0">
-                <RankingLeaderboard mode={selectedMode} />
-              </div>
+            
+            {/* 채팅 패널 */}
+            <div className="flex-1 min-h-0">
+              <ChatPanel type="GLOBAL" />
             </div>
           </div>
 
-          {/* 세 번째 줄: 채팅 패널 (전체 폭) */}
-          <div className="h-full min-w-0">
-            <ChatPanel type="GLOBAL" />
+          {/* 우측 레이아웃: 유저목록, 랭킹 (3:2 비율) */}
+          <div className="flex flex-col gap-3 overflow-hidden">
+            {/* 유저목록 패널 (높이 비율 3) */}
+            <div className="flex-[3] min-h-0">
+              <OnlineUsersList mode={selectedMode} />
+            </div>
+            
+            {/* 랭킹 패널 (높이 비율 2) */}
+            <div className="flex-[2] min-h-0">
+              <RankingLeaderboard mode={selectedMode} />
+            </div>
           </div>
         </div>
       </div>

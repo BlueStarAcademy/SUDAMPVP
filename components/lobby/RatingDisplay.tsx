@@ -76,43 +76,43 @@ export default function RatingDisplay({ mode }: RatingDisplayProps) {
   };
 
   return (
-    <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
-      <div className="mb-2 flex items-center gap-2 border-b-2 border-gray-200 pb-2 dark:border-gray-700">
-        <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-md`}>
-          <span className="text-sm">⭐</span>
+    <div className="baduk-card p-4 animate-fade-in border-2 border-gray-200 dark:border-gray-700 flex flex-col">
+      <div className="mb-4 flex items-center gap-3 border-b-2 border-gray-200 pb-3 dark:border-gray-700">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-md`}>
+          <span className="text-xl">⭐</span>
         </div>
         <div>
-          <h2 className="text-sm font-bold">{modeLabel} 레이팅</h2>
+          <h2 className="text-lg font-bold">{modeLabel} 레이팅</h2>
         </div>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center space-y-3">
+      <div className="flex flex-col items-center justify-center space-y-4">
         {currentRating ? (
-          <div className="w-full rounded border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-3 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700">
-            <div className="flex items-center justify-between mb-2">
+          <div className="w-full rounded-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-4 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <span
-                  className={`rounded-full bg-gradient-to-r ${gradeColors[gradeInfo.grade] || 'from-gray-400 to-gray-500'} px-2 py-0.5 text-[10px] font-bold text-white`}
+                  className={`rounded-full bg-gradient-to-r ${gradeColors[gradeInfo.grade] || 'from-gray-400 to-gray-500'} px-3 py-1 text-sm font-bold text-white`}
                 >
                   {gradeInfo.name}
                 </span>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                <p className="text-4xl font-bold text-gray-800 dark:text-gray-200">
                   {currentRating.rating}
                 </p>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   {currentRating.wins}승 {currentRating.losses}패
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="w-full rounded border-2 border-dashed border-gray-300 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-800">
-            <p className="text-xs text-gray-600 dark:text-gray-400">기본 등급</p>
-            <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+          <div className="w-full rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-sm text-gray-600 dark:text-gray-400">기본 등급</p>
+            <p className="text-4xl font-bold text-gray-800 dark:text-gray-200">
               {rating}
             </p>
-            <span className="mt-1 inline-block rounded-full bg-gradient-to-r from-gray-400 to-gray-500 px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className="mt-2 inline-block rounded-full bg-gradient-to-r from-gray-400 to-gray-500 px-3 py-1 text-sm font-bold text-white">
               {gradeInfo.name}
             </span>
           </div>
