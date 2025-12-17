@@ -6,8 +6,10 @@ import { getSocketInstance } from '../socket/client';
 export interface OnlineUser {
   id: string;
   username: string;
-  socketId: string;
-  lastSeen: Date;
+  nickname: string | null;
+  status: string;
+  socketId?: string;
+  lastSeen?: Date;
 }
 
 export function useOnlineUsers() {

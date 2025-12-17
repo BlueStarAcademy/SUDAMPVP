@@ -1,14 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useOnlineUsers } from '@/lib/hooks/useOnlineUsers';
-
-interface OnlineUser {
-  id: string;
-  username: string;
-  nickname: string | null;
-  status: string;
-}
+import { useOnlineUsers, OnlineUser } from '@/lib/hooks/useOnlineUsers';
 
 export default function OnlineUsersList() {
   const { users, loading } = useOnlineUsers();
@@ -17,9 +10,9 @@ export default function OnlineUsersList() {
 
   useEffect(() => {
     if (statusFilter === 'ALL') {
-      setFilteredUsers(users as OnlineUser[]);
+      setFilteredUsers(users);
     } else {
-      setFilteredUsers(users.filter((u: any) => u.status === statusFilter) as OnlineUser[]);
+      setFilteredUsers(users.filter((u) => u.status === statusFilter));
     }
   }, [users, statusFilter]);
 
