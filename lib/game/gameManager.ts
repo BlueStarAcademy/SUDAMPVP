@@ -402,6 +402,12 @@ export class GameManager {
     if (game.player2Id && !game.aiType) {
       const { updateRatingsAfterGame } = await import('@/lib/rating/ratingManager');
       await updateRatingsAfterGame(gameId, result).catch(console.error);
+
+      // 골드 보상 지급
+      const { awardGoldAfterGame } = await import('@/lib/gold/rewards');
+      await awardGoldAfterGame(gameId, result, game.player1Id, game.player2Id).catch(
+        console.error
+      );
     }
 
     // Update AI progress if playing against AI

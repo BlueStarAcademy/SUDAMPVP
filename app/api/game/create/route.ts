@@ -83,6 +83,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 대국 이용권 확인 및 사용 (AI 대결 제외)
+    if (!aiType) {
+      const { useGameTicket } = await import('@/lib/tickets/recovery');
+      const hasTicket = await useGameTicket(user.userId);
+      if (!hasTicket) {
+        return NextResponse.json(
+          { error: '대국 이용권이 부족합니다. 이용권을 구매하거나 회복을 기다려주세요.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const currentSeason = getCurrentSeason();
     const timeLimit = 1800; // 30 minutes default
 

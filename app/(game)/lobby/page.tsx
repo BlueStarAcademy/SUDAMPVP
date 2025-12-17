@@ -11,6 +11,7 @@ import OngoingGamesList from '@/components/lobby/OngoingGamesList';
 import GameMatchPanel from '@/components/lobby/GameMatchPanel';
 import NicknameSetupModal from '@/components/NicknameSetupModal';
 import GameRequestNotification from '@/components/lobby/GameRequestNotification';
+import ChatPanel from '@/components/chat/ChatPanel';
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -87,9 +88,11 @@ export default function LobbyPage() {
           <div className="space-y-6">
             <AIBattleButton />
             <OngoingGamesList />
+            {/* 전체 채팅 */}
+            <ChatPanel type="GLOBAL" />
           </div>
 
-          {/* 오른쪽 열: 게임 타입 선택, 접속 유저 목록, 랭킹전 매칭 */}
+          {/* 오른쪽 열: 접속 유저 목록, 랭킹전 매칭 */}
           <div>
             <GameMatchPanel />
           </div>

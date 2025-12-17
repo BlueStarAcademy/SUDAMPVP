@@ -20,6 +20,12 @@ export default function Header() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
+        // 이용권 회복 처리
+        await fetch('/api/tickets/recover', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(console.error);
+
         const response = await fetch('/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });

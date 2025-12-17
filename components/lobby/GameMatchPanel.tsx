@@ -1,13 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import OnlineUsersList from './OnlineUsersList';
 import RankingMatchButton from './RankingMatchButton';
 
 export default function GameMatchPanel() {
-  const [selectedGameType, setSelectedGameType] = useState<string>('');
-  const [selectedBoardSize, setSelectedBoardSize] = useState<number>(19);
-
   return (
     <div className="space-y-6">
       {/* 접속 유저 목록 (대국신청 포함) */}
@@ -21,10 +17,7 @@ export default function GameMatchPanel() {
           </div>
           <h2 className="text-xl font-bold">랭킹전 매칭</h2>
         </div>
-        <RankingMatchButton
-          selectedGameType={selectedGameType}
-          selectedBoardSize={selectedBoardSize}
-        />
+        <RankingMatchButton />
       </div>
     </div>
   );

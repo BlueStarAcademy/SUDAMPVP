@@ -6,6 +6,7 @@ import { getSocket, getSocketInstance } from '@/lib/socket/client';
 import Link from 'next/link';
 import { getGameType, ALL_GAME_TYPES } from '@/lib/game/types';
 import GameBoard from '@/components/game/GameBoard';
+import ChatPanel from '@/components/chat/ChatPanel';
 
 export default function GamePage() {
   const router = useRouter();
@@ -300,6 +301,11 @@ export default function GamePage() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* 대국실 채팅 */}
+        <div className="mt-6">
+          <ChatPanel gameId={gameId} type="GAME" />
         </div>
       </div>
     </div>
