@@ -31,32 +31,79 @@ body {
 
 /* 바둑 게임 스타일 */
 .baduk-card {
-  @apply rounded-xl bg-white shadow-lg transition-all duration-300 hover:shadow-xl dark:bg-gray-800;
+  border-radius: 0.75rem;
+  background-color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+.baduk-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  .baduk-card {
+    background-color: #1f2937;
+  }
+}
+
 .baduk-button {
-  @apply rounded-lg px-4 py-2 font-medium transition-all duration-200;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .baduk-button-primary {
-  @apply baduk-button bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg;
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.baduk-button-primary:hover {
+  background: linear-gradient(to right, #1d4ed8, #1e40af);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .baduk-button-success {
-  @apply baduk-button bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg;
+  background: linear-gradient(to right, #16a34a, #15803d);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.baduk-button-success:hover {
+  background: linear-gradient(to right, #15803d, #166534);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .baduk-button-danger {
-  @apply baduk-button bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-md hover:shadow-lg;
+  background: linear-gradient(to right, #dc2626, #b91c1c);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.baduk-button-danger:hover {
+  background: linear-gradient(to right, #b91c1c, #991b1b);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .baduk-button-secondary {
-  @apply baduk-button bg-gray-600 text-white hover:bg-gray-700 shadow-md hover:shadow-lg;
+  background-color: #4b5563;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.baduk-button-secondary:hover {
+  background-color: #374151;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .baduk-header {
-  @apply bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-xl shadow-lg;
+  background: linear-gradient(to right, #1f2937, #111827);
+  color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* 애니메이션 */

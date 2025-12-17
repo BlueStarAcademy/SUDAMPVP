@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { validateNickname } from '@/lib/validation/nickname';
 import { DEFAULT_AVATARS, DEFAULT_AVATAR_ID } from '@/lib/constants/avatars';
 import AvatarSelector from './AvatarSelector';
 
@@ -31,10 +30,10 @@ export default function NicknameSetupModal({ isOpen, onComplete }: NicknameSetup
       return;
     }
 
-    // 클라이언트 사이드 검증
-    const validation = validateNickname(nickname);
-    if (!validation.valid) {
-      setError(validation.error || '닉네임 형식이 올바르지 않습니다.');
+    // 간단한 클라이언트 사이드 형식 검증 (한글 1-6글자)
+    const koreanRegex = /^[가-힣]{1,6}$/;
+    if (!koreanRegex.test(nickname)) {
+      setError('닉네임은 한글 1-6글자만 사용할 수 있습니다.');
       return;
     }
 
