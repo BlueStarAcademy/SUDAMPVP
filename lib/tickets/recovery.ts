@@ -19,6 +19,7 @@ export async function recoverGameTickets(userId: string): Promise<{
     select: {
       gameTickets: true,
       lastTicketRecovery: true,
+      createdAt: true,
     },
   });
 

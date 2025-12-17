@@ -54,16 +54,19 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const strategyWins = strategyGames.filter(
+      (g) => g.winnerId === payload.userId
+    ).length;
+    const strategyLosses = strategyGames.filter(
+      (g) => g.winnerId && g.winnerId !== payload.userId
+    ).length;
+    const strategyDraws = strategyGames.filter((g) => g.result === 'DRAW' || g.result === 'TIMEOUT').length;
     const strategyStats = {
-      wins: strategyGames.filter(
-        (g) => g.winnerId === payload.userId
-      ).length,
-      losses: strategyGames.filter(
-        (g) => g.winnerId && g.winnerId !== payload.userId
-      ).length,
-      draws: strategyGames.filter((g) => g.result === 'DRAW' || g.result === 'TIMEOUT').length,
+      wins: strategyWins,
+      losses: strategyLosses,
+      draws: strategyDraws,
+      total: strategyWins + strategyLosses + strategyDraws,
     };
-    strategyStats.total = strategyStats.wins + strategyStats.losses + strategyStats.draws;
 
     // 놀이바둑 통합 전적
     const playGames = await prisma.game.findMany({
@@ -75,14 +78,17 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const playWins = playGames.filter((g) => g.winnerId === payload.userId).length;
+    const playLosses = playGames.filter(
+      (g) => g.winnerId && g.winnerId !== payload.userId
+    ).length;
+    const playDraws = playGames.filter((g) => g.result === 'DRAW' || g.result === 'TIMEOUT').length;
     const playStats = {
-      wins: playGames.filter((g) => g.winnerId === payload.userId).length,
-      losses: playGames.filter(
-        (g) => g.winnerId && g.winnerId !== payload.userId
-      ).length,
-      draws: playGames.filter((g) => g.result === 'DRAW' || g.result === 'TIMEOUT').length,
+      wins: playWins,
+      losses: playLosses,
+      draws: playDraws,
+      total: playWins + playLosses + playDraws,
     };
-    playStats.total = playStats.wins + playStats.losses + playStats.draws;
 
     // 게임 타입별 상세 전적
     const gameStats = await prisma.gameStats.findMany({

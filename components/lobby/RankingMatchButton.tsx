@@ -181,7 +181,7 @@ export default function RankingMatchButton({
                   </p>
                 </div>
               )}
-              {gameTypeData && (
+              {gameTypeData && gameType && (
                 <div className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
                   {getGameType(gameType)?.name || gameType} ({localBoardSize || selectedBoardSize}×{localBoardSize || selectedBoardSize})
                 </div>

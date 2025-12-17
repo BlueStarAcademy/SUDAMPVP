@@ -47,6 +47,33 @@ export default function OnlineUsersList() {
     }
   }, [users, statusFilter, currentUser]);
 
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('/api/users/status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok && currentUser) {
+        setCurrentUser({ ...currentUser, status: newStatus as OnlineUser['status'] });
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleRequestGame = (user: OnlineUser) => {
+    setSelectedUser(user);
+    setShowRequestModal(true);
+  };
+
   const statusLabels: Record<string, string> = {
     ALL: '전체',
     WAITING: '대기중',

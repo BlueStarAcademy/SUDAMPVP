@@ -5,10 +5,14 @@
   "private": true,
   "scripts": {
     "dev": "tsx server.ts",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "prebuild": "npm run type-check",
     "build": "next build",
     "postbuild": "prisma generate",
     "start": "tsx server.ts",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check": "npm run type-check && npm run lint"
   },
   "keywords": [],
   "author": "",
