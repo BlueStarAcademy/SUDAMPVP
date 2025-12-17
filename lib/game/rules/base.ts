@@ -4,6 +4,9 @@
 
 import { BoardState } from '../board';
 
+// BoardState를 re-export하여 다른 규칙 파일에서 사용할 수 있도록 함
+export type { BoardState };
+
 export interface GameRule {
   // 게임 타입 ID
   gameType: string;
