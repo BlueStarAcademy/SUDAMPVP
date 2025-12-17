@@ -51,14 +51,22 @@ model User {
   avatarId          String?     // 기본 아바타 ID
   hasCompletedSetup Boolean     @default(false) // 닉네임/아바타 설정 완료 여부
   status            UserStatus  @default(WAITING)
+  gold              Int         @default(0) // 골드 (재화)
+  gameTickets       Int         @default(10) // 대국 이용권 (최대 10개)
+  lastTicketRecovery DateTime? // 마지막 이용권 회복 시간
   createdAt         DateTime    @default(now())
   
-  gamesAsPlayer1  Game[]  @relation("Player1Games")
-  gamesAsPlayer2  Game[]  @relation("Player2Games")
-  ratings         Rating[]
-  sessions        Session[]
-  spectating      Spectator[]
-  aiProgress      AIProgress?
+  gamesAsPlayer1    Game[]  @relation("Player1Games")
+  gamesAsPlayer2    Game[]  @relation("Player2Games")
+  ratings           Rating[]
+  sessions          Session[]
+  spectating        Spectator[]
+  aiProgress        AIProgress?
+  gameRequestsSent  GameRequest[] @relation("RequestSender")
+  gameRequestsReceived GameRequest[] @relation("RequestReceiver")
+  gameStats         GameStats[]
+  chatMessages      ChatMessage[]
+  rankingMatchQueue RankingMatchQueue?
 }
 
 model Game {
@@ -88,6 +96,7 @@ model Game {
   player1       User        @relation("Player1Games", fields: [player1Id], references: [id])
   player2       User?        @relation("Player2Games", fields: [player2Id], references: [id])
   spectators    Spectator[]
+  chatMessages  ChatMessage[]
   
   @@index([status])
   @@index([season, mode])
@@ -149,5 +158,82 @@ model AIProgress {
   user          User     @relation(fields: [userId], references: [id])
   
   @@index([userId])
+}
+
+enum GameRequestStatus {
+  PENDING     // 대기중
+  ACCEPTED    // 수락됨
+  REJECTED    // 거절됨
+  MODIFIED    // 수정 제안됨
+  CANCELLED   // 취소됨
+}
+
+model GameRequest {
+  id            String            @id @default(cuid())
+  senderId      String            // 신청자
+  receiverId    String            // 수신자
+  gameType      String            // 게임 타입
+  boardSize     Int               // 보드 크기
+  timeLimit     Int               @default(1800) // 시간 제한 (초)
+  status        GameRequestStatus @default(PENDING)
+  modifiedConditions Json?        // 수정 제안된 조건
+  createdAt     DateTime          @default(now())
+  respondedAt   DateTime?
+  
+  sender        User              @relation("RequestSender", fields: [senderId], references: [id])
+  receiver      User              @relation("RequestReceiver", fields: [receiverId], references: [id])
+  
+  @@index([senderId])
+  @@index([receiverId, status])
+}
+
+model GameStats {
+  id            String   @id @default(cuid())
+  userId        String
+  gameType      String   // 게임 타입 (CLASSIC, OMOK 등)
+  mode          GameMode // STRATEGY or PLAY
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  draws         Int      @default(0)
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, gameType])
+  @@index([userId])
+}
+
+enum ChatType {
+  GLOBAL    // 전체 채팅
+  GAME      // 대국실 채팅
+}
+
+model ChatMessage {
+  id            String   @id @default(cuid())
+  userId        String
+  gameId        String?  // 대국실 채팅인 경우
+  type          ChatType @default(GLOBAL)
+  message       String
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  game          Game?    @relation(fields: [gameId], references: [id])
+  
+  @@index([type, createdAt])
+  @@index([gameId, createdAt])
+}
+
+model RankingMatchQueue {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  gameType      String   // 게임 타입
+  boardSize     Int      // 보드 크기
+  rating        Int      // 현재 랭킹점수
+  joinedAt      DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@index([gameType, boardSize, rating])
+  @@index([joinedAt])
 }
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import GameTypeSelector from './GameTypeSelector';
 import OnlineUsersList from './OnlineUsersList';
 import RankingMatchButton from './RankingMatchButton';
 
@@ -9,17 +8,9 @@ export default function GameMatchPanel() {
   const [selectedGameType, setSelectedGameType] = useState<string>('');
   const [selectedBoardSize, setSelectedBoardSize] = useState<number>(19);
 
-  const handleGameTypeSelect = (gameType: string, boardSize: number) => {
-    setSelectedGameType(gameType);
-    setSelectedBoardSize(boardSize);
-  };
-
   return (
     <div className="space-y-6">
-      {/* 게임 타입 선택 */}
-      <GameTypeSelector onSelect={handleGameTypeSelect} />
-
-      {/* 접속 유저 목록 */}
+      {/* 접속 유저 목록 (대국신청 포함) */}
       <OnlineUsersList />
 
       {/* 랭킹전 매칭 버튼 */}

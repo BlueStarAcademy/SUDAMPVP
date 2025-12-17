@@ -2,19 +2,50 @@
 
 import { useEffect, useState } from 'react';
 import { useOnlineUsers, OnlineUser } from '@/lib/hooks/useOnlineUsers';
+import { getSocketInstance } from '@/lib/socket/client';
+import GameRequestModal from './GameRequestModal';
 
 export default function OnlineUsersList() {
   const { users, loading } = useOnlineUsers();
   const [filteredUsers, setFilteredUsers] = useState<OnlineUser[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [currentUser, setCurrentUser] = useState<OnlineUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<OnlineUser | null>(null);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   useEffect(() => {
+    // 현재 사용자 정보 가져오기
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const current = users.find((u) => u.id === data.user.id);
+          if (current) {
+            setCurrentUser(current);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+      }
+    };
+
+    fetchCurrentUser();
+
+    // 필터링된 유저 목록
     if (statusFilter === 'ALL') {
-      setFilteredUsers(users);
+      setFilteredUsers(users.filter((u) => u.id !== currentUser?.id));
     } else {
-      setFilteredUsers(users.filter((u) => u.status === statusFilter));
+      setFilteredUsers(
+        users.filter((u) => u.id !== currentUser?.id && u.status === statusFilter)
+      );
     }
-  }, [users, statusFilter]);
+  }, [users, statusFilter, currentUser]);
 
   const statusLabels: Record<string, string> = {
     ALL: '전체',
@@ -47,63 +78,131 @@ export default function OnlineUsersList() {
   };
 
   return (
-    <div className="baduk-card p-6 animate-fade-in">
-      <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-            <span className="text-xl">👥</span>
+    <>
+      <div className="baduk-card p-6 animate-fade-in">
+        <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
+              <span className="text-xl">👥</span>
+            </div>
+            <h2 className="text-xl font-bold">접속 유저 목록</h2>
           </div>
-          <h2 className="text-xl font-bold">접속 유저 목록</h2>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg border-2 border-gray-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+          >
+            {Object.entries(statusLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border-2 border-gray-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-        >
-          {Object.entries(statusLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </div>
-      {filteredUsers.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">접속 중인 유저가 없습니다.</p>
-        </div>
-      ) : (
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {filteredUsers.map((user) => (
-            <div
-              key={user.id}
-              className="group flex items-center justify-between rounded-lg border-2 border-gray-200 bg-gradient-to-r from-white to-gray-50 p-3 transition-all hover:border-indigo-400 hover:shadow-md dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 dark:hover:border-indigo-500"
-            >
+
+        {/* 내 닉네임 고정 표시 */}
+        {currentUser && (
+          <div className="mb-4 rounded-lg border-2 border-indigo-400 bg-gradient-to-r from-indigo-50 to-purple-50 p-3 dark:from-indigo-900/30 dark:to-purple-900/30 dark:border-indigo-500">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white shadow-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
                   <span className="text-lg">
-                    {user.nickname?.[0] || user.username[0]?.toUpperCase() || 'U'}
+                    {currentUser.nickname?.[0] || currentUser.username[0]?.toUpperCase() || 'U'}
                   </span>
                 </div>
                 <div>
                   <p className="font-bold text-gray-800 dark:text-gray-200">
-                    {user.nickname || user.username}
+                    {currentUser.nickname || currentUser.username}
                   </p>
                   <div className="mt-1 flex items-center gap-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        statusColors[user.status] || 'bg-gray-100 text-gray-700'
+                        statusColors[currentUser.status] || 'bg-gray-100 text-gray-700'
                       }`}
                     >
-                      {statusIcons[user.status] || '•'} {statusLabels[user.status] || user.status}
+                      {statusIcons[currentUser.status] || '•'}{' '}
+                      {statusLabels[currentUser.status] || currentUser.status}
                     </span>
                   </div>
                 </div>
               </div>
+              {/* 상태 변경 드롭다운 (대기중, 휴식중만) */}
+              {(currentUser.status === 'WAITING' || currentUser.status === 'RESTING') && (
+                <select
+                  value={currentUser.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="rounded-lg border-2 border-gray-300 bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  <option value="WAITING">대기중</option>
+                  <option value="RESTING">휴식중</option>
+                </select>
+              )}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* 다른 유저 목록 */}
+        {filteredUsers.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400">접속 중인 다른 유저가 없습니다.</p>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="group flex items-center justify-between rounded-lg border-2 border-gray-200 bg-gradient-to-r from-white to-gray-50 p-3 transition-all hover:border-indigo-400 hover:shadow-md dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 dark:hover:border-indigo-500"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white shadow-md">
+                    <span className="text-lg">
+                      {user.nickname?.[0] || user.username[0]?.toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-800 dark:text-gray-200">
+                      {user.nickname || user.username}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          statusColors[user.status] || 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {statusIcons[user.status] || '•'} {statusLabels[user.status] || user.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {/* 대국 신청 버튼 (대기중, 관전중일 때만 표시) */}
+                {(user.status === 'WAITING' || user.status === 'SPECTATING') &&
+                  (currentUser?.status === 'WAITING' || currentUser?.status === 'SPECTATING') && (
+                    <button
+                      onClick={() => handleRequestGame(user)}
+                      className="rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg"
+                    >
+                      대국신청
+                    </button>
+                  )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 대국 신청 모달 */}
+      {selectedUser && (
+        <GameRequestModal
+          isOpen={showRequestModal}
+          onClose={() => {
+            setShowRequestModal(false);
+            setSelectedUser(null);
+          }}
+          receiverId={selectedUser.id}
+          receiverName={selectedUser.nickname || selectedUser.username}
+        />
       )}
-    </div>
+    </>
   );
 }
 

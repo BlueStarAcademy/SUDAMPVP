@@ -7,6 +7,12 @@ export interface SocketWithUser extends SocketIOServer {
   userId?: string;
 }
 
+let globalIO: SocketIOServer | null = null;
+
+export function getSocketServer(): SocketIOServer | null {
+  return globalIO;
+}
+
 export function initializeSocket(server: HTTPServer) {
   const io = new SocketIOServer(server, {
     cors: {
@@ -261,8 +267,17 @@ export function initializeSocket(server: HTTPServer) {
         users: onlineUsers,
       });
     });
+
+    // Handle game request events
+    socket.on('game:request-sent', async (data: { receiverId: string; requestId: string }) => {
+      // 수신자에게 알림
+      io.to(`user:${data.receiverId}`).emit('game:request-received', {
+        id: data.requestId,
+      });
+    });
   });
 
+  globalIO = io;
   return io;
 }
 

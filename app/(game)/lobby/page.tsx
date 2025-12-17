@@ -10,6 +10,7 @@ import AIBattleButton from '@/components/lobby/AIBattleButton';
 import OngoingGamesList from '@/components/lobby/OngoingGamesList';
 import GameMatchPanel from '@/components/lobby/GameMatchPanel';
 import NicknameSetupModal from '@/components/NicknameSetupModal';
+import GameRequestNotification from '@/components/lobby/GameRequestNotification';
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -100,6 +101,9 @@ export default function LobbyPage() {
         isOpen={showNicknameModal}
         onComplete={handleNicknameComplete}
       />
+
+      {/* 대국 신청 알림 */}
+      <GameRequestNotification />
     </div>
   );
 }
