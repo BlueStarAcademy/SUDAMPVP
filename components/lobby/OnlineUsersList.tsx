@@ -4,14 +4,21 @@ import { useEffect, useState } from 'react';
 import { useOnlineUsers, OnlineUser } from '@/lib/hooks/useOnlineUsers';
 import { getSocketInstance } from '@/lib/socket/client';
 import GameRequestModal from './GameRequestModal';
+import GameRequestBlockModal from './GameRequestBlockModal';
 
-export default function OnlineUsersList() {
+interface OnlineUsersListProps {
+  mode: 'STRATEGY' | 'PLAY';
+}
+
+export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
   const { users, loading } = useOnlineUsers();
   const [filteredUsers, setFilteredUsers] = useState<OnlineUser[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [currentUser, setCurrentUser] = useState<OnlineUser | null>(null);
   const [selectedUser, setSelectedUser] = useState<OnlineUser | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blockedGameTypes, setBlockedGameTypes] = useState<string[]>([]);
 
   useEffect(() => {
     // 현재 사용자 정보 가져오기
@@ -35,7 +42,26 @@ export default function OnlineUsersList() {
       }
     };
 
+    // 거부된 게임 타입 가져오기
+    const fetchBlockedGameTypes = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/auth/blocked-game-types', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setBlockedGameTypes(data.blockedGameTypes || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch blocked game types:', error);
+      }
+    };
+
     fetchCurrentUser();
+    fetchBlockedGameTypes();
 
     // 필터링된 유저 목록
     if (statusFilter === 'ALL') {
@@ -74,6 +100,32 @@ export default function OnlineUsersList() {
     setShowRequestModal(true);
   };
 
+  const handleSaveBlockedGameTypes = async (blockedTypes: string[]) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('/api/auth/blocked-game-types', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ blockedGameTypes: blockedTypes }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBlockedGameTypes(data.blockedGameTypes || []);
+      } else {
+        throw new Error('Failed to save blocked game types');
+      }
+    } catch (error) {
+      console.error('Failed to save blocked game types:', error);
+      throw error;
+    }
+  };
+
   const statusLabels: Record<string, string> = {
     ALL: '전체',
     WAITING: '대기중',
@@ -104,15 +156,23 @@ export default function OnlineUsersList() {
     SPECTATING: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
   };
 
+  const modeLabel = mode === 'STRATEGY' ? '전략바둑' : '놀이바둑';
+  const modeColor = mode === 'STRATEGY' 
+    ? 'from-blue-500 to-indigo-600' 
+    : 'from-purple-500 to-pink-600';
+
   return (
     <>
-      <div className="baduk-card p-6 animate-fade-in">
-        <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+      <div className="baduk-card p-6 animate-fade-in border-2 border-gray-200 dark:border-gray-700">
+        <div className="mb-4 flex items-center justify-between border-b-2 border-gray-200 pb-4 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-              <span className="text-xl">👥</span>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
+              <span className="text-2xl">👥</span>
             </div>
-            <h2 className="text-xl font-bold">접속 유저 목록</h2>
+            <div>
+              <h2 className="text-xl font-bold">{modeLabel} 대기실</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">접속 유저 목록</p>
+            </div>
           </div>
           <select
             value={statusFilter}
@@ -153,17 +213,28 @@ export default function OnlineUsersList() {
                   </div>
                 </div>
               </div>
-              {/* 상태 변경 드롭다운 (대기중, 휴식중만) */}
-              {(currentUser.status === 'WAITING' || currentUser.status === 'RESTING') && (
-                <select
-                  value={currentUser.status}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  className="rounded-lg border-2 border-gray-300 bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              {/* 상태 변경 및 대국 거부 설정 */}
+              <div className="flex items-center gap-2">
+                {/* 상태 변경 드롭다운 (대기중, 휴식중만) */}
+                {(currentUser.status === 'WAITING' || currentUser.status === 'RESTING') && (
+                  <select
+                    value={currentUser.status}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    className="rounded-lg border-2 border-gray-300 bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  >
+                    <option value="WAITING">대기중</option>
+                    <option value="RESTING">휴식중</option>
+                  </select>
+                )}
+                {/* 대국 거부 설정 버튼 */}
+                <button
+                  onClick={() => setShowBlockModal(true)}
+                  className="rounded-lg border-2 border-gray-300 bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-colors hover:border-indigo-400 hover:bg-indigo-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/30"
+                  title="대국 신청 거부 설정"
                 >
-                  <option value="WAITING">대기중</option>
-                  <option value="RESTING">휴식중</option>
-                </select>
-              )}
+                  {blockedGameTypes.length > 0 ? `🚫 거부 설정 (${blockedGameTypes.length})` : '⚙️ 거부 설정'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -229,6 +300,14 @@ export default function OnlineUsersList() {
           receiverName={selectedUser.nickname || selectedUser.username}
         />
       )}
+
+      {/* 대국 거부 설정 모달 */}
+      <GameRequestBlockModal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        blockedGameTypes={blockedGameTypes}
+        onSave={handleSaveBlockedGameTypes}
+      />
     </>
   );
 }

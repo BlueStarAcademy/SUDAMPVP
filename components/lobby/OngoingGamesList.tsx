@@ -22,7 +22,11 @@ interface OngoingGame {
   startedAt: string | null;
 }
 
-export default function OngoingGamesList() {
+interface OngoingGamesListProps {
+  mode: 'STRATEGY' | 'PLAY';
+}
+
+export default function OngoingGamesList({ mode }: OngoingGamesListProps) {
   const router = useRouter();
   const [games, setGames] = useState<OngoingGame[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +37,13 @@ export default function OngoingGamesList() {
         const response = await fetch('/api/game/ongoing-pvp');
         if (response.ok) {
           const data = await response.json();
-          setGames(data.games || []);
+          // 모드별로 필터링
+          const filteredGames = (data.games || []).filter((game: OngoingGame) => {
+            if (!game.gameType) return false;
+            const isStrategy = ['CLASSIC', 'CAPTURE', 'SPEED', 'BASE', 'HIDDEN', 'MISSILE', 'MIXED'].includes(game.gameType);
+            return mode === 'STRATEGY' ? isStrategy : !isStrategy;
+          });
+          setGames(filteredGames);
         }
       } catch (error) {
         console.error('Failed to fetch ongoing games:', error);
@@ -49,14 +59,20 @@ export default function OngoingGamesList() {
     if (token) {
       const socket = getSocket(token);
       socket.on('game:ongoing-updated', (updatedGames: OngoingGame[]) => {
-        setGames(updatedGames);
+        // 모드별로 필터링
+        const filteredGames = updatedGames.filter((game: OngoingGame) => {
+          if (!game.gameType) return false;
+          const isStrategy = ['CLASSIC', 'CAPTURE', 'SPEED', 'BASE', 'HIDDEN', 'MISSILE', 'MIXED'].includes(game.gameType);
+          return mode === 'STRATEGY' ? isStrategy : !isStrategy;
+        });
+        setGames(filteredGames);
       });
 
       return () => {
         socket.off('game:ongoing-updated');
       };
     }
-  }, []);
+  }, [mode]);
 
   const handleSpectate = (gameId: string) => {
     router.push(`/game/${gameId}?spectate=true`);
@@ -71,13 +87,21 @@ export default function OngoingGamesList() {
     );
   }
 
+  const modeLabel = mode === 'STRATEGY' ? '전략바둑' : '놀이바둑';
+  const modeColor = mode === 'STRATEGY' 
+    ? 'from-blue-500 to-indigo-600' 
+    : 'from-purple-500 to-pink-600';
+
   return (
-    <div className="baduk-card p-6 animate-fade-in">
-      <div className="mb-4 flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600">
-          <span className="text-xl">🔥</span>
+    <div className="baduk-card p-6 animate-fade-in border-2 border-gray-200 dark:border-gray-700">
+      <div className="mb-4 flex items-center gap-3 border-b-2 border-gray-200 pb-4 dark:border-gray-700">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
+          <span className="text-2xl">🔥</span>
         </div>
-        <h2 className="text-xl font-bold">경기중인 대국실</h2>
+        <div>
+          <h2 className="text-xl font-bold">{modeLabel} 경기중</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">진행 중인 대국실</p>
+        </div>
       </div>
       {games.length === 0 ? (
         <div className="py-8 text-center">

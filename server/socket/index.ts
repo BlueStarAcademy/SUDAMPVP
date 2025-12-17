@@ -86,10 +86,20 @@ export function initializeSocket(server: HTTPServer) {
     });
 
     // Handle join lobby
-    socket.on('lobby:join', async () => {
-      socket.join('lobby');
-      const onlineUsers = await getOnlineUsers();
-      io.to('lobby').emit('lobby:users', onlineUsers);
+    socket.on('lobby:join', async (data?: { mode?: 'STRATEGY' | 'PLAY' }) => {
+      const mode = data?.mode || 'STRATEGY'; // 기본값은 전략바둑
+      const roomName = `lobby:${mode}`;
+      
+      // 기존 대기실에서 나가기
+      socket.leave('lobby:STRATEGY');
+      socket.leave('lobby:PLAY');
+      
+      // 선택한 대기실에 참가
+      socket.join(roomName);
+      
+      // 해당 모드의 온라인 유저 목록 가져오기
+      const onlineUsers = await getOnlineUsersByMode(mode);
+      io.to(roomName).emit('lobby:users', { mode, users: onlineUsers });
       
       // Emit ongoing games update
       const ongoingGames = await getOngoingGames();
@@ -98,7 +108,8 @@ export function initializeSocket(server: HTTPServer) {
 
     // Handle leave lobby
     socket.on('lobby:leave', () => {
-      socket.leave('lobby');
+      socket.leave('lobby:STRATEGY');
+      socket.leave('lobby:PLAY');
     });
 
     // Handle game events
@@ -369,3 +380,9 @@ async function getOnlineUsers() {
   return Array.from(userMap.values());
 }
 
+async function getOnlineUsersByMode(mode: 'STRATEGY' | 'PLAY') {
+  // Socket.io의 방에 있는 유저들을 가져오는 것은 복잡하므로
+  // 일단 모든 온라인 유저를 반환하고, 클라이언트에서 필터링
+  // 추후 개선 가능: User 모델에 현재 대기실 정보 추가
+  return getOnlineUsers();
+}

@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // 수신자 확인
     const receiver = await prisma.user.findUnique({
       where: { id: receiverId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, blockedGameTypes: true },
     });
 
     if (!receiver) {
@@ -28,6 +28,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Receiver is not available for game requests' },
         { status: 400 }
+      );
+    }
+
+    // 수신자가 해당 게임 타입을 거부했는지 확인
+    const blockedTypes = Array.isArray(receiver.blockedGameTypes)
+      ? (receiver.blockedGameTypes as string[])
+      : [];
+    if (blockedTypes.includes(gameType)) {
+      return NextResponse.json(
+        { error: 'Receiver has blocked this game type' },
+        { status: 403 }
       );
     }
 

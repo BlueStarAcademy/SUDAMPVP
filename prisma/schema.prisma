@@ -54,6 +54,7 @@ model User {
   gold              Int         @default(0) // 골드 (재화)
   gameTickets       Int         @default(10) // 대국 이용권 (최대 10개)
   lastTicketRecovery DateTime? // 마지막 이용권 회복 시간
+  blockedGameTypes  Json?       // 거부할 게임 타입 목록 (문자열 배열)
   createdAt         DateTime    @default(now())
   
   gamesAsPlayer1    Game[]  @relation("Player1Games")
