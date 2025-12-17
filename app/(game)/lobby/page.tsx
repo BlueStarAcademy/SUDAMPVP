@@ -8,10 +8,11 @@ import ProfilePanel from '@/components/lobby/ProfilePanel';
 import RatingDisplay from '@/components/lobby/RatingDisplay';
 import AIBattleButton from '@/components/lobby/AIBattleButton';
 import OngoingGamesList from '@/components/lobby/OngoingGamesList';
-import GameMatchPanel from '@/components/lobby/GameMatchPanel';
+import OnlineUsersList from '@/components/lobby/OnlineUsersList';
+import RankingMatchButton from '@/components/lobby/RankingMatchButton';
+import RankingLeaderboard from '@/components/lobby/RankingLeaderboard';
 import NicknameSetupModal from '@/components/NicknameSetupModal';
 import GameRequestNotification from '@/components/lobby/GameRequestNotification';
-import ChatPanel from '@/components/chat/ChatPanel';
 
 type GameMode = 'STRATEGY' | 'PLAY';
 
@@ -118,29 +119,32 @@ export default function LobbyPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          {/* 왼쪽 열: 프로필 및 레이팅 (3칸) */}
-          <div className="lg:col-span-3 space-y-4">
+        <div className="space-y-4">
+          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널, AI봇 대결 패널 */}
+          <div className={`grid grid-cols-1 gap-4 ${selectedMode === 'STRATEGY' ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
             <ProfilePanel />
             <RatingDisplay mode={selectedMode} />
+            {selectedMode === 'STRATEGY' && <AIBattleButton />}
           </div>
 
-          {/* 중앙 열: 게임 매칭 및 진행중인 게임 (5칸) */}
-          <div className="lg:col-span-5 space-y-4">
-            {selectedMode === 'STRATEGY' ? (
-              <>
-                <AIBattleButton />
-                <OngoingGamesList mode={selectedMode} />
-              </>
-            ) : (
-              <OngoingGamesList mode={selectedMode} />
-            )}
-            <ChatPanel type="GLOBAL" />
+          {/* 두 번째 줄: 경기중인 대국실 목록 패널, 유저목록 패널 */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <OngoingGamesList mode={selectedMode} />
+            <OnlineUsersList mode={selectedMode} />
           </div>
 
-          {/* 오른쪽 열: 접속 유저 목록, 랭킹전 매칭 (4칸) */}
-          <div className="lg:col-span-4 space-y-4">
-            <GameMatchPanel mode={selectedMode} />
+          {/* 세 번째 줄: 랭킹전 매칭 패널, 랭킹전 순위 패널 */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="baduk-card p-6 animate-fade-in border-2 border-gray-200 dark:border-gray-700">
+              <div className="mb-4 flex items-center gap-3 border-b-2 border-gray-200 pb-4 dark:border-gray-700">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600 shadow-lg">
+                  <span className="text-2xl">🏆</span>
+                </div>
+                <h2 className="text-xl font-bold">랭킹전 매칭</h2>
+              </div>
+              <RankingMatchButton />
+            </div>
+            <RankingLeaderboard mode={selectedMode} />
           </div>
         </div>
       </div>
