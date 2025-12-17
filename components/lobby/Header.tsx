@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket/client';
-import SeasonInfoModal from './SeasonInfoModal';
 
 interface UserInfo {
   gold: number;
@@ -17,7 +16,6 @@ interface HeaderProps {
 
 export default function Header({ mode, onModeChange }: HeaderProps) {
   const router = useRouter();
-  const [showSeasonModal, setShowSeasonModal] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   const handleModeSwitch = () => {
@@ -123,11 +121,14 @@ export default function Header({ mode, onModeChange }: HeaderProps) {
           )}
 
           <button
-            onClick={() => setShowSeasonModal(true)}
-            className="baduk-button-success flex items-center gap-1 px-2 py-1 text-xs"
+            onClick={() => {
+              // TODO: 상점 모달 구현
+              alert('상점 기능은 준비 중입니다.');
+            }}
+            className="baduk-button-primary flex items-center gap-1 px-2 py-1 text-xs"
           >
-            <span>📅</span>
-            <span>시즌</span>
+            <span>🛒</span>
+            <span>상점</span>
           </button>
           <button
             onClick={() => router.push('/settings')}
@@ -145,10 +146,6 @@ export default function Header({ mode, onModeChange }: HeaderProps) {
           </button>
         </div>
       </header>
-      <SeasonInfoModal
-        isOpen={showSeasonModal}
-        onClose={() => setShowSeasonModal(false)}
-      />
     </>
   );
 }

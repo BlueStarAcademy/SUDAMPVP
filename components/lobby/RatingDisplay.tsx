@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getGradeFromRating } from '@/lib/rating/grade';
 import RankingMatchButton from './RankingMatchButton';
+import SeasonInfoModal from './SeasonInfoModal';
 
 interface RatingData {
   mode: string;
@@ -19,6 +20,7 @@ interface RatingDisplayProps {
 export default function RatingDisplay({ mode }: RatingDisplayProps) {
   const [ratings, setRatings] = useState<RatingData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSeasonModal, setShowSeasonModal] = useState(false);
 
   useEffect(() => {
     const fetchRatings = async () => {
@@ -76,52 +78,67 @@ export default function RatingDisplay({ mode }: RatingDisplayProps) {
   };
 
   return (
-    <div className="p-5 h-full flex flex-col">
-      <div className="mb-3 flex items-center gap-2 border-b border-indigo-200 pb-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
-          <span className="text-base">⭐</span>
-        </div>
-        <div>
-          <h2 className="text-base font-bold text-gray-800">{modeLabel} 레이팅</h2>
-        </div>
-      </div>
-      <div className="flex-1 flex flex-col items-center justify-center space-y-2">
-        {currentRating ? (
-          <div className="w-full rounded border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-2 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <span
-                  className={`rounded-full bg-gradient-to-r ${gradeColors[gradeInfo.grade] || 'from-gray-400 to-gray-500'} px-2 py-0.5 text-[10px] font-bold text-white`}
-                >
-                  {gradeInfo.name}
-                </span>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                  {currentRating.rating}
-                </p>
-                <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
-                  {currentRating.wins}승 {currentRating.losses}패
-                </p>
-              </div>
+    <>
+      <div className="p-5 h-full flex flex-col">
+        <div className="mb-3 flex items-center justify-between border-b border-indigo-200 pb-3">
+          <div className="flex items-center gap-2">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
+              <span className="text-base">⭐</span>
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-800">{modeLabel} 레이팅</h2>
             </div>
           </div>
-        ) : (
-          <div className="w-full rounded border-2 border-dashed border-gray-300 bg-gray-50 p-2 text-center dark:border-gray-700 dark:bg-gray-800">
-            <p className="text-xs text-gray-600 dark:text-gray-400">기본 등급</p>
-            <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-              {rating}
-            </p>
-            <span className="mt-1 inline-block rounded-full bg-gradient-to-r from-gray-400 to-gray-500 px-2 py-0.5 text-[10px] font-bold text-white">
-              {gradeInfo.name}
-            </span>
+          <button
+            onClick={() => setShowSeasonModal(true)}
+            className="baduk-button-success flex items-center gap-1 px-2 py-1 text-xs"
+          >
+            <span>📅</span>
+            <span>시즌</span>
+          </button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center space-y-2">
+          {currentRating ? (
+            <div className="w-full rounded border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-2 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span
+                    className={`rounded-full bg-gradient-to-r ${gradeColors[gradeInfo.grade] || 'from-gray-400 to-gray-500'} px-2 py-0.5 text-[10px] font-bold text-white`}
+                  >
+                    {gradeInfo.name}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                    {currentRating.rating}
+                  </p>
+                  <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                    {currentRating.wins}승 {currentRating.losses}패
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full rounded border-2 border-dashed border-gray-300 bg-gray-50 p-2 text-center dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-xs text-gray-600 dark:text-gray-400">기본 등급</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                {rating}
+              </p>
+              <span className="mt-1 inline-block rounded-full bg-gradient-to-r from-gray-400 to-gray-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                {gradeInfo.name}
+              </span>
+            </div>
+          )}
+          <div className="w-full">
+            <RankingMatchButton />
           </div>
-        )}
-        <div className="w-full">
-          <RankingMatchButton />
         </div>
       </div>
-    </div>
+      <SeasonInfoModal
+        isOpen={showSeasonModal}
+        onClose={() => setShowSeasonModal(false)}
+      />
+    </>
   );
 }
 

@@ -28,11 +28,13 @@ export function initializeSocket(server: HTTPServer) {
     try {
       const token = socket.handshake.auth.token;
       if (!token) {
+        // 토큰이 없는 경우 조용히 실패 (클라이언트에서 처리)
         return next(new Error('Authentication error: No token provided'));
       }
 
       const payload = verifyToken(token);
       if (!payload) {
+        // 토큰이 유효하지 않은 경우 조용히 실패 (클라이언트에서 처리)
         return next(new Error('Authentication error: Invalid token'));
       }
 
@@ -40,6 +42,8 @@ export function initializeSocket(server: HTTPServer) {
       (socket as any).user = payload;
       next();
     } catch (error) {
+      // 예상치 못한 오류는 로그만 남기고 조용히 실패
+      console.error('Socket authentication error:', error);
       next(new Error('Authentication error'));
     }
   });

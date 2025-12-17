@@ -31,7 +31,7 @@ export default function DraggableModal({
   // 모달이 열릴 때 z-index 설정 및 위치 초기화
   useEffect(() => {
     if (isOpen) {
-      // 새로운 z-index 할당 (마지막에 열린 모달이 위에 오도록)
+      // 새로운 z-index 할당 (마지막에 열린 모달이 위에 오도록) - 높은 값으로 설정
       const newZIndex = getNextZIndex();
       setZIndex(newZIndex);
       
@@ -41,42 +41,77 @@ export default function DraggableModal({
         setZIndex(newZ);
       };
       
-      if (overlayRef.current) {
-        overlayRef.current.addEventListener('mousedown', handleClick);
+      const overlay = overlayRef.current;
+      if (overlay) {
+        overlay.addEventListener('mousedown', handleClick);
       }
       
-      // 위치 설정
-      if (modalRef.current) {
-        const savedRemember = localStorage.getItem(`modal_${modalId}_remember`);
-        const savedPosition = localStorage.getItem(`modal_${modalId}_position`);
-        
-        if (savedRemember === 'true' && savedPosition) {
-          try {
-            const pos = JSON.parse(savedPosition);
-            setRememberPosition(true);
-            // 화면 경계 체크
-            const maxX = window.innerWidth - modalRef.current.offsetWidth;
-            const maxY = window.innerHeight - modalRef.current.offsetHeight;
-            setPosition({
-              x: Math.max(0, Math.min(pos.x, maxX)),
-              y: Math.max(0, Math.min(pos.y, maxY)),
-            });
-          } catch (e) {
-            // 기본값 사용 - 중앙 배치
-            setRememberPosition(false);
-            setTimeout(() => centerModal(), 0);
-          }
-        } else {
+      // 위치 설정 - 항상 중앙에 배치
+      const savedRemember = localStorage.getItem(`modal_${modalId}_remember`);
+      const savedPosition = localStorage.getItem(`modal_${modalId}_position`);
+      
+      if (savedRemember === 'true' && savedPosition) {
+        try {
+          const pos = JSON.parse(savedPosition);
+          setRememberPosition(true);
+          // 모달이 렌더링된 후 위치 설정
+          setTimeout(() => {
+            if (modalRef.current) {
+              const maxX = window.innerWidth - modalRef.current.offsetWidth;
+              const maxY = window.innerHeight - modalRef.current.offsetHeight;
+              setPosition({
+                x: Math.max(0, Math.min(pos.x, maxX)),
+                y: Math.max(0, Math.min(pos.y, maxY)),
+              });
+            }
+          }, 0);
+        } catch (e) {
+          // 기본값 사용 - 중앙 배치
           setRememberPosition(false);
-          setTimeout(() => centerModal(), 0);
+          setTimeout(() => {
+            if (modalRef.current) {
+              const rect = modalRef.current.getBoundingClientRect();
+              const x = (window.innerWidth - rect.width) / 2;
+              const y = (window.innerHeight - rect.height) / 2;
+              setPosition({ 
+                x: Math.max(0, x), 
+                y: Math.max(0, y) 
+              });
+            }
+          }, 0);
         }
+      } else {
+        // 위치 기억이 없으면 항상 중앙에 배치
+        setRememberPosition(false);
+        setTimeout(() => {
+          if (modalRef.current) {
+            const rect = modalRef.current.getBoundingClientRect();
+            const x = (window.innerWidth - rect.width) / 2;
+            const y = (window.innerHeight - rect.height) / 2;
+            setPosition({ 
+              x: Math.max(0, x), 
+              y: Math.max(0, y) 
+            });
+          } else {
+            // 모달이 아직 렌더링되지 않았을 때 기본 중앙 위치 설정
+            const x = (window.innerWidth - 600) / 2;
+            const y = (window.innerHeight - 400) / 2;
+            setPosition({ 
+              x: Math.max(0, x), 
+              y: Math.max(0, y) 
+            });
+          }
+        }, 0);
       }
       
       return () => {
-        if (overlayRef.current) {
-          overlayRef.current.removeEventListener('mousedown', handleClick);
+        if (overlay) {
+          overlay.removeEventListener('mousedown', handleClick);
         }
       };
+    } else {
+      // 모달이 닫힐 때 위치 초기화
+      setPosition({ x: 0, y: 0 });
     }
   }, [isOpen, modalId]);
 
@@ -92,16 +127,15 @@ export default function DraggableModal({
   }, [rememberPosition, position, modalId]);
 
   const centerModal = () => {
+    // 모달이 렌더링된 후 중앙 위치 계산
     if (modalRef.current) {
       const rect = modalRef.current.getBoundingClientRect();
-      const x = Math.max(0, (window.innerWidth - rect.width) / 2);
-      const y = Math.max(0, (window.innerHeight - rect.height) / 2);
-      setPosition({ x, y });
-    } else {
-      // 모달이 아직 렌더링되지 않았을 때 기본 중앙 위치 설정
-      const x = (window.innerWidth - 600) / 2; // 대략적인 모달 너비
-      const y = (window.innerHeight - 400) / 2; // 대략적인 모달 높이
-      setPosition({ x: Math.max(0, x), y: Math.max(0, y) });
+      const x = (window.innerWidth - rect.width) / 2;
+      const y = (window.innerHeight - rect.height) / 2;
+      setPosition({ 
+        x: Math.max(0, x), 
+        y: Math.max(0, y) 
+      });
     }
   };
 
@@ -148,23 +182,50 @@ export default function DraggableModal({
     };
   }, [isDragging, dragStart]);
 
+  // 모달이 렌더링된 후 중앙 배치
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      // 모달이 렌더링된 후 약간의 지연을 두고 위치 계산
+      const timer = setTimeout(() => {
+        if (modalRef.current && !rememberPosition) {
+          const rect = modalRef.current.getBoundingClientRect();
+          const x = (window.innerWidth - rect.width) / 2;
+          const y = (window.innerHeight - rect.height) / 2;
+          setPosition({ 
+            x: Math.max(0, x), 
+            y: Math.max(0, y) 
+          });
+        }
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, rememberPosition]);
+
   if (!isOpen) return null;
 
   return (
     <div 
       ref={overlayRef}
-      className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      style={{ zIndex }}
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+      style={{ zIndex: zIndex }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) {
+          onClose();
+        }
+      }}
     >
       <div
         ref={modalRef}
         className={`premium-modal ${maxWidth} w-full animate-fade-in`}
         style={{
           position: 'fixed',
-          left: `${position.x}px`,
-          top: `${position.y}px`,
+          left: position.x > 0 ? `${position.x}px` : '50%',
+          top: position.y > 0 ? `${position.y}px` : '50%',
+          transform: position.x === 0 && position.y === 0 ? 'translate(-50%, -50%)' : 'none',
           cursor: isDragging ? 'grabbing' : 'default',
           zIndex: zIndex + 1,
+          maxHeight: '90vh',
+          overflow: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
       >

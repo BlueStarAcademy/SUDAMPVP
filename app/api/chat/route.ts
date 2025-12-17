@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/middleware';
 import { prisma } from '@/lib/prisma';
 import { getSocketServer } from '@/server/socket/index';
+import { filterProfanity } from '@/lib/utils/profanityFilter';
 
 // 채팅 메시지 전송
 export async function POST(request: NextRequest) {
@@ -18,14 +19,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    if (message.length > 500) {
+    if (message.length > 60) {
       return NextResponse.json(
-        { error: 'Message is too long (max 500 characters)' },
+        { error: 'Message is too long (max 60 characters)' },
         { status: 400 }
       );
     }
 
     const chatType = type === 'GAME' ? 'GAME' : 'GLOBAL';
+
+    // 비속어 필터링
+    const filteredMessage = filterProfanity(message.trim());
 
     // 채팅 메시지 저장
     const chatMessage = await prisma.chatMessage.create({
@@ -33,7 +37,7 @@ export async function POST(request: NextRequest) {
         userId: user.userId,
         gameId: chatType === 'GAME' ? gameId : null,
         type: chatType,
-        message: message.trim(),
+        message: filteredMessage,
       },
       include: {
         user: {

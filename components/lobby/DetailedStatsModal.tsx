@@ -27,6 +27,14 @@ export default function DetailedStatsModal({
   const strategyStats = gameStats.filter((s) => s.mode === 'STRATEGY');
   const playStats = gameStats.filter((s) => s.mode === 'PLAY');
 
+  // 모달이 열릴 때마다 위치 기억을 초기화하여 항상 중앙에 표시
+  useEffect(() => {
+    if (isOpen) {
+      localStorage.removeItem('modal_detailed-stats_remember');
+      localStorage.removeItem('modal_detailed-stats_position');
+    }
+  }, [isOpen]);
+
   return (
     <DraggableModal
       isOpen={isOpen}

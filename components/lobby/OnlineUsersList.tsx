@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useOnlineUsers, OnlineUser } from '@/lib/hooks/useOnlineUsers';
-import { getSocketInstance } from '@/lib/socket/client';
 import { DEFAULT_AVATARS } from '@/lib/constants/avatars';
 import GameRequestModal from './GameRequestModal';
 import GameRequestBlockModal from './GameRequestBlockModal';
@@ -11,6 +10,10 @@ import AIGameSetupModal from './AIGameSetupModal';
 
 interface OnlineUsersListProps {
   mode: 'STRATEGY' | 'PLAY';
+}
+
+interface OnlineUserWithRating extends OnlineUser {
+  rating?: number;
 }
 
 export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
@@ -24,6 +27,8 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
   const [showAIModal, setShowAIModal] = useState(false);
   const [blockedGameTypes, setBlockedGameTypes] = useState<string[]>([]);
   const [currentUserProfile, setCurrentUserProfile] = useState<{ avatarId: string | null; nickname: string | null } | null>(null);
+  const [currentUserRating, setCurrentUserRating] = useState<number | null>(null);
+  const [userRatings, setUserRatings] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     // 현재 사용자 정보 가져오기
@@ -43,7 +48,7 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
           }
         }
 
-        // 프로필 정보 가져오기 (아바타, 닉네임)
+        // 프로필 정보 가져오기 (아바타, 닉네임, 레이팅)
         const profileResponse = await fetch('/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -53,6 +58,9 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
             avatarId: profileData.user?.avatarId || null,
             nickname: profileData.user?.nickname || null,
           });
+          // 현재 모드의 레이팅 가져오기
+          const rating = profileData.ratings?.find((r: any) => r.mode === mode);
+          setCurrentUserRating(rating?.rating || 1500);
         }
       } catch (error) {
         console.error('Failed to fetch current user:', error);
@@ -77,6 +85,32 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
       }
     };
 
+    // 다른 유저들의 레이팅 가져오기
+    const fetchUserRatings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        // 온라인 유저 목록을 다시 가져와서 레이팅 정보 포함
+        const response = await fetch(`/api/users/online?mode=${mode}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const ratingsMap = new Map<string, number>();
+          data.users.forEach((user: any) => {
+            if (user.id !== currentUser?.id) {
+              ratingsMap.set(user.id, user.rating || 1500);
+            }
+          });
+          setUserRatings(ratingsMap);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user ratings:', error);
+      }
+    };
+
     fetchCurrentUser();
     fetchBlockedGameTypes();
 
@@ -88,7 +122,12 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
         users.filter((u) => u.id !== currentUser?.id && u.status === statusFilter)
       );
     }
-  }, [users, statusFilter, currentUser]);
+
+    // 유저 목록이 변경되면 레이팅도 다시 가져오기
+    if (users.length > 0 && currentUser) {
+      fetchUserRatings();
+    }
+  }, [users, statusFilter, currentUser, mode]);
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -233,7 +272,7 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
             </div>
           )}
 
-          {/* 내 프로필사진 + 상태 변경 */}
+          {/* 내 프로필사진 + 레이팅 + 상태 변경 */}
           {currentUser && currentUserProfile && (
             <div className="mb-2 rounded border border-indigo-400 bg-gradient-to-r from-indigo-50 to-purple-50 p-2 dark:from-indigo-900/30 dark:to-purple-900/30 dark:border-indigo-500">
               <div className="flex items-center justify-between gap-2">
@@ -267,19 +306,16 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
                       {currentUserProfile.nickname || currentUser.username}
                     </p>
                     <div className="mt-0.5 flex items-center gap-1">
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                          statusColors[currentUser.status] || 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {statusIcons[currentUser.status] || '•'} {statusLabels[currentUser.status] || currentUser.status}
-                      </span>
+                      {currentUserRating !== null && (
+                        <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
+                          {currentUserRating}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
-                {/* 상태 변경 및 대국 거부 설정 */}
+                {/* 상태 변경 드롭다운 */}
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  {/* 상태 변경 드롭다운 */}
                   <select
                     value={currentUser.status}
                     onChange={(e) => handleStatusChange(e.target.value)}
@@ -287,28 +323,16 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
                   >
                     <option value="WAITING">대기중</option>
                     <option value="RESTING">휴식중</option>
-                    <option value="SPECTATING">관전중</option>
                   </select>
-                  {/* 대국 거부 설정 버튼 */}
-                  <button
-                    onClick={() => setShowBlockModal(true)}
-                    className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-medium shadow-sm transition-colors hover:border-indigo-400 hover:bg-indigo-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/30"
-                    title="대국 신청 거부 설정"
-                  >
-                    {blockedGameTypes.length > 0 ? `🚫(${blockedGameTypes.length})` : '⚙️'}
-                  </button>
                 </div>
               </div>
             </div>
           )}
 
           {/* 다른 유저 목록 */}
-          {filteredUsers.length === 0 ? (
-            <div className="py-4 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">접속 중인 다른 유저 없음</p>
-            </div>
-          ) : (
-            filteredUsers.map((user) => (
+          {filteredUsers.map((user) => {
+            const userRating = userRatings.get(user.id) || 1500;
+            return (
               <div
                 key={user.id}
                 className="group flex items-center justify-between rounded border border-gray-200 bg-gradient-to-r from-white to-gray-50 p-2 transition-all hover:border-indigo-400 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700"
@@ -324,29 +348,22 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
                       {user.nickname || user.username}
                     </p>
                     <div className="mt-0.5 flex items-center gap-1">
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                          statusColors[user.status] || 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {statusIcons[user.status] || '•'} {statusLabels[user.status] || user.status}
+                      <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
+                        {userRating}
                       </span>
                     </div>
                   </div>
                 </div>
-                {/* 대국 신청 버튼 (대기중, 관전중일 때만 표시) */}
-                {(user.status === 'WAITING' || user.status === 'SPECTATING') &&
-                  (currentUser?.status === 'WAITING' || currentUser?.status === 'SPECTATING') && (
-                    <button
-                      onClick={() => handleRequestGame(user)}
-                      className="rounded bg-gradient-to-r from-blue-500 to-indigo-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm transition-all hover:from-blue-600 hover:to-indigo-700 flex-shrink-0"
-                    >
-                      신청
-                    </button>
-                  )}
+                {/* 대국 신청 버튼 */}
+                <button
+                  onClick={() => handleRequestGame(user)}
+                  className="rounded bg-gradient-to-r from-blue-500 to-indigo-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm transition-all hover:from-blue-600 hover:to-indigo-700 flex-shrink-0"
+                >
+                  신청
+                </button>
               </div>
-            ))
-          )}
+            );
+          })}
         </div>
       </div>
 
