@@ -93,13 +93,13 @@ export default function OngoingGamesList({ mode }: OngoingGamesListProps) {
     : 'from-purple-500 to-pink-600';
 
   return (
-    <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
-      <div className="mb-2 flex items-center gap-2 border-b-2 border-gray-200 pb-2 dark:border-gray-700">
-        <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-md`}>
-          <span className="text-sm">🔥</span>
+    <div className="p-5 h-full flex flex-col">
+      <div className="mb-3 flex items-center gap-2 border-b border-indigo-200 pb-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
+          <span className="text-base">🔥</span>
         </div>
         <div>
-          <h2 className="text-sm font-bold">진행중인 대국</h2>
+          <h2 className="text-base font-bold text-gray-800">진행중인 대국</h2>
         </div>
       </div>
       {games.length === 0 ? (

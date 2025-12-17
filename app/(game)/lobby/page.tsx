@@ -76,71 +76,41 @@ export default function LobbyPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-2 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="h-screen overflow-hidden premium-lobby-bg p-3">
       <div className="mx-auto h-full w-full max-w-[1600px] flex flex-col">
         <div className="mb-2">
-          <Header />
+          <Header mode={selectedMode} onModeChange={setSelectedMode} />
         </div>
 
-        {/* 게임 모드 탭 */}
-        <div className="mb-2 flex gap-2">
-          <button
-            onClick={() => {
-              setSelectedMode('STRATEGY');
-              const socket = getSocket(localStorage.getItem('token') || '');
-              socket.emit('lobby:join', { mode: 'STRATEGY' });
-            }}
-            className={`flex-1 rounded-lg border-2 px-3 py-2 text-sm font-bold shadow-md transition-all ${
-              selectedMode === 'STRATEGY'
-                ? 'border-blue-600 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-500/50'
-                : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-xl">⚫</span>
-              <span>전략바둑</span>
-            </div>
-          </button>
-          <button
-            onClick={() => {
-              setSelectedMode('PLAY');
-              const socket = getSocket(localStorage.getItem('token') || '');
-              socket.emit('lobby:join', { mode: 'PLAY' });
-            }}
-            className={`flex-1 rounded-lg border-2 px-3 py-2 text-sm font-bold shadow-md transition-all ${
-              selectedMode === 'PLAY'
-                ? 'border-purple-600 bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-purple-500/50'
-                : 'border-gray-300 bg-white text-gray-700 hover:border-purple-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-xl">🎮</span>
-              <span>놀이바둑</span>
-            </div>
-          </button>
-        </div>
-
-        <div className="flex-1 grid grid-cols-2 gap-3 overflow-hidden">
-          {/* 좌측 레이아웃: 프로필, 레이팅+랭킹전 매칭, 진행중인 대국, 채팅 */}
+        <div className="flex-1 grid grid-cols-[3fr_1fr] gap-3 overflow-hidden">
+          {/* 좌측 레이아웃: 프로필+레이팅, 진행중인 대국, 채팅 */}
           <div className="flex flex-col gap-3 overflow-hidden">
-            {/* 프로필 패널 */}
-            <div className="flex-shrink-0">
-              <ProfilePanel />
+            {/* 프로필 패널 + 레이팅 패널 (가로로 나눔) */}
+            <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+              <div className="min-w-0">
+                <div className="premium-card h-full">
+                  <ProfilePanel />
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="premium-card h-full">
+                  <RatingDisplay mode={selectedMode} />
+                </div>
+              </div>
             </div>
             
-            {/* 레이팅 점수 + 랭킹전 매칭 버튼 (크게) */}
-            <div className="flex-shrink-0">
-              <RatingDisplay mode={selectedMode} />
+            {/* 진행중인 대국 패널 (높이 비율 2) */}
+            <div className="flex-[2] min-h-0">
+              <div className="premium-card h-full">
+                <OngoingGamesList mode={selectedMode} />
+              </div>
             </div>
             
-            {/* 진행중인 대국 패널 */}
-            <div className="flex-1 min-h-0">
-              <OngoingGamesList mode={selectedMode} />
-            </div>
-            
-            {/* 채팅 패널 */}
-            <div className="flex-1 min-h-0">
-              <ChatPanel type="GLOBAL" />
+            {/* 채팅 패널 (높이 비율 1) */}
+            <div className="flex-[1] min-h-0">
+              <div className="premium-card h-full">
+                <ChatPanel type="GLOBAL" />
+              </div>
             </div>
           </div>
 
@@ -148,12 +118,16 @@ export default function LobbyPage() {
           <div className="flex flex-col gap-3 overflow-hidden">
             {/* 유저목록 패널 (높이 비율 3) */}
             <div className="flex-[3] min-h-0">
-              <OnlineUsersList mode={selectedMode} />
+              <div className="premium-card h-full">
+                <OnlineUsersList mode={selectedMode} />
+              </div>
             </div>
             
             {/* 랭킹 패널 (높이 비율 2) */}
             <div className="flex-[2] min-h-0">
-              <RankingLeaderboard mode={selectedMode} />
+              <div className="premium-card h-full">
+                <RankingLeaderboard mode={selectedMode} />
+              </div>
             </div>
           </div>
         </div>

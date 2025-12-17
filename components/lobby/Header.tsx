@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getSocket } from '@/lib/socket/client';
 import SeasonInfoModal from './SeasonInfoModal';
 
 interface UserInfo {
@@ -9,10 +10,26 @@ interface UserInfo {
   gameTickets: number;
 }
 
-export default function Header() {
+interface HeaderProps {
+  mode: 'STRATEGY' | 'PLAY';
+  onModeChange: (mode: 'STRATEGY' | 'PLAY') => void;
+}
+
+export default function Header({ mode, onModeChange }: HeaderProps) {
   const router = useRouter();
   const [showSeasonModal, setShowSeasonModal] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+  const handleModeSwitch = () => {
+    const newMode = mode === 'STRATEGY' ? 'PLAY' : 'STRATEGY';
+    const token = localStorage.getItem('token');
+    if (token) {
+      const socket = getSocket(token);
+      socket.emit('lobby:leave', { mode });
+      socket.emit('lobby:join', { mode: newMode });
+    }
+    onModeChange(newMode);
+  };
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -55,11 +72,23 @@ export default function Header() {
   return (
     <>
       <header className="baduk-header mb-2 flex items-center justify-between p-3 animate-fade-in">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white bg-opacity-20">
-            <span className="text-lg">⚫</span>
+            <span className="text-lg">{mode === 'STRATEGY' ? '⚫' : '🎮'}</span>
           </div>
-          <h1 className="text-lg font-bold">대기실</h1>
+          <h1 className="text-lg font-bold">
+            {mode === 'STRATEGY' ? '전략바둑 대기실' : '놀이바둑 대기실'}
+          </h1>
+          <button
+            onClick={handleModeSwitch}
+            className={`rounded-lg border-2 px-3 py-1.5 text-xs font-bold shadow-md transition-all ${
+              mode === 'STRATEGY'
+                ? 'border-purple-600 bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700'
+                : 'border-blue-600 bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700'
+            }`}
+          >
+            {mode === 'STRATEGY' ? '→ 놀이바둑 대기실' : '→ 전략바둑 대기실'}
+          </button>
         </div>
         <div className="flex items-center gap-2">
           {/* 골드 표시 */}

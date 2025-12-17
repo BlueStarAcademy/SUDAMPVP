@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getGameType, ALL_GAME_TYPES } from '@/lib/game/types';
+import DraggableModal from '@/components/ui/DraggableModal';
 
 interface GameStat {
   gameType: string;
@@ -23,29 +24,22 @@ export default function DetailedStatsModal({
   onClose,
   gameStats,
 }: DetailedStatsModalProps) {
-  if (!isOpen) return null;
-
   const strategyStats = gameStats.filter((s) => s.mode === 'STRATEGY');
   const playStats = gameStats.filter((s) => s.mode === 'PLAY');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="baduk-card w-full max-w-2xl p-6 animate-fade-in">
-        <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
-          <h2 className="text-2xl font-bold">상세 전적</h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
-          >
-            닫기
-          </button>
-        </div>
-
-        <div className="space-y-6 max-h-96 overflow-y-auto">
+    <DraggableModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="상세 전적"
+      modalId="detailed-stats"
+      maxWidth="max-w-2xl"
+    >
+      <div className="space-y-6">
           {/* 전략바둑 */}
           {strategyStats.length > 0 && (
             <div>
-              <h3 className="mb-3 text-lg font-semibold text-blue-600 dark:text-blue-400">
+              <h3 className="mb-3 text-lg font-semibold text-blue-600">
                 전략바둑
               </h3>
               <div className="space-y-2">
@@ -54,23 +48,23 @@ export default function DetailedStatsModal({
                   return (
                     <div
                       key={stat.gameType}
-                      className="flex items-center justify-between rounded-lg border-2 border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                      className="flex items-center justify-between rounded-lg border border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50 p-4 backdrop-blur-sm hover:border-indigo-300 hover:shadow-md transition-all"
                     >
                       <div className="flex-1">
-                        <p className="font-bold">{gameType?.name || stat.gameType}</p>
+                        <p className="font-bold text-gray-800">{gameType?.name || stat.gameType}</p>
                       </div>
                       <div className="flex items-center gap-3 text-sm">
-                        <span className="text-green-600 dark:text-green-400">
+                        <span className="text-green-600 font-semibold">
                           승 {stat.wins}
                         </span>
-                        <span className="text-gray-600 dark:text-gray-400">
+                        <span className="text-gray-500">
                           무 {stat.draws}
                         </span>
-                        <span className="text-red-600 dark:text-red-400">패 {stat.losses}</span>
-                        <span className="text-blue-600 dark:text-blue-400 font-bold">
+                        <span className="text-red-600 font-semibold">패 {stat.losses}</span>
+                        <span className="text-blue-600 font-bold">
                           승률 {stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0}%
                         </span>
-                        <span className="text-gray-500 dark:text-gray-400">총 {stat.total}경기</span>
+                        <span className="text-gray-600">총 {stat.total}경기</span>
                       </div>
                     </div>
                   );
@@ -82,7 +76,7 @@ export default function DetailedStatsModal({
           {/* 놀이바둑 */}
           {playStats.length > 0 && (
             <div>
-              <h3 className="mb-3 text-lg font-semibold text-purple-600 dark:text-purple-400">
+              <h3 className="mb-3 text-lg font-semibold text-purple-600">
                 놀이바둑
               </h3>
               <div className="space-y-2">
@@ -91,23 +85,23 @@ export default function DetailedStatsModal({
                   return (
                     <div
                       key={stat.gameType}
-                      className="flex items-center justify-between rounded-lg border-2 border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                      className="flex items-center justify-between rounded-lg border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-4 backdrop-blur-sm hover:border-purple-300 hover:shadow-md transition-all"
                     >
                       <div className="flex-1">
-                        <p className="font-bold">{gameType?.name || stat.gameType}</p>
+                        <p className="font-bold text-gray-800">{gameType?.name || stat.gameType}</p>
                       </div>
                       <div className="flex items-center gap-3 text-sm">
-                        <span className="text-green-600 dark:text-green-400">
+                        <span className="text-green-600 font-semibold">
                           승 {stat.wins}
                         </span>
-                        <span className="text-gray-600 dark:text-gray-400">
+                        <span className="text-gray-500">
                           무 {stat.draws}
                         </span>
-                        <span className="text-red-600 dark:text-red-400">패 {stat.losses}</span>
-                        <span className="text-blue-600 dark:text-blue-400 font-bold">
+                        <span className="text-red-600 font-semibold">패 {stat.losses}</span>
+                        <span className="text-purple-600 font-bold">
                           승률 {stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0}%
                         </span>
-                        <span className="text-gray-500 dark:text-gray-400">총 {stat.total}경기</span>
+                        <span className="text-gray-600">총 {stat.total}경기</span>
                       </div>
                     </div>
                   );
@@ -116,14 +110,13 @@ export default function DetailedStatsModal({
             </div>
           )}
 
-          {gameStats.length === 0 && (
-            <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-              전적이 없습니다.
-            </div>
-          )}
-        </div>
+        {gameStats.length === 0 && (
+          <div className="py-8 text-center text-gray-500">
+            전적이 없습니다.
+          </div>
+        )}
       </div>
-    </div>
+    </DraggableModal>
   );
 }
 

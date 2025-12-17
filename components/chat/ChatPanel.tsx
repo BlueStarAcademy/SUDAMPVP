@@ -130,10 +130,10 @@ export default function ChatPanel({ gameId, type = 'GLOBAL' }: ChatPanelProps) {
   }
 
   return (
-    <div className="baduk-card flex h-full flex-col p-4 border-2 border-gray-200 dark:border-gray-700">
-      <div className="mb-2 flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-        <span className="text-lg">💬</span>
-        <h3 className="font-bold">{type === 'GAME' ? '대국실 채팅' : '전체 채팅'}</h3>
+    <div className="flex h-full flex-col p-5">
+      <div className="mb-3 flex items-center gap-2 border-b border-indigo-200 pb-3">
+        <span className="text-xl">💬</span>
+        <h3 className="font-bold text-gray-800">{type === 'GAME' ? '대국실 채팅' : '전체 채팅'}</h3>
       </div>
 
       {/* 메시지 목록 */}

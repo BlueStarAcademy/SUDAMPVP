@@ -87,12 +87,12 @@ export default function ProfilePanel() {
     : DEFAULT_AVATARS[0];
 
   return (
-    <div className="baduk-card p-3 animate-fade-in h-full flex flex-col">
-      <div className="mb-2 flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
-          <span className="text-sm">👤</span>
+    <div className="p-5 h-full flex flex-col">
+      <div className="mb-3 flex items-center gap-2 border-b border-indigo-200 pb-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+          <span className="text-base">👤</span>
         </div>
-        <h2 className="text-sm font-bold">내 프로필</h2>
+        <h2 className="text-base font-bold text-gray-800">내 프로필</h2>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto">
         {/* 아바타 */}

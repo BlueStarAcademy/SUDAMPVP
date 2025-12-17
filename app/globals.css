@@ -174,3 +174,161 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
+/* 프리미엄 모달 스타일 - 밝고 고급스러운 디자인 */
+.premium-modal {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  border-radius: 1.5rem;
+  box-shadow: 
+    0 30px 60px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 0 rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  overflow: hidden;
+  position: relative;
+}
+
+.premium-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(99, 102, 241, 0.8), 
+    rgba(168, 85, 247, 0.8),
+    rgba(236, 72, 153, 0.8),
+    transparent
+  );
+  animation: shimmer 3s infinite;
+}
+
+.premium-modal-header {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+  backdrop-filter: blur(20px);
+}
+
+.premium-modal-content {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #1e293b;
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
+}
+
+.premium-modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.premium-modal-content::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 5px;
+}
+
+.premium-modal-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  border-radius: 5px;
+  border: 2px solid rgba(241, 245, 249, 0.8);
+}
+
+.premium-modal-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #818cf8, #c084fc);
+}
+
+/* 고급스러운 대기실 디자인 - 밝고 세련된 스타일 */
+.premium-lobby-bg {
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+}
+
+.premium-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 1.25rem;
+  box-shadow: 
+    0 10px 30px -5px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(99, 102, 241, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(99, 102, 241, 0.4), 
+    rgba(168, 85, 247, 0.4),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.premium-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 
+    0 20px 40px -5px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transform: translateY(-3px);
+}
+
+.premium-card:hover::before {
+  opacity: 1;
+}
+
+.premium-button {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.premium-button:hover::before {
+  left: 100%;
+}
+
+.premium-button:hover {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  transform: translateY(-1px);
+}
+
+.premium-button:active {
+  transform: translateY(0);
+}
+
