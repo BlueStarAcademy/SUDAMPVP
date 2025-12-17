@@ -162,46 +162,46 @@ export default function RankingMatchButton({
     <>
       <div className="space-y-4">
         {matching ? (
-          <div className="space-y-3">
-            <div className="rounded-lg bg-gradient-to-r from-orange-100 to-red-100 p-4 dark:from-orange-900/30 dark:to-red-900/30">
-              <div className="mb-2 flex items-center justify-center gap-2">
-                <span className="animate-spin text-2xl">⏳</span>
-                <span className="text-lg font-bold">매칭 대기 중...</span>
+          <div className="space-y-2">
+            <div className="rounded bg-gradient-to-r from-orange-100 to-red-100 p-2 dark:from-orange-900/30 dark:to-red-900/30">
+              <div className="mb-1 flex items-center justify-center gap-1">
+                <span className="animate-spin text-sm">⏳</span>
+                <span className="text-xs font-bold">매칭 대기 중...</span>
               </div>
               {waitingTime < 5 ? (
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {5 - waitingTime}초 후 매칭 시작
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                    {5 - waitingTime}초 후 시작
                   </p>
                 </div>
               ) : (
                 <div className="text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-[10px] text-gray-600 dark:text-gray-400">
                     상대를 찾는 중...
                   </p>
                 </div>
               )}
               {gameTypeData && gameType && (
-                <div className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                <div className="mt-1 text-center text-[10px] text-gray-500 dark:text-gray-400">
                   {getGameType(gameType)?.name || gameType} ({localBoardSize || selectedBoardSize}×{localBoardSize || selectedBoardSize})
                 </div>
               )}
             </div>
             <button
               onClick={handleCancelMatching}
-              className="w-full rounded-lg bg-gray-500 px-4 py-2 text-sm font-bold text-white hover:bg-gray-600"
+              className="w-full rounded bg-gray-500 px-2 py-1 text-xs font-bold text-white hover:bg-gray-600"
             >
-              매칭 취소
+              취소
             </button>
           </div>
         ) : (
           <button
             onClick={handleStartMatching}
-            className="baduk-button w-full bg-gradient-to-r from-orange-500 to-red-600 px-6 py-5 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:from-orange-600 hover:to-red-700"
+            className="baduk-button w-full bg-gradient-to-r from-orange-500 to-red-600 px-3 py-3 text-sm font-bold text-white shadow-md transition-all hover:scale-105 hover:from-orange-600 hover:to-red-700"
           >
-            <span className="flex items-center justify-center gap-2">
-              <span className="text-2xl">⚡</span>
-              <span>랭킹전 매칭 시작</span>
+            <span className="flex items-center justify-center gap-1">
+              <span className="text-sm">⚡</span>
+              <span>랭킹전 매칭</span>
             </span>
           </button>
         )}

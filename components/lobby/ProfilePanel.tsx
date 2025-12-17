@@ -87,17 +87,17 @@ export default function ProfilePanel() {
     : DEFAULT_AVATARS[0];
 
   return (
-    <div className="baduk-card p-6 animate-fade-in">
-      <div className="mb-6 flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-700">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
-          <span className="text-xl">👤</span>
+    <div className="baduk-card p-3 animate-fade-in h-full flex flex-col">
+      <div className="mb-2 flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+          <span className="text-sm">👤</span>
         </div>
-        <h2 className="text-xl font-bold">내 프로필</h2>
+        <h2 className="text-sm font-bold">내 프로필</h2>
       </div>
-      <div className="space-y-6">
+      <div className="flex-1 space-y-2 overflow-y-auto">
         {/* 아바타 */}
         <div className="flex justify-center">
-          <div className="relative h-28 w-28 rounded-full overflow-hidden border-4 border-gradient-to-br from-blue-400 to-purple-500 shadow-lg ring-4 ring-blue-100 dark:ring-blue-900">
+          <div className="relative h-16 w-16 rounded-full overflow-hidden border-2 border-gradient-to-br from-blue-400 to-purple-500 shadow-md">
             {avatar.imagePath ? (
               <Image
                 src={avatar.imagePath}
@@ -110,7 +110,7 @@ export default function ProfilePanel() {
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-400 to-purple-500 text-white">
-                <span className="text-4xl">👤</span>
+                <span className="text-2xl">👤</span>
               </div>
             )}
           </div>
@@ -118,77 +118,71 @@ export default function ProfilePanel() {
 
         {/* 닉네임 */}
         <div className="text-center">
-          <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
             {profile.user.nickname || '닉네임 없음'}
           </p>
         </div>
 
         {/* 전략바둑 통합 전적 */}
-        <div className="space-y-3 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-blue-900/20 dark:to-indigo-900/20">
-          <h3 className="text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
-            전략바둑 통합전적
+        <div className="space-y-1 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 p-2 dark:from-blue-900/20 dark:to-indigo-900/20">
+          <h3 className="text-center text-xs font-semibold text-gray-700 dark:text-gray-300">
+            전략바둑
           </h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="grid grid-cols-3 gap-1 text-center">
+            <div className="rounded bg-green-50 p-1 dark:bg-green-900/20">
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">
                 {profile.strategyStats.wins}
               </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">승</p>
+              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">승</p>
             </div>
-            <div className="rounded-lg bg-gray-100 p-3 dark:bg-gray-700">
-              <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+            <div className="rounded bg-gray-100 p-1 dark:bg-gray-700">
+              <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
                 {profile.strategyStats.draws}
               </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">무</p>
+              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">무</p>
             </div>
-            <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+            <div className="rounded bg-red-50 p-1 dark:bg-red-900/20">
+              <p className="text-lg font-bold text-red-600 dark:text-red-400">
                 {profile.strategyStats.losses}
               </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">패</p>
+              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">패</p>
             </div>
           </div>
-          <p className="text-center text-xs font-medium text-gray-600 dark:text-gray-400">
-            총 {profile.strategyStats.total}경기
-          </p>
         </div>
 
         {/* 놀이바둑 통합 전적 */}
-        <div className="space-y-3 rounded-lg bg-gradient-to-br from-purple-50 to-pink-100 p-4 dark:from-purple-900/20 dark:to-pink-900/20">
-          <h3 className="text-center text-sm font-semibold text-gray-700 dark:text-gray-300">
-            놀이바둑 통합전적
+        <div className="space-y-1 rounded-lg bg-gradient-to-br from-purple-50 to-pink-100 p-2 dark:from-purple-900/20 dark:to-pink-900/20">
+          <h3 className="text-center text-xs font-semibold text-gray-700 dark:text-gray-300">
+            놀이바둑
           </h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="grid grid-cols-3 gap-1 text-center">
+            <div className="rounded bg-green-50 p-1 dark:bg-green-900/20">
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">
                 {profile.playStats.wins}
               </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">승</p>
+              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">승</p>
             </div>
-            <div className="rounded-lg bg-gray-100 p-3 dark:bg-gray-700">
-              <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+            <div className="rounded bg-gray-100 p-1 dark:bg-gray-700">
+              <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
                 {profile.playStats.draws}
               </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">무</p>
+              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">무</p>
             </div>
-            <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+            <div className="rounded bg-red-50 p-1 dark:bg-red-900/20">
+              <p className="text-lg font-bold text-red-600 dark:text-red-400">
                 {profile.playStats.losses}
               </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">패</p>
+              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">패</p>
             </div>
           </div>
-          <p className="text-center text-xs font-medium text-gray-600 dark:text-gray-400">
-            총 {profile.playStats.total}경기
-          </p>
         </div>
 
         {/* 상세전적 버튼 */}
         <button
           onClick={() => setShowDetailedStats(true)}
-          className="w-full rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:from-indigo-600 hover:to-purple-700 hover:shadow-lg"
+          className="w-full rounded bg-gradient-to-r from-indigo-500 to-purple-600 px-2 py-1 text-xs font-bold text-white shadow-sm transition-all hover:from-indigo-600 hover:to-purple-700"
         >
-          📊 상세전적 보기
+          📊 상세전적
         </button>
       </div>
 

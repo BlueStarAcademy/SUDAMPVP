@@ -77,27 +77,29 @@ export default function LobbyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-4 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="mx-auto w-full max-w-[1600px]">
-        <Header />
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-2 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="mx-auto h-full w-full max-w-[1600px] flex flex-col">
+        <div className="mb-2">
+          <Header />
+        </div>
 
         {/* 게임 모드 탭 */}
-        <div className="mb-6 flex gap-4">
+        <div className="mb-2 flex gap-2">
           <button
             onClick={() => {
               setSelectedMode('STRATEGY');
               const socket = getSocket(localStorage.getItem('token') || '');
               socket.emit('lobby:join', { mode: 'STRATEGY' });
             }}
-            className={`flex-1 rounded-xl border-4 px-6 py-4 text-xl font-bold shadow-lg transition-all ${
+            className={`flex-1 rounded-lg border-2 px-3 py-2 text-sm font-bold shadow-md transition-all ${
               selectedMode === 'STRATEGY'
-                ? 'border-blue-600 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-500/50 scale-105'
+                ? 'border-blue-600 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-blue-500/50'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
             }`}
           >
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-3xl">⚫</span>
-              <span>전략바둑 대기실</span>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-xl">⚫</span>
+              <span>전략바둑</span>
             </div>
           </button>
           <button
@@ -106,41 +108,41 @@ export default function LobbyPage() {
               const socket = getSocket(localStorage.getItem('token') || '');
               socket.emit('lobby:join', { mode: 'PLAY' });
             }}
-            className={`flex-1 rounded-xl border-4 px-6 py-4 text-xl font-bold shadow-lg transition-all ${
+            className={`flex-1 rounded-lg border-2 px-3 py-2 text-sm font-bold shadow-md transition-all ${
               selectedMode === 'PLAY'
-                ? 'border-purple-600 bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-purple-500/50 scale-105'
+                ? 'border-purple-600 bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-purple-500/50'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-purple-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
             }`}
           >
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-3xl">🎮</span>
-              <span>놀이바둑 대기실</span>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-xl">🎮</span>
+              <span>놀이바둑</span>
             </div>
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="flex-1 grid grid-rows-3 gap-2 overflow-hidden">
           {/* 첫 번째 줄: 프로필 패널, 레이팅 패널, AI봇 대결 패널 */}
-          <div className={`grid grid-cols-1 gap-4 ${selectedMode === 'STRATEGY' ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+          <div className={`grid grid-cols-1 gap-2 ${selectedMode === 'STRATEGY' ? 'md:grid-cols-3' : 'md:grid-cols-2'} min-h-0`}>
             <ProfilePanel />
             <RatingDisplay mode={selectedMode} />
             {selectedMode === 'STRATEGY' && <AIBattleButton />}
           </div>
 
           {/* 두 번째 줄: 경기중인 대국실 목록 패널, 유저목록 패널 */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 min-h-0">
             <OngoingGamesList mode={selectedMode} />
             <OnlineUsersList mode={selectedMode} />
           </div>
 
           {/* 세 번째 줄: 랭킹전 매칭 패널, 랭킹전 순위 패널 */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="baduk-card p-6 animate-fade-in border-2 border-gray-200 dark:border-gray-700">
-              <div className="mb-4 flex items-center gap-3 border-b-2 border-gray-200 pb-4 dark:border-gray-700">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600 shadow-lg">
-                  <span className="text-2xl">🏆</span>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 min-h-0">
+            <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
+              <div className="mb-2 flex items-center gap-2 border-b-2 border-gray-200 pb-2 dark:border-gray-700">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600 shadow-md">
+                  <span className="text-sm">🏆</span>
                 </div>
-                <h2 className="text-xl font-bold">랭킹전 매칭</h2>
+                <h2 className="text-sm font-bold">랭킹전 매칭</h2>
               </div>
               <RankingMatchButton />
             </div>

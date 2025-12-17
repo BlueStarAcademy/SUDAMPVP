@@ -54,19 +54,19 @@ export default function Header() {
 
   return (
     <>
-      <header className="baduk-header mb-6 flex items-center justify-between p-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white bg-opacity-20">
-            <span className="text-2xl">⚫</span>
+      <header className="baduk-header mb-2 flex items-center justify-between p-3 animate-fade-in">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white bg-opacity-20">
+            <span className="text-lg">⚫</span>
           </div>
-          <h1 className="text-3xl font-bold">대기실</h1>
+          <h1 className="text-lg font-bold">대기실</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {/* 골드 표시 */}
           {userInfo && (
-            <div className="flex items-center gap-2 rounded-lg bg-yellow-100 px-4 py-2 dark:bg-yellow-900/30">
-              <span className="text-xl">💰</span>
-              <span className="font-bold text-yellow-700 dark:text-yellow-300">
+            <div className="flex items-center gap-1 rounded bg-yellow-100 px-2 py-1 dark:bg-yellow-900/30">
+              <span className="text-sm">💰</span>
+              <span className="text-xs font-bold text-yellow-700 dark:text-yellow-300">
                 {userInfo.gold.toLocaleString()}
               </span>
             </div>
@@ -74,9 +74,9 @@ export default function Header() {
 
           {/* 대국 이용권 표시 */}
           {userInfo && (
-            <div className="flex items-center gap-2 rounded-lg bg-blue-100 px-4 py-2 dark:bg-blue-900/30">
-              <span className="text-xl">🎫</span>
-              <span className="font-bold text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-1 rounded bg-blue-100 px-2 py-1 dark:bg-blue-900/30">
+              <span className="text-sm">🎫</span>
+              <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
                 {userInfo.gameTickets}/10
               </span>
               {userInfo.gameTickets < 10 && (
@@ -85,7 +85,7 @@ export default function Header() {
                     // TODO: 이용권 구매 모달
                     alert('이용권 구매 기능은 준비 중입니다.');
                   }}
-                  className="ml-2 rounded-full bg-blue-600 px-2 py-1 text-xs font-bold text-white hover:bg-blue-700"
+                  className="ml-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-blue-700"
                 >
                   +
                 </button>
@@ -95,21 +95,21 @@ export default function Header() {
 
           <button
             onClick={() => setShowSeasonModal(true)}
-            className="baduk-button-success flex items-center gap-2 px-5 py-2.5"
+            className="baduk-button-success flex items-center gap-1 px-2 py-1 text-xs"
           >
             <span>📅</span>
-            <span>시즌 안내</span>
+            <span>시즌</span>
           </button>
           <button
             onClick={() => router.push('/settings')}
-            className="baduk-button-secondary flex items-center gap-2 px-5 py-2.5"
+            className="baduk-button-secondary flex items-center gap-1 px-2 py-1 text-xs"
           >
             <span>⚙️</span>
             <span>설정</span>
           </button>
           <button
             onClick={handleLogout}
-            className="baduk-button-danger flex items-center gap-2 px-5 py-2.5"
+            className="baduk-button-danger flex items-center gap-1 px-2 py-1 text-xs"
           >
             <span>🚪</span>
             <span>로그아웃</span>

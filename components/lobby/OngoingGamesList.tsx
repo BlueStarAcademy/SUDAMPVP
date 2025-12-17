@@ -93,56 +93,49 @@ export default function OngoingGamesList({ mode }: OngoingGamesListProps) {
     : 'from-purple-500 to-pink-600';
 
   return (
-    <div className="baduk-card p-6 animate-fade-in border-2 border-gray-200 dark:border-gray-700">
-      <div className="mb-4 flex items-center gap-3 border-b-2 border-gray-200 pb-4 dark:border-gray-700">
-        <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
-          <span className="text-2xl">🔥</span>
+    <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
+      <div className="mb-2 flex items-center gap-2 border-b-2 border-gray-200 pb-2 dark:border-gray-700">
+        <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-md`}>
+          <span className="text-sm">🔥</span>
         </div>
         <div>
-          <h2 className="text-xl font-bold">{modeLabel} 경기중</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">진행 중인 대국실</p>
+          <h2 className="text-sm font-bold">{modeLabel} 경기중</h2>
         </div>
       </div>
       {games.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">현재 진행 중인 대국이 없습니다.</p>
+        <div className="py-4 text-center flex-1 flex items-center justify-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400">진행 중인 대국 없음</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="flex-1 overflow-y-auto space-y-1">
           {games.map((game) => (
             <div
               key={game.id}
-              className="group flex items-center justify-between rounded-lg border-2 border-gray-200 bg-gradient-to-r from-white to-gray-50 p-4 transition-all hover:border-blue-400 hover:shadow-md dark:border-gray-700 dark:from-gray-800 dark:to-gray-700 dark:hover:border-blue-500"
+              className="group flex items-center justify-between rounded border border-gray-200 bg-gradient-to-r from-white to-gray-50 p-2 transition-all hover:border-blue-400 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700"
             >
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="font-bold text-gray-800 dark:text-gray-200">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
                     {game.player1.nickname || game.player1.username}
                   </span>
-                  <span className="text-lg font-bold text-gray-400">⚫</span>
-                  <span className="text-lg font-bold text-gray-300">⚪</span>
-                  <span className="font-bold text-gray-800 dark:text-gray-200">
+                  <span className="text-xs">⚫</span>
+                  <span className="text-xs">⚪</span>
+                  <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
                     {game.player2?.nickname || game.player2?.username || '대기중'}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                  <span className="rounded-full bg-blue-100 px-2 py-1 font-medium dark:bg-blue-900/30">
+                <div className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                  <span className="rounded bg-blue-100 px-1 py-0.5 font-medium dark:bg-blue-900/30">
                     {game.gameType || '게임'}
                   </span>
                   <span>{game.boardSize}x{game.boardSize}</span>
-                  <span>·</span>
-                  <span>
-                    {game.startedAt
-                      ? new Date(game.startedAt).toLocaleTimeString()
-                      : '대기중'}
-                  </span>
                 </div>
               </div>
               <button
                 onClick={() => handleSpectate(game.id)}
-                className="baduk-button-primary ml-4 px-4 py-2 text-sm font-medium shadow-md transition-transform hover:scale-105"
+                className="baduk-button-primary ml-2 px-2 py-1 text-xs font-medium shadow-sm transition-transform hover:scale-105 flex-shrink-0"
               >
-                👁️ 관전
+                👁️
               </button>
             </div>
           ))}
