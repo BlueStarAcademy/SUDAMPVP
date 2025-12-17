@@ -121,38 +121,54 @@ export default function LobbyPage() {
           </button>
         </div>
 
-        <div className="flex-1 grid grid-rows-3 gap-2 overflow-hidden">
-          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널, AI봇 대결 패널 (항상 3개 가로 배치) */}
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3 min-h-0">
-            <ProfilePanel />
-            <RatingDisplay mode={selectedMode} />
-            {selectedMode === 'STRATEGY' ? (
-              <AIBattleButton />
-            ) : (
-              <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex items-center justify-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400">놀이바둑 AI는 준비 중입니다.</p>
-              </div>
-            )}
-          </div>
-
-          {/* 두 번째 줄: 경기중인 대국실 목록 패널, 접속중인 유저목록 패널 (2개 가로 배치) */}
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 min-h-0">
-            <OngoingGamesList mode={selectedMode} />
-            <OnlineUsersList mode={selectedMode} />
-          </div>
-
-          {/* 세 번째 줄: 랭킹전 매칭 패널, 랭킹전 순위 패널 (2개 가로 배치) */}
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 min-h-0">
-            <div className="baduk-card p-3 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
-              <div className="mb-2 flex items-center gap-2 border-b-2 border-gray-200 pb-2 dark:border-gray-700">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600 shadow-md">
-                  <span className="text-sm">🏆</span>
-                </div>
-                <h2 className="text-sm font-bold">랭킹전 매칭</h2>
-              </div>
-              <RankingMatchButton />
+        <div className="flex-1 grid grid-rows-3 gap-3 overflow-hidden">
+          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널, AI봇 대결 패널 (항상 3개 가로 균등 배치) */}
+          <div className="grid grid-cols-3 gap-3 overflow-hidden">
+            <div className="h-full min-w-0">
+              <ProfilePanel />
             </div>
-            <RankingLeaderboard mode={selectedMode} />
+            <div className="h-full min-w-0">
+              <RatingDisplay mode={selectedMode} />
+            </div>
+            <div className="h-full min-w-0">
+              {selectedMode === 'STRATEGY' ? (
+                <AIBattleButton />
+              ) : (
+                <div className="baduk-card p-4 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex items-center justify-center">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">놀이바둑 AI는 준비 중입니다.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 두 번째 줄: 경기중인 대국실 목록 패널, 접속중인 유저목록 패널 (2개 가로 균등 배치) */}
+          <div className="grid grid-cols-2 gap-3 overflow-hidden">
+            <div className="h-full min-w-0">
+              <OngoingGamesList mode={selectedMode} />
+            </div>
+            <div className="h-full min-w-0">
+              <OnlineUsersList mode={selectedMode} />
+            </div>
+          </div>
+
+          {/* 세 번째 줄: 랭킹전 매칭 패널, 랭킹전 순위 패널 (2개 가로 균등 배치) */}
+          <div className="grid grid-cols-2 gap-3 overflow-hidden">
+            <div className="h-full min-w-0">
+              <div className="baduk-card p-4 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
+                <div className="mb-3 flex items-center gap-2 border-b-2 border-gray-200 pb-3 dark:border-gray-700 flex-shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600 shadow-md">
+                    <span className="text-lg">🏆</span>
+                  </div>
+                  <h2 className="text-base font-bold">랭킹전 매칭</h2>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <RankingMatchButton />
+                </div>
+              </div>
+            </div>
+            <div className="h-full min-w-0">
+              <RankingLeaderboard mode={selectedMode} />
+            </div>
           </div>
         </div>
       </div>
