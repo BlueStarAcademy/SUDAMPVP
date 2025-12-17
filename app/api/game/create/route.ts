@@ -15,13 +15,54 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { mode, opponentId, aiType, aiLevel } = body;
+    const { mode, opponentId, aiType, aiLevel, gameType, boardSize } = body;
 
     if (!mode || (mode !== 'STRATEGY' && mode !== 'PLAY')) {
       return NextResponse.json(
         { error: 'Invalid mode. Must be STRATEGY or PLAY' },
         { status: 400 }
       );
+    }
+
+    // Validate gameType if provided
+    if (gameType) {
+      const { ALL_GAME_TYPES, STRATEGY_GAME_TYPES, PLAY_GAME_TYPES } = await import('@/lib/game/types');
+      
+      if (!ALL_GAME_TYPES[gameType]) {
+        return NextResponse.json(
+          { error: 'Invalid game type' },
+          { status: 400 }
+        );
+      }
+
+      // Validate mode matches gameType
+      const isStrategyGame = gameType in STRATEGY_GAME_TYPES;
+      const isPlayGame = gameType in PLAY_GAME_TYPES;
+      
+      if (mode === 'STRATEGY' && !isStrategyGame) {
+        return NextResponse.json(
+          { error: 'Game type does not match mode (STRATEGY)' },
+          { status: 400 }
+        );
+      }
+      
+      if (mode === 'PLAY' && !isPlayGame) {
+        return NextResponse.json(
+          { error: 'Game type does not match mode (PLAY)' },
+          { status: 400 }
+        );
+      }
+
+      // Validate boardSize if provided
+      if (boardSize) {
+        const validBoardSizes = ALL_GAME_TYPES[gameType].boardSizes;
+        if (!validBoardSizes.includes(boardSize)) {
+          return NextResponse.json(
+            { error: `Invalid board size. Valid sizes for ${gameType}: ${validBoardSizes.join(', ')}` },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // Validate: either opponentId or aiType, not both
@@ -60,7 +101,10 @@ export async function POST(request: NextRequest) {
       timeLimit,
       opponentId || undefined,
       aiType || undefined,
-      userAILevel || undefined
+      userAILevel || undefined,
+      gameType || undefined,
+      boardSize || undefined,
+      undefined // gameRules (추후 구현)
     );
 
     // If opponent is specified, start the game immediately

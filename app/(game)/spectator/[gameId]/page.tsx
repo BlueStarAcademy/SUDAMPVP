@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getSocketInstance } from '@/lib/socket/client';
 import Link from 'next/link';
+import { getGameType } from '@/lib/game/types';
+import GameBoard from '@/components/game/GameBoard';
 
 export default function SpectateGamePage() {
   const router = useRouter();
@@ -94,34 +96,59 @@ export default function SpectateGamePage() {
           </Link>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <span className="font-medium">{game.player1?.username}</span>
-              <span className="mx-2 text-gray-500">vs</span>
-              <span className="font-medium">
-                {game.player2?.username || `AI (${game.aiType})`}
+        <div className="baduk-card p-6 animate-fade-in">
+          <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-lg">{game.player1?.nickname || game.player1?.username}</span>
+                  <span className="text-2xl">⚫</span>
+                  <span className="text-2xl text-gray-300">⚪</span>
+                  <span className="font-bold text-lg">
+                    {game.player2?.nickname || game.player2?.username || `AI (${game.aiType})`}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {game.gameType && (
+                <span className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-3 py-1 text-xs font-bold text-white">
+                  {getGameType(game.gameType)?.name || game.gameType}
+                </span>
+              )}
+              <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-medium dark:bg-gray-700">
+                {game.mode === 'STRATEGY' ? '전략바둑' : '놀이바둑'}
+              </span>
+              {game.boardSize && (
+                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                  {game.boardSize}×{game.boardSize}
+                </span>
+              )}
+              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                관전 모드
               </span>
             </div>
-            <span className="rounded bg-gray-200 px-2 py-1 text-xs dark:bg-gray-700">
-              {game.mode === 'STRATEGY' ? '전략바둑' : '놀이바둑'}
-            </span>
           </div>
 
-          {/* Game board would be rendered here */}
-          <div className="mb-4 rounded-lg border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-900">
-            <p className="text-center text-gray-500">
-              게임 보드 렌더링 (읽기 전용)
-            </p>
-            {/* TODO: Implement board visualization */}
+          {/* Game board (읽기 전용) */}
+          <div className="mb-6 flex justify-center">
+            <div className="rounded-lg border-4 border-amber-800 bg-amber-100 p-4 dark:border-amber-900 dark:bg-amber-900/30">
+              <GameBoard
+                boardState={game.boardState}
+                boardSize={game.boardSize || 19}
+                currentPlayer={game.currentPlayer}
+                onMakeMove={() => {}} // 관전 모드에서는 수를 둘 수 없음
+                isMyTurn={false} // 항상 false
+              />
+            </div>
           </div>
 
           <div className="flex justify-between text-sm text-gray-500">
             <div>
-              현재 차례: {game.currentPlayer === 1 ? game.player1?.username : game.player2?.username || 'AI'}
+              현재 차례: {game.currentPlayer === 1 ? (game.player1?.nickname || game.player1?.username) : (game.player2?.nickname || game.player2?.username || 'AI')}
             </div>
             <div>
-              남은 시간: Player1 {game.player1Time}s / Player2 {game.player2Time || 0}s
+              남은 시간: {game.player1?.nickname || game.player1?.username} {game.player1Time}s / {game.player2?.nickname || game.player2?.username || 'AI'} {game.player2Time || 0}s
             </div>
           </div>
         </div>

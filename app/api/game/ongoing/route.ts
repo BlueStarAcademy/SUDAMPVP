@@ -30,12 +30,14 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             username: true,
+            nickname: true,
           },
         },
         player2: {
           select: {
             id: true,
             username: true,
+            nickname: true,
           },
         },
         _count: {
@@ -50,7 +52,20 @@ export async function GET(request: NextRequest) {
       take: 50,
     });
 
-    return NextResponse.json({ games });
+    return NextResponse.json({
+      games: games.map((game) => ({
+        id: game.id,
+        gameType: game.gameType,
+        boardSize: game.boardSize,
+        mode: game.mode,
+        player1: game.player1,
+        player2: game.player2,
+        aiType: game.aiType,
+        status: game.status,
+        createdAt: game.createdAt.toISOString(),
+        _count: game._count,
+      })),
+    });
   } catch (error) {
     console.error('Get ongoing games error:', error);
     return NextResponse.json(

@@ -1,12 +1,14 @@
 // Baduk (Go) board logic
 
-export const BOARD_SIZE = 19;
+export const DEFAULT_BOARD_SIZE = 19;
+export const VALID_BOARD_SIZES = [9, 13, 19];
 
 export type Stone = 'black' | 'white' | null;
 export type Position = { x: number; y: number };
 
 export interface BoardState {
   board: Stone[][];
+  boardSize: number; // 보드 크기 (9, 13, 19)
   capturedBlack: number;
   capturedWhite: number;
   lastMove: Position | null;
@@ -19,14 +21,20 @@ export interface Move {
   timestamp: number;
 }
 
-export function createEmptyBoard(): BoardState {
+export function createEmptyBoard(boardSize: number = DEFAULT_BOARD_SIZE): BoardState {
+  // 보드 크기 검증
+  if (!VALID_BOARD_SIZES.includes(boardSize)) {
+    boardSize = DEFAULT_BOARD_SIZE;
+  }
+
   const board: Stone[][] = [];
-  for (let i = 0; i < BOARD_SIZE; i++) {
-    board[i] = new Array(BOARD_SIZE).fill(null);
+  for (let i = 0; i < boardSize; i++) {
+    board[i] = new Array(boardSize).fill(null);
   }
 
   return {
     board,
+    boardSize,
     capturedBlack: 0,
     capturedWhite: 0,
     lastMove: null,
@@ -34,21 +42,21 @@ export function createEmptyBoard(): BoardState {
   };
 }
 
-export function isValidPosition(x: number, y: number): boolean {
-  return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
+export function isValidPosition(x: number, y: number, boardSize: number): boolean {
+  return x >= 0 && x < boardSize && y >= 0 && y < boardSize;
 }
 
-export function getStoneAt(board: Stone[][], x: number, y: number): Stone {
-  if (!isValidPosition(x, y)) return null;
+export function getStoneAt(board: Stone[][], x: number, y: number, boardSize: number): Stone {
+  if (!isValidPosition(x, y, boardSize)) return null;
   return board[x][y];
 }
 
-export function setStone(board: Stone[][], x: number, y: number, stone: Stone): void {
-  if (!isValidPosition(x, y)) return;
+export function setStone(board: Stone[][], x: number, y: number, stone: Stone, boardSize: number): void {
+  if (!isValidPosition(x, y, boardSize)) return;
   board[x][y] = stone;
 }
 
-export function getAdjacentPositions(x: number, y: number): Position[] {
+export function getAdjacentPositions(x: number, y: number, boardSize: number): Position[] {
   const positions: Position[] = [];
   const directions = [
     { x: 0, y: -1 }, // up
@@ -60,7 +68,7 @@ export function getAdjacentPositions(x: number, y: number): Position[] {
   for (const dir of directions) {
     const newX = x + dir.x;
     const newY = y + dir.y;
-    if (isValidPosition(newX, newY)) {
+    if (isValidPosition(newX, newY, boardSize)) {
       positions.push({ x: newX, y: newY });
     }
   }
@@ -68,8 +76,8 @@ export function getAdjacentPositions(x: number, y: number): Position[] {
   return positions;
 }
 
-export function getGroup(board: Stone[][], x: number, y: number): Position[] {
-  const stone = getStoneAt(board, x, y);
+export function getGroup(board: Stone[][], x: number, y: number, boardSize: number): Position[] {
+  const stone = getStoneAt(board, x, y, boardSize);
   if (!stone) return [];
 
   const group: Position[] = [];
@@ -83,9 +91,9 @@ export function getGroup(board: Stone[][], x: number, y: number): Position[] {
     if (visited.has(key)) continue;
     visited.add(key);
 
-    if (getStoneAt(board, pos.x, pos.y) === stone) {
+    if (getStoneAt(board, pos.x, pos.y, boardSize) === stone) {
       group.push(pos);
-      const adjacent = getAdjacentPositions(pos.x, pos.y);
+      const adjacent = getAdjacentPositions(pos.x, pos.y, boardSize);
       for (const adj of adjacent) {
         const adjKey = `${adj.x},${adj.y}`;
         if (!visited.has(adjKey)) {
@@ -98,12 +106,12 @@ export function getGroup(board: Stone[][], x: number, y: number): Position[] {
   return group;
 }
 
-export function hasLiberties(board: Stone[][], x: number, y: number): boolean {
-  const group = getGroup(board, x, y);
+export function hasLiberties(board: Stone[][], x: number, y: number, boardSize: number): boolean {
+  const group = getGroup(board, x, y, boardSize);
   for (const pos of group) {
-    const adjacent = getAdjacentPositions(pos.x, pos.y);
+    const adjacent = getAdjacentPositions(pos.x, pos.y, boardSize);
     for (const adj of adjacent) {
-      if (getStoneAt(board, adj.x, adj.y) === null) {
+      if (getStoneAt(board, adj.x, adj.y, boardSize) === null) {
         return true;
       }
     }
@@ -111,11 +119,11 @@ export function hasLiberties(board: Stone[][], x: number, y: number): boolean {
   return false;
 }
 
-export function captureGroup(board: Stone[][], group: Position[]): number {
+export function captureGroup(board: Stone[][], group: Position[], boardSize: number): number {
   let captured = 0;
   for (const pos of group) {
-    if (getStoneAt(board, pos.x, pos.y) !== null) {
-      setStone(board, pos.x, pos.y, null);
+    if (getStoneAt(board, pos.x, pos.y, boardSize) !== null) {
+      setStone(board, pos.x, pos.y, null, boardSize);
       captured++;
     }
   }
@@ -128,33 +136,33 @@ export function makeMove(
   x: number,
   y: number
 ): { success: boolean; error?: string; captured?: number } {
-  const { board } = boardState;
+  const { board, boardSize } = boardState;
 
   // Check if position is valid
-  if (!isValidPosition(x, y)) {
+  if (!isValidPosition(x, y, boardSize)) {
     return { success: false, error: 'Invalid position' };
   }
 
   // Check if position is empty
-  if (getStoneAt(board, x, y) !== null) {
+  if (getStoneAt(board, x, y, boardSize) !== null) {
     return { success: false, error: 'Position already occupied' };
   }
 
   // Place stone
   const stone: Stone = player === 1 ? 'black' : 'white';
-  setStone(board, x, y, stone);
+  setStone(board, x, y, stone, boardSize);
 
   // Check for captures
   let totalCaptured = 0;
-  const adjacent = getAdjacentPositions(x, y);
+  const adjacent = getAdjacentPositions(x, y, boardSize);
   const opponentStone: Stone = player === 1 ? 'white' : 'black';
 
   for (const adj of adjacent) {
-    const adjStone = getStoneAt(board, adj.x, adj.y);
+    const adjStone = getStoneAt(board, adj.x, adj.y, boardSize);
     if (adjStone === opponentStone) {
-      if (!hasLiberties(board, adj.x, adj.y)) {
-        const group = getGroup(board, adj.x, adj.y);
-        const captured = captureGroup(board, group);
+      if (!hasLiberties(board, adj.x, adj.y, boardSize)) {
+        const group = getGroup(board, adj.x, adj.y, boardSize);
+        const captured = captureGroup(board, group, boardSize);
         totalCaptured += captured;
         if (player === 1) {
           boardState.capturedBlack += captured;
@@ -166,9 +174,9 @@ export function makeMove(
   }
 
   // Check if own group has liberties (suicide rule)
-  if (!hasLiberties(board, x, y)) {
+  if (!hasLiberties(board, x, y, boardSize)) {
     // Revert the move
-    setStone(board, x, y, null);
+    setStone(board, x, y, null, boardSize);
     return { success: false, error: 'Invalid move: suicide' };
   }
 
@@ -203,12 +211,13 @@ export function isValidMove(
   x: number,
   y: number
 ): boolean {
-  const result = makeMove(
-    { ...boardState, board: boardState.board.map((row) => [...row]) },
-    player,
-    x,
-    y
-  );
+  // Deep copy board state for testing
+  const testState: BoardState = {
+    ...boardState,
+    board: boardState.board.map((row) => [...row]),
+    moveHistory: [...boardState.moveHistory],
+  };
+  const result = makeMove(testState, player, x, y);
   return result.success;
 }
 

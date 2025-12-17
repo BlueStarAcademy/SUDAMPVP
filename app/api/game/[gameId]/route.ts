@@ -53,6 +53,8 @@ export async function GET(
     return NextResponse.json({
       game: {
         ...game,
+        gameType: dbGame?.gameType || game.gameType,
+        boardSize: dbGame?.boardSize || game.boardSize,
         player1: dbGame?.player1,
         player2: dbGame?.player2,
       },

@@ -3,15 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getGameType } from '@/lib/game/types';
 
 interface OngoingGame {
   id: string;
-  mode: string;
-  player1: { id: string; username: string };
-  player2: { id: string; username: string } | null;
-  aiType: string | null;
-  createdAt: string;
-  _count: { spectators: number };
+  gameType: string | null;
+  boardSize: number | null;
+  player1: { id: string; username: string; nickname: string | null };
+  player2: { id: string; username: string; nickname: string | null } | null;
+  status: string;
+  startedAt: string | null;
 }
 
 export default function SpectatorPage() {
@@ -36,11 +37,8 @@ export default function SpectatorPage() {
   const fetchGames = async () => {
     try {
       const token = localStorage.getItem('token');
-      const url = selectedMode
-        ? `/api/game/ongoing?mode=${selectedMode}`
-        : '/api/game/ongoing';
-
-      const response = await fetch(url, {
+      // ongoing-pvp API 사용 (AI 대결 제외, 유저간 대결만)
+      const response = await fetch('/api/game/ongoing-pvp', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -48,7 +46,21 @@ export default function SpectatorPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setGames(data.games);
+        let games = data.games || [];
+        
+        // 모드 필터링 (클라이언트 측)
+        if (selectedMode) {
+          games = games.filter((game: any) => {
+            if (selectedMode === 'STRATEGY') {
+              return game.gameType && ['CLASSIC', 'CAPTURE', 'SPEED', 'BASE', 'HIDDEN', 'MISSILE', 'MIXED'].includes(game.gameType);
+            } else if (selectedMode === 'PLAY') {
+              return game.gameType && ['OMOK', 'TTAMOK', 'DICE', 'THIEF_COP', 'ALKKAGI', 'CURLING'].includes(game.gameType);
+            }
+            return true;
+          });
+        }
+        
+        setGames(games);
       }
     } catch (error) {
       console.error('Failed to fetch games:', error);
@@ -124,23 +136,27 @@ export default function SpectatorPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-4">
                       <span className="font-medium">
-                        {game.player1.username}
+                        {game.player1.nickname || game.player1.username}
                       </span>
-                      <span className="text-gray-500">vs</span>
+                      <span className="text-gray-500">⚫ vs ⚪</span>
                       <span className="font-medium">
-                        {game.player2?.username || `AI (${game.aiType})`}
+                        {game.player2?.nickname || game.player2?.username}
                       </span>
-                      <span className="rounded bg-gray-200 px-2 py-1 text-xs dark:bg-gray-700">
-                        {game.mode === 'STRATEGY' ? '전략바둑' : '놀이바둑'}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        관전자: {game._count.spectators}명
-                      </span>
+                      {game.gameType && (
+                        <span className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 text-xs font-bold text-white">
+                          {getGameType(game.gameType)?.name || game.gameType}
+                        </span>
+                      )}
+                      {game.boardSize && (
+                        <span className="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                          {game.boardSize}×{game.boardSize}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Link
                     href={`/spectator/${game.id}`}
-                    className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    className="baduk-button-primary rounded-full px-6 py-2 font-medium"
                   >
                     관전하기
                   </Link>

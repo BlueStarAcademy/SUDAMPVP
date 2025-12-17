@@ -1,11 +1,20 @@
-import { BoardState, createEmptyBoard, makeMove, passMove, Move } from './board';
+import { BoardState, createEmptyBoard, makeMove, passMove, Move, DEFAULT_BOARD_SIZE } from './board';
 import { prisma } from '@/lib/prisma';
 import { GameMode, GameStatus, GameResult } from '@prisma/client';
+import {
+  validateMoveWithRule,
+  applyRuleAfterMove,
+  checkGameEndWithRule,
+  calculateScoreWithRule,
+  getGameRule,
+} from './rules';
 
 export interface GameState {
   id: string;
   mode: GameMode;
   season: number;
+  gameType: string | null;
+  boardSize: number | null;
   player1Id: string;
   player2Id: string | null;
   aiType: string | null;
@@ -34,19 +43,34 @@ export class GameManager {
     timeLimit: number,
     player2Id?: string,
     aiType?: string,
-    aiLevel?: number
+    aiLevel?: number,
+    gameType?: string,
+    boardSize?: number,
+    gameRules?: any
   ): Promise<GameState> {
+    const finalBoardSize = boardSize || DEFAULT_BOARD_SIZE;
+    const initialBoardState = createEmptyBoard(finalBoardSize);
+
+    // 게임 규칙 초기화
+    const rule = getGameRule(gameType);
+    if (rule?.initialize) {
+      rule.initialize(initialBoardState, gameRules);
+    }
+
     const game = await prisma.game.create({
       data: {
         mode,
         season,
+        gameType: gameType || null,
+        boardSize: finalBoardSize,
+        gameRules: gameRules || null,
         player1Id,
         player2Id: player2Id || null,
         aiType: aiType || null,
         aiLevel: aiLevel || null,
         status: 'WAITING',
         moves: [],
-        boardState: createEmptyBoard() as any,
+        boardState: initialBoardState as any,
         timeLimit,
         player1Time: timeLimit,
         player2Time: player2Id || aiType ? timeLimit : null,
@@ -58,12 +82,14 @@ export class GameManager {
       id: game.id,
       mode: game.mode as GameMode,
       season: game.season,
+      gameType: game.gameType || null,
+      boardSize: game.boardSize || DEFAULT_BOARD_SIZE,
       player1Id: game.player1Id,
       player2Id: game.player2Id || null,
       aiType: game.aiType || null,
       aiLevel: (game as any).aiLevel || null,
       status: game.status as GameStatus,
-      boardState: createEmptyBoard(),
+      boardState: initialBoardState,
       timeLimit: game.timeLimit,
       player1Time: game.player1Time,
       player2Time: game.player2Time || null,
@@ -79,7 +105,7 @@ export class GameManager {
     return gameState;
   }
 
-  async startGame(gameId: string): Promise<GameState | null> {
+  async startGame(gameId: string, onGameEnd?: (game: GameState) => void): Promise<GameState | null> {
     const game = this.games.get(gameId);
     if (!game) return null;
 
@@ -98,8 +124,19 @@ export class GameManager {
       },
     });
 
-    // Start timer
-    this.startTimer(gameId);
+    // Update user status to PLAYING
+    await prisma.user.updateMany({
+      where: {
+        OR: [
+          { id: game.player1Id },
+          ...(game.player2Id ? [{ id: game.player2Id }] : []),
+        ],
+      },
+      data: { status: 'PLAYING' },
+    });
+
+    // Start timer with callback
+    this.startTimer(gameId, onGameEnd);
 
     return game;
   }
@@ -126,9 +163,106 @@ export class GameManager {
     // Note: Player validation should be done at the API/Socket level
     // by checking the authenticated user ID against player1Id/player2Id
 
+    // 게임 규칙에 따른 수 검증
+    const ruleValidation = validateMoveWithRule(
+      game.boardState,
+      player,
+      x,
+      y,
+      game.gameType
+    );
+    if (!ruleValidation.valid) {
+      return { success: false, error: ruleValidation.error || 'Invalid move' };
+    }
+
     const result = makeMove(game.boardState, player, x, y);
     if (!result.success) {
       return result;
+    }
+
+    // 게임 규칙에 따른 수 후 처리
+    const ruleEffects = applyRuleAfterMove(
+      game.boardState,
+      player,
+      x,
+      y,
+      result.captured || 0,
+      game.gameType
+    );
+
+    // 규칙에 따른 승리 확인 (예: 오목 5개 연속)
+    if (ruleEffects.effects?.win) {
+      game.status = 'FINISHED';
+      game.finishedAt = new Date();
+      game.winnerId = ruleEffects.effects.winner === 1 ? game.player1Id : game.player2Id;
+      game.result = ruleEffects.effects.winner === 1 ? 'PLAYER1_WIN' : 'PLAYER2_WIN';
+      
+      await prisma.game.update({
+        where: { id: gameId },
+        data: {
+          status: 'FINISHED',
+          finishedAt: game.finishedAt,
+          winnerId: game.winnerId,
+          result: game.result,
+        },
+      });
+
+      // 사용자 상태 업데이트
+      await prisma.user.updateMany({
+        where: {
+          OR: [
+            { id: game.player1Id },
+            ...(game.player2Id ? [{ id: game.player2Id }] : []),
+          ],
+        },
+        data: { status: 'WAITING' },
+      });
+
+      // 레이팅 업데이트
+      if (game.player2Id && !game.aiType) {
+        const { updateRatingsAfterGame } = await import('@/lib/rating/ratingManager');
+        await updateRatingsAfterGame(gameId, game.result).catch(console.error);
+      }
+
+      return { success: true, game };
+    }
+
+    // 게임 종료 조건 확인
+    const gameEndCheck = checkGameEndWithRule(game.boardState, game.gameType);
+    if (gameEndCheck.ended && gameEndCheck.winner) {
+      game.status = 'FINISHED';
+      game.finishedAt = new Date();
+      game.winnerId = gameEndCheck.winner === 1 ? game.player1Id : game.player2Id;
+      game.result = gameEndCheck.winner === 1 ? 'PLAYER1_WIN' : 'PLAYER2_WIN';
+
+      await prisma.game.update({
+        where: { id: gameId },
+        data: {
+          status: 'FINISHED',
+          finishedAt: game.finishedAt,
+          winnerId: game.winnerId,
+          result: game.result,
+        },
+      });
+
+      // 사용자 상태 업데이트
+      await prisma.user.updateMany({
+        where: {
+          OR: [
+            { id: game.player1Id },
+            ...(game.player2Id ? [{ id: game.player2Id }] : []),
+          ],
+        },
+        data: { status: 'WAITING' },
+      });
+
+      // 레이팅 업데이트
+      if (game.player2Id && !game.aiType) {
+        const { updateRatingsAfterGame } = await import('@/lib/rating/ratingManager');
+        await updateRatingsAfterGame(gameId, game.result).catch(console.error);
+      }
+
+      return { success: true, game };
     }
 
     // Switch player
@@ -178,11 +312,11 @@ export class GameManager {
     return { success: true, game };
   }
 
-  private startTimer(gameId: string): void {
+  private startTimer(gameId: string, onGameEnd?: (game: GameState) => void): void {
     const game = this.games.get(gameId);
     if (!game) return;
 
-    const timer = setInterval(() => {
+    const timer = setInterval(async () => {
       const currentGame = this.games.get(gameId);
       if (!currentGame || currentGame.status !== 'IN_PROGRESS') {
         this.stopTimer(gameId);
@@ -192,12 +326,18 @@ export class GameManager {
       if (currentGame.currentPlayer === 1) {
         currentGame.player1Time--;
         if (currentGame.player1Time <= 0) {
-          this.endGame(gameId, 'TIMEOUT', currentGame.player2Id || null);
+          const endedGame = await this.endGame(gameId, 'TIMEOUT', currentGame.player2Id || null);
+          if (endedGame && onGameEnd) {
+            onGameEnd(endedGame);
+          }
         }
       } else if (currentGame.player2Time !== null) {
         currentGame.player2Time--;
         if (currentGame.player2Time <= 0) {
-          this.endGame(gameId, 'TIMEOUT', currentGame.player1Id);
+          const endedGame = await this.endGame(gameId, 'TIMEOUT', currentGame.player1Id);
+          if (endedGame && onGameEnd) {
+            onGameEnd(endedGame);
+          }
         }
       }
 
@@ -247,6 +387,17 @@ export class GameManager {
       },
     });
 
+    // Update user status to WAITING after game ends
+    await prisma.user.updateMany({
+      where: {
+        OR: [
+          { id: game.player1Id },
+          ...(game.player2Id ? [{ id: game.player2Id }] : []),
+        ],
+      },
+      data: { status: 'WAITING' },
+    });
+
     // Update ratings if both players are human
     if (game.player2Id && !game.aiType) {
       const { updateRatingsAfterGame } = await import('@/lib/rating/ratingManager');
@@ -274,16 +425,26 @@ export class GameManager {
 
     if (!dbGame) return null;
 
+    const boardSize = dbGame.boardSize || DEFAULT_BOARD_SIZE;
+    const boardState = (dbGame.boardState as any) || createEmptyBoard(boardSize);
+    
+    // boardState에 boardSize가 없으면 추가
+    if (!boardState.boardSize) {
+      boardState.boardSize = boardSize;
+    }
+
     const gameState: GameState = {
       id: dbGame.id,
       mode: dbGame.mode as GameMode,
       season: dbGame.season,
+      gameType: dbGame.gameType || null,
+      boardSize: boardSize,
       player1Id: dbGame.player1Id,
       player2Id: dbGame.player2Id || null,
       aiType: dbGame.aiType || null,
       aiLevel: (dbGame as any).aiLevel || null,
       status: dbGame.status as GameStatus,
-      boardState: (dbGame.boardState as any) || createEmptyBoard(),
+      boardState: boardState,
       timeLimit: dbGame.timeLimit,
       player1Time: dbGame.player1Time,
       player2Time: dbGame.player2Time || null,
@@ -298,6 +459,7 @@ export class GameManager {
     this.games.set(gameId, gameState);
 
     if (gameState.status === 'IN_PROGRESS') {
+      // loadGame에서는 콜백 없이 타이머 시작 (Socket.io에서 별도 처리)
       this.startTimer(gameId);
     }
 

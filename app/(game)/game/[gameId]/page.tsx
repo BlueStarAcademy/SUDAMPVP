@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getSocket, getSocketInstance } from '@/lib/socket/client';
 import Link from 'next/link';
+import { getGameType, ALL_GAME_TYPES } from '@/lib/game/types';
+import GameBoard from '@/components/game/GameBoard';
 
 export default function GamePage() {
   const router = useRouter();
@@ -12,6 +14,7 @@ export default function GamePage() {
   const [game, setGame] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -19,6 +22,18 @@ export default function GamePage() {
       router.push('/login');
       return;
     }
+
+    // 현재 사용자 ID 가져오기
+    fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setCurrentUserId(data.user.id);
+        }
+      })
+      .catch(console.error);
 
     const socket = getSocket(token);
     socket.emit('game:join', gameId);
@@ -170,57 +185,121 @@ export default function GamePage() {
           </Link>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <span className="font-medium">{game.player1?.username}</span>
-              <span className="mx-2 text-gray-500">vs</span>
-              <span className="font-medium">
-                {game.player2?.username || `AI (${game.aiType})`}
+        <div className="baduk-card p-6 animate-fade-in">
+          <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-lg">{game.player1?.nickname || game.player1?.username}</span>
+                  <span className="text-2xl">⚫</span>
+                  <span className="text-2xl text-gray-300">⚪</span>
+                  <span className="font-bold text-lg">
+                    {game.player2?.nickname || game.player2?.username || `AI (${game.aiType})`}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {game.gameType && (
+                <span className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-3 py-1 text-xs font-bold text-white">
+                  {getGameType(game.gameType)?.name || game.gameType}
+                </span>
+              )}
+              <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-medium dark:bg-gray-700">
+                {game.mode === 'STRATEGY' ? '전략바둑' : '놀이바둑'}
               </span>
+              {game.boardSize && (
+                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                  {game.boardSize}×{game.boardSize}
+                </span>
+              )}
             </div>
-            <span className="rounded bg-gray-200 px-2 py-1 text-xs dark:bg-gray-700">
-              {game.mode === 'STRATEGY' ? '전략바둑' : '놀이바둑'}
-            </span>
           </div>
 
-          {/* Game board would be rendered here */}
-          <div className="mb-4 rounded-lg border border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-900">
-            <p className="text-center text-gray-500">
-              게임 보드 렌더링 (19x19 바둑판)
-            </p>
-            {/* TODO: Implement interactive board visualization */}
+          {/* Game board */}
+          <div className="mb-6 flex justify-center">
+            <div className="rounded-lg border-4 border-amber-800 bg-amber-100 p-4 dark:border-amber-900 dark:bg-amber-900/30">
+              <GameBoard
+                boardState={game.boardState}
+                boardSize={game.boardSize || 19}
+                currentPlayer={game.currentPlayer}
+                onMakeMove={handleMakeMove}
+                isMyTurn={
+                  currentUserId &&
+                  ((game.currentPlayer === 1 && game.player1?.id === currentUserId) ||
+                    (game.currentPlayer === 2 && game.player2?.id === currentUserId))
+                }
+              />
+            </div>
           </div>
 
-          <div className="flex justify-between text-sm text-gray-500">
+          <div className="mb-4 grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
             <div>
-              현재 차례: {game.currentPlayer === 1 ? game.player1?.username : game.player2?.username || 'AI'}
+              <div className="text-xs text-gray-500 dark:text-gray-400">현재 차례</div>
+              <div className="font-bold">
+                {game.currentPlayer === 1 
+                  ? (game.player1?.nickname || game.player1?.username) 
+                  : (game.player2?.nickname || game.player2?.username || 'AI')}
+              </div>
             </div>
             <div>
-              남은 시간: Player1 {game.player1Time}s / Player2 {game.player2Time || 0}s
+              <div className="text-xs text-gray-500 dark:text-gray-400">남은 시간</div>
+              <div className="font-bold">
+                {game.player1?.nickname || game.player1?.username}: {Math.floor(game.player1Time / 60)}:{(game.player1Time % 60).toString().padStart(2, '0')}
+              </div>
+              {game.player2Time !== null && (
+                <div className="font-bold">
+                  {game.player2?.nickname || game.player2?.username || 'AI'}: {Math.floor((game.player2Time || 0) / 60)}:{((game.player2Time || 0) % 60).toString().padStart(2, '0')}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="mt-4 flex gap-4">
-            <button
-              onClick={handlePass}
-              className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
-            >
-              패스
-            </button>
-            <button
-              onClick={handleHint}
-              className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              힌트 (KataGo)
-            </button>
-            <button
-              onClick={handleScoring}
-              className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
-            >
-              계가 (KataGo)
-            </button>
-          </div>
+          {/* 게임 종료 상태 표시 */}
+          {game.status === 'FINISHED' && (
+            <div className="mb-4 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 p-4 text-center text-white">
+              <div className="text-2xl font-bold">
+                {game.winnerId === game.player1?.id
+                  ? `🎉 ${game.player1?.nickname || game.player1?.username} 승리!`
+                  : game.winnerId === game.player2?.id
+                  ? `🎉 ${game.player2?.nickname || game.player2?.username} 승리!`
+                  : '무승부'}
+              </div>
+              {game.result && (
+                <div className="mt-2 text-sm opacity-90">
+                  {game.result === 'PLAYER1_WIN' && '흑 승리'}
+                  {game.result === 'PLAYER2_WIN' && '백 승리'}
+                  {game.result === 'DRAW' && '무승부'}
+                  {game.result === 'TIMEOUT' && '시간 초과'}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 게임 액션 버튼 */}
+          {game.status === 'IN_PROGRESS' && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={handlePass}
+                disabled={!currentUserId || (game.currentPlayer === 1 && game.player1?.id !== currentUserId) || (game.currentPlayer === 2 && game.player2?.id !== currentUserId)}
+                className="baduk-button-secondary rounded-full px-6 py-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                패스
+              </button>
+              <button
+                onClick={handleHint}
+                className="baduk-button-primary rounded-full px-6 py-2 font-medium"
+              >
+                💡 힌트 (KataGo)
+              </button>
+              <button
+                onClick={handleScoring}
+                className="baduk-button-success rounded-full px-6 py-2 font-medium"
+              >
+                📊 계가 (KataGo)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

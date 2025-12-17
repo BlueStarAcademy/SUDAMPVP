@@ -32,6 +32,7 @@ export default function RegisterPage() {
 
       // Store token
       localStorage.setItem('token', data.token);
+      // 닉네임 설정 모달이 표시되도록 lobby로 이동
       router.push('/lobby');
     } catch (err) {
       setError('An error occurred. Please try again.');

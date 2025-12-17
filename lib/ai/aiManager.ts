@@ -20,11 +20,12 @@ export interface AIScoringRequest {
  * Convert board state to AI format
  */
 function boardStateToAIFormat(boardState: BoardState): string[][] {
+  const boardSize = boardState.boardSize || 19;
   const board: string[][] = [];
-  for (let i = 0; i < 19; i++) {
+  for (let i = 0; i < boardSize; i++) {
     board[i] = [];
-    for (let j = 0; j < 19; j++) {
-      const stone = boardState.board[i][j];
+    for (let j = 0; j < boardSize; j++) {
+      const stone = boardState.board[i]?.[j];
       if (stone === 'black') {
         board[i][j] = 'B';
       } else if (stone === 'white') {

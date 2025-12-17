@@ -34,13 +34,24 @@ enum UserRole {
   ADMIN
 }
 
+enum UserStatus {
+  PLAYING      // 경기중
+  RESTING      // 휴식중
+  WAITING      // 대기중
+  SPECTATING   // 관전중
+}
+
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  username      String   @unique
-  passwordHash  String
-  role          UserRole @default(USER)
-  createdAt     DateTime @default(now())
+  id                String      @id @default(cuid())
+  email             String      @unique
+  username          String      @unique
+  passwordHash      String
+  role              UserRole    @default(USER)
+  nickname          String?     @unique // 한글 닉네임 (1-6자)
+  avatarId          String?     // 기본 아바타 ID
+  hasCompletedSetup Boolean     @default(false) // 닉네임/아바타 설정 완료 여부
+  status            UserStatus  @default(WAITING)
+  createdAt         DateTime    @default(now())
   
   gamesAsPlayer1  Game[]  @relation("Player1Games")
   gamesAsPlayer2  Game[]  @relation("Player2Games")
@@ -54,6 +65,9 @@ model Game {
   id            String      @id @default(cuid())
   mode          GameMode
   season        Int         // 시즌 번호
+  gameType      String?     // 전략바둑/놀이바둑 종류 (CLASSIC, CAPTURE, SPEED, BASE, HIDDEN, MISSILE, MIXED, OMOK, TTAMOK, DICE, THIEF_COP, ALKKAGI, CURLING)
+  boardSize     Int?        // 9, 13, 19
+  gameRules     Json?       // 각 게임 타입별 특수 규칙
   player1Id     String
   player2Id     String?
   aiType        String?     // "gnugo", null (KataGo는 대결에 사용 안 함)
@@ -77,6 +91,7 @@ model Game {
   
   @@index([status])
   @@index([season, mode])
+  @@index([gameType])
 }
 
 model Rating {

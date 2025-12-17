@@ -1,50 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/middleware';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = requireAuth(request);
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Get all online users (distinct by userId)
-    const sessions = await prisma.session.findMany({
-      where: { isOnline: true },
+    // 온라인 유저 목록 조회 (상태 포함)
+    const onlineSessions = await prisma.session.findMany({
+      where: {
+        isOnline: true,
+        lastSeen: {
+          gte: new Date(Date.now() - 5 * 60 * 1000), // 최근 5분 이내
+        },
+      },
       include: {
         user: {
           select: {
             id: true,
             username: true,
-            email: true,
+            nickname: true,
+            status: true,
           },
         },
       },
-      orderBy: {
-        lastSeen: 'desc',
-      },
     });
 
-    // Get distinct users
+    // 중복 제거 (같은 유저의 여러 세션)
     const userMap = new Map();
-    sessions.forEach((session) => {
-      if (!userMap.has(session.userId)) {
-        userMap.set(session.userId, {
+    onlineSessions.forEach((session) => {
+      const userId = session.user.id;
+      if (!userMap.has(userId)) {
+        userMap.set(userId, {
           id: session.user.id,
           username: session.user.username,
-          socketId: session.socketId,
-          lastSeen: session.lastSeen,
+          nickname: session.user.nickname,
+          status: session.user.status || 'WAITING',
         });
       }
     });
 
-    const onlineUsers = Array.from(userMap.values());
-
-    return NextResponse.json({ users: onlineUsers });
+    return NextResponse.json({
+      users: Array.from(userMap.values()),
+    });
   } catch (error) {
     console.error('Get online users error:', error);
     return NextResponse.json(
@@ -53,4 +48,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
