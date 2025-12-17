@@ -6,11 +6,10 @@ import { getSocket } from '@/lib/socket/client';
 import Header from '@/components/lobby/Header';
 import ProfilePanel from '@/components/lobby/ProfilePanel';
 import RatingDisplay from '@/components/lobby/RatingDisplay';
-import AIBattleButton from '@/components/lobby/AIBattleButton';
 import OngoingGamesList from '@/components/lobby/OngoingGamesList';
 import OnlineUsersList from '@/components/lobby/OnlineUsersList';
-import RankingMatchButton from '@/components/lobby/RankingMatchButton';
 import RankingLeaderboard from '@/components/lobby/RankingLeaderboard';
+import ChatPanel from '@/components/chat/ChatPanel';
 import NicknameSetupModal from '@/components/NicknameSetupModal';
 import GameRequestNotification from '@/components/lobby/GameRequestNotification';
 
@@ -122,53 +121,34 @@ export default function LobbyPage() {
         </div>
 
         <div className="flex-1 grid grid-rows-3 gap-3 overflow-hidden">
-          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널, AI봇 대결 패널 (항상 3개 가로 균등 배치) */}
-          <div className="grid grid-cols-3 gap-3 overflow-hidden">
+          {/* 첫 번째 줄: 프로필 패널, 레이팅 패널 (2개 가로 균등 배치) */}
+          <div className="grid grid-cols-2 gap-3 overflow-hidden">
             <div className="h-full min-w-0">
               <ProfilePanel />
             </div>
             <div className="h-full min-w-0">
               <RatingDisplay mode={selectedMode} />
             </div>
-            <div className="h-full min-w-0">
-              {selectedMode === 'STRATEGY' ? (
-                <AIBattleButton />
-              ) : (
-                <div className="baduk-card p-4 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex items-center justify-center">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">놀이바둑 AI는 준비 중입니다.</p>
-                </div>
-              )}
-            </div>
           </div>
 
-          {/* 두 번째 줄: 경기중인 대국실 목록 패널, 접속중인 유저목록 패널 (2개 가로 균등 배치) */}
+          {/* 두 번째 줄: 진행중인 대국 패널, 유저목록 패널 (2개 가로 배치, 유저목록이 우측에 길게) */}
           <div className="grid grid-cols-2 gap-3 overflow-hidden">
             <div className="h-full min-w-0">
               <OngoingGamesList mode={selectedMode} />
             </div>
-            <div className="h-full min-w-0">
-              <OnlineUsersList mode={selectedMode} />
+            <div className="h-full min-w-0 flex flex-col gap-3">
+              <div className="flex-1 min-h-0">
+                <OnlineUsersList mode={selectedMode} />
+              </div>
+              <div className="flex-1 min-h-0">
+                <RankingLeaderboard mode={selectedMode} />
+              </div>
             </div>
           </div>
 
-          {/* 세 번째 줄: 랭킹전 매칭 패널, 랭킹전 순위 패널 (2개 가로 균등 배치) */}
-          <div className="grid grid-cols-2 gap-3 overflow-hidden">
-            <div className="h-full min-w-0">
-              <div className="baduk-card p-4 animate-fade-in border-2 border-gray-200 dark:border-gray-700 h-full flex flex-col">
-                <div className="mb-3 flex items-center gap-2 border-b-2 border-gray-200 pb-3 dark:border-gray-700 flex-shrink-0">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-600 shadow-md">
-                    <span className="text-lg">🏆</span>
-                  </div>
-                  <h2 className="text-base font-bold">랭킹전 매칭</h2>
-                </div>
-                <div className="flex-1 min-h-0">
-                  <RankingMatchButton />
-                </div>
-              </div>
-            </div>
-            <div className="h-full min-w-0">
-              <RankingLeaderboard mode={selectedMode} />
-            </div>
+          {/* 세 번째 줄: 채팅 패널 (전체 폭) */}
+          <div className="h-full min-w-0">
+            <ChatPanel type="GLOBAL" />
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getGradeFromRating } from '@/lib/rating/grade';
+import RankingMatchButton from './RankingMatchButton';
 
 interface RatingData {
   mode: string;
@@ -84,10 +85,10 @@ export default function RatingDisplay({ mode }: RatingDisplayProps) {
           <h2 className="text-sm font-bold">{modeLabel} 레이팅</h2>
         </div>
       </div>
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex flex-col items-center justify-center space-y-3">
         {currentRating ? (
-          <div className="w-full rounded border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-2 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700">
-            <div className="flex items-center justify-between">
+          <div className="w-full rounded border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-3 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700">
+            <div className="flex items-center justify-between mb-2">
               <div>
                 <span
                   className={`rounded-full bg-gradient-to-r ${gradeColors[gradeInfo.grade] || 'from-gray-400 to-gray-500'} px-2 py-0.5 text-[10px] font-bold text-white`}
@@ -96,19 +97,19 @@ export default function RatingDisplay({ mode }: RatingDisplayProps) {
                 </span>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
                   {currentRating.rating}
                 </p>
-                <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   {currentRating.wins}승 {currentRating.losses}패
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="w-full rounded border-2 border-dashed border-gray-300 bg-gray-50 p-2 text-center dark:border-gray-700 dark:bg-gray-800">
+          <div className="w-full rounded border-2 border-dashed border-gray-300 bg-gray-50 p-3 text-center dark:border-gray-700 dark:bg-gray-800">
             <p className="text-xs text-gray-600 dark:text-gray-400">기본 등급</p>
-            <p className="text-xl font-bold text-gray-800 dark:text-gray-200">
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
               {rating}
             </p>
             <span className="mt-1 inline-block rounded-full bg-gradient-to-r from-gray-400 to-gray-500 px-2 py-0.5 text-[10px] font-bold text-white">
@@ -116,6 +117,9 @@ export default function RatingDisplay({ mode }: RatingDisplayProps) {
             </span>
           </div>
         )}
+        <div className="w-full">
+          <RankingMatchButton />
+        </div>
       </div>
     </div>
   );

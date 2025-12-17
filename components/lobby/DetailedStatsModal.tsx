@@ -59,7 +59,7 @@ export default function DetailedStatsModal({
                       <div className="flex-1">
                         <p className="font-bold">{gameType?.name || stat.gameType}</p>
                       </div>
-                      <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-3 text-sm">
                         <span className="text-green-600 dark:text-green-400">
                           승 {stat.wins}
                         </span>
@@ -67,7 +67,10 @@ export default function DetailedStatsModal({
                           무 {stat.draws}
                         </span>
                         <span className="text-red-600 dark:text-red-400">패 {stat.losses}</span>
-                        <span className="font-bold">총 {stat.total}경기</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-bold">
+                          승률 {stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0}%
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400">총 {stat.total}경기</span>
                       </div>
                     </div>
                   );
@@ -93,7 +96,7 @@ export default function DetailedStatsModal({
                       <div className="flex-1">
                         <p className="font-bold">{gameType?.name || stat.gameType}</p>
                       </div>
-                      <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-3 text-sm">
                         <span className="text-green-600 dark:text-green-400">
                           승 {stat.wins}
                         </span>
@@ -101,7 +104,10 @@ export default function DetailedStatsModal({
                           무 {stat.draws}
                         </span>
                         <span className="text-red-600 dark:text-red-400">패 {stat.losses}</span>
-                        <span className="font-bold">총 {stat.total}경기</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-bold">
+                          승률 {stat.total > 0 ? Math.round((stat.wins / stat.total) * 100) : 0}%
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400">총 {stat.total}경기</span>
                       </div>
                     </div>
                   );

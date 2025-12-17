@@ -123,67 +123,42 @@ export default function ProfilePanel() {
           </p>
         </div>
 
-        {/* 전략바둑 통합 전적 */}
-        <div className="space-y-1 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 p-2 dark:from-blue-900/20 dark:to-indigo-900/20">
-          <h3 className="text-center text-xs font-semibold text-gray-700 dark:text-gray-300">
-            전략바둑
-          </h3>
-          <div className="grid grid-cols-3 gap-1 text-center">
-            <div className="rounded bg-green-50 p-1 dark:bg-green-900/20">
-              <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                {profile.strategyStats.wins}
+        {/* 통합 전적 */}
+        <div className="space-y-2 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-100 p-3 dark:from-indigo-900/20 dark:to-purple-900/20">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">전적</h3>
+            <button
+              onClick={() => setShowDetailedStats(true)}
+              className="rounded bg-gradient-to-r from-indigo-500 to-purple-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm transition-all hover:from-indigo-600 hover:to-purple-700"
+            >
+              상세보기
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded bg-green-50 p-2 dark:bg-green-900/20">
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                {profile.strategyStats.wins + profile.playStats.wins}
               </p>
-              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">승</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">승</p>
             </div>
-            <div className="rounded bg-gray-100 p-1 dark:bg-gray-700">
-              <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
-                {profile.strategyStats.draws}
+            <div className="rounded bg-red-50 p-2 dark:bg-red-900/20">
+              <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                {profile.strategyStats.losses + profile.playStats.losses}
               </p>
-              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">무</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">패</p>
             </div>
-            <div className="rounded bg-red-50 p-1 dark:bg-red-900/20">
-              <p className="text-lg font-bold text-red-600 dark:text-red-400">
-                {profile.strategyStats.losses}
+            <div className="rounded bg-blue-50 p-2 dark:bg-blue-900/20">
+              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                {(() => {
+                  const total = profile.strategyStats.total + profile.playStats.total;
+                  const wins = profile.strategyStats.wins + profile.playStats.wins;
+                  return total > 0 ? Math.round((wins / total) * 100) : 0;
+                })()}%
               </p>
-              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">패</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">승률</p>
             </div>
           </div>
         </div>
-
-        {/* 놀이바둑 통합 전적 */}
-        <div className="space-y-1 rounded-lg bg-gradient-to-br from-purple-50 to-pink-100 p-2 dark:from-purple-900/20 dark:to-pink-900/20">
-          <h3 className="text-center text-xs font-semibold text-gray-700 dark:text-gray-300">
-            놀이바둑
-          </h3>
-          <div className="grid grid-cols-3 gap-1 text-center">
-            <div className="rounded bg-green-50 p-1 dark:bg-green-900/20">
-              <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                {profile.playStats.wins}
-              </p>
-              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">승</p>
-            </div>
-            <div className="rounded bg-gray-100 p-1 dark:bg-gray-700">
-              <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
-                {profile.playStats.draws}
-              </p>
-              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">무</p>
-            </div>
-            <div className="rounded bg-red-50 p-1 dark:bg-red-900/20">
-              <p className="text-lg font-bold text-red-600 dark:text-red-400">
-                {profile.playStats.losses}
-              </p>
-              <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">패</p>
-            </div>
-          </div>
-        </div>
-
-        {/* 상세전적 버튼 */}
-        <button
-          onClick={() => setShowDetailedStats(true)}
-          className="w-full rounded bg-gradient-to-r from-indigo-500 to-purple-600 px-2 py-1 text-xs font-bold text-white shadow-sm transition-all hover:from-indigo-600 hover:to-purple-700"
-        >
-          📊 상세전적
-        </button>
       </div>
 
       {/* 상세전적 모달 */}
@@ -195,4 +170,5 @@ export default function ProfilePanel() {
     </div>
   );
 }
+
 

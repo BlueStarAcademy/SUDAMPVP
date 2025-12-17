@@ -99,7 +99,7 @@ export default function OngoingGamesList({ mode }: OngoingGamesListProps) {
           <span className="text-sm">🔥</span>
         </div>
         <div>
-          <h2 className="text-sm font-bold">{modeLabel} 경기중</h2>
+          <h2 className="text-sm font-bold">진행중인 대국</h2>
         </div>
       </div>
       {games.length === 0 ? (
