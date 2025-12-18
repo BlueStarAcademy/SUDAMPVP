@@ -1,5 +1,7 @@
 'use client';
 
+import { createPortal } from 'react-dom';
+
 interface SeasonInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,36 +17,34 @@ export default function SeasonInfoModal({ isOpen, onClose }: SeasonInfoModalProp
   const currentYear = currentDate.getFullYear();
   const seasonNumber = (currentYear - 2024) * 4 + currentSeason;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-800 animate-fade-in">
-        <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600">
-              <span className="text-2xl">📅</span>
-            </div>
-            <h2 className="text-2xl font-bold">시즌 안내</h2>
-          </div>
+  const modalContent = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-auto min-w-[320px] max-w-md mx-4 bg-panel text-on-panel rounded-xl p-6 shadow-2xl animate-fade-in border border-color">
+        <div className="mb-6 flex items-center justify-between border-b border-color pb-4">
+          <h2 className="text-xl font-semibold text-on-panel">시즌 안내</h2>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            className="rounded-md p-1.5 text-secondary transition-all hover:bg-tertiary hover:text-on-panel"
+            aria-label="닫기"
           >
-            <span className="text-2xl">✕</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 p-5 dark:from-green-900/20 dark:to-emerald-900/20">
-            <h3 className="mb-2 font-bold text-gray-800 dark:text-gray-200">현재 시즌</h3>
-            <p className="text-3xl font-bold text-green-600 dark:text-green-400">시즌 {seasonNumber}</p>
-            <p className="mt-1 text-sm font-medium text-gray-600 dark:text-gray-400">
+          <div className="rounded-xl bg-tertiary/30 border border-color p-5">
+            <h3 className="mb-2 font-bold text-on-panel">현재 시즌</h3>
+            <p className="text-3xl font-bold text-highlight">시즌 {seasonNumber}</p>
+            <p className="mt-1 text-sm font-medium text-secondary">
               {currentYear}년 {currentSeason}분기
             </p>
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-bold text-gray-800 dark:text-gray-200">시즌 시스템</h3>
-            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <h3 className="font-bold text-on-panel">시즌 시스템</h3>
+            <ul className="space-y-2 text-sm text-secondary">
               <li className="flex items-start gap-2">
                 <span className="mt-1">•</span>
                 <span>시즌은 분기별로 운영됩니다 (1월, 4월, 7월, 10월)</span>
@@ -61,7 +61,7 @@ export default function SeasonInfoModal({ isOpen, onClose }: SeasonInfoModalProp
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-bold text-gray-800 dark:text-gray-200">등급 시스템</h3>
+            <h3 className="font-bold text-on-panel">등급 시스템</h3>
             <div className="space-y-2">
               {[
                 { name: '초급', range: '0-999', color: 'from-gray-400 to-gray-500' },
@@ -72,9 +72,9 @@ export default function SeasonInfoModal({ isOpen, onClose }: SeasonInfoModalProp
               ].map((grade) => (
                 <div
                   key={grade.name}
-                  className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700"
+                  className="flex items-center justify-between rounded-lg bg-tertiary/30 border border-color p-3"
                 >
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{grade.name}</span>
+                  <span className="font-medium text-on-panel">{grade.name}</span>
                   <span className={`rounded-full bg-gradient-to-r ${grade.color} px-3 py-1 text-xs font-bold text-white`}>
                     {grade.range}
                   </span>
@@ -86,12 +86,19 @@ export default function SeasonInfoModal({ isOpen, onClose }: SeasonInfoModalProp
 
         <button
           onClick={onClose}
-          className="baduk-button-primary mt-8 w-full px-6 py-3 text-lg font-bold"
+          className="bg-accent hover:bg-accent-hover mt-8 w-full px-6 py-3 text-lg font-bold text-white rounded-lg transition-colors"
         >
           확인
         </button>
       </div>
     </div>
   );
+
+  // Portal을 사용하여 document.body에 직접 렌더링
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+  
+  return null;
 }
 

@@ -79,57 +79,76 @@ export default function RatingDisplay({ mode }: RatingDisplayProps) {
 
   return (
     <>
-      <div className="p-5 h-full flex flex-col">
-        <div className="mb-3 flex items-center justify-between border-b border-indigo-200 pb-3">
-          <div className="flex items-center gap-2">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
-              <span className="text-base">⭐</span>
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-gray-800">{modeLabel} 레이팅</h2>
-            </div>
+      <div className="p-4 h-full flex flex-col text-on-panel">
+        <div className="mb-3 flex items-center justify-between border-b border-color pb-2">
+          <div>
+            <h2 className="text-lg font-semibold text-on-panel">{modeLabel} 레이팅</h2>
           </div>
           <button
             onClick={() => setShowSeasonModal(true)}
-            className="baduk-button-success flex items-center gap-1 px-2 py-1 text-xs"
+            className="rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all hover:from-green-600 hover:to-emerald-700 hover:shadow-lg hover:scale-105 flex items-center gap-1"
           >
             <span>📅</span>
             <span>시즌</span>
           </button>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center space-y-2">
-          {currentRating ? (
-            <div className="w-full rounded border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-2 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <span
-                    className={`rounded-full bg-gradient-to-r ${gradeColors[gradeInfo.grade] || 'from-gray-400 to-gray-500'} px-2 py-0.5 text-[10px] font-bold text-white`}
-                  >
-                    {gradeInfo.name}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                    {currentRating.rating}
-                  </p>
-                  <p className="text-[10px] font-medium text-gray-600 dark:text-gray-400">
-                    {currentRating.wins}승 {currentRating.losses}패
-                  </p>
-                </div>
+        
+        <div className="flex-1 flex flex-col space-y-3 pr-1">
+          {/* 레이팅 카드 */}
+          <div className="relative overflow-hidden rounded-lg bg-tertiary/30 p-3 border border-color">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-secondary mb-1">현재 레이팅</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  {currentRating?.rating || rating}
+                </p>
+              </div>
+              <div className="text-right">
+                <span
+                  className={`inline-block rounded-full bg-gradient-to-r ${gradeColors[gradeInfo.grade] || 'from-gray-400 to-gray-500'} px-3 py-1 text-xs font-bold text-white shadow-md`}
+                >
+                  {gradeInfo.name}
+                </span>
               </div>
             </div>
-          ) : (
-            <div className="w-full rounded border-2 border-dashed border-gray-300 bg-gray-50 p-2 text-center dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-xs text-gray-600 dark:text-gray-400">기본 등급</p>
-              <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                {rating}
-              </p>
-              <span className="mt-1 inline-block rounded-full bg-gradient-to-r from-gray-400 to-gray-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                {gradeInfo.name}
-              </span>
+          </div>
+
+          {/* 전적 표 - 무승부 제거, 여백 추가 */}
+          {currentRating && (
+            <div className="rounded-lg border border-color bg-tertiary/30 overflow-hidden">
+              <div className="bg-tertiary/50 px-4 py-2.5 border-b border-color">
+                <h3 className="text-xs font-semibold text-on-panel">전적 정보</h3>
+              </div>
+              <div className="overflow-x-auto p-2">
+                <table className="w-full text-xs">
+                  <thead className="bg-tertiary/30">
+                    <tr>
+                      <th className="px-4 py-2.5 text-center font-semibold text-on-panel">승</th>
+                      <th className="px-4 py-2.5 text-center font-semibold text-on-panel">패</th>
+                      <th className="px-4 py-2.5 text-center font-semibold text-on-panel">합계</th>
+                      <th className="px-4 py-2.5 text-center font-semibold text-on-panel">승률</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-tertiary/40 transition-colors">
+                      <td className="px-4 py-2.5 text-center font-semibold text-green-400">{currentRating.wins}</td>
+                      <td className="px-4 py-2.5 text-center font-semibold text-red-400">{currentRating.losses}</td>
+                      <td className="px-4 py-2.5 text-center font-semibold text-on-panel">{currentRating.wins + currentRating.losses}</td>
+                      <td className="px-4 py-2.5 text-center font-semibold text-highlight">
+                        {(() => {
+                          const total = currentRating.wins + currentRating.losses;
+                          return total > 0 ? Math.round((currentRating.wins / total) * 100) : 0;
+                        })()}%
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-          <div className="w-full">
+
+          {/* 랭킹전 매칭 버튼 */}
+          <div className="mt-auto">
             <RankingMatchButton />
           </div>
         </div>

@@ -219,152 +219,143 @@ export default function OnlineUsersList({ mode }: OnlineUsersListProps) {
 
   return (
     <>
-      <div className="p-3 h-full flex flex-col">
-        <div className="mb-3 flex items-center justify-between border-b border-indigo-200 pb-3">
-          <div className="flex items-center gap-2">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
-              <span className="text-base">👥</span>
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-gray-800">유저목록</h2>
-            </div>
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium shadow-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-          >
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="p-3 h-full flex flex-col text-on-panel">
+        <h2 className="text-xl font-semibold mb-2 border-b border-color pb-2 flex-shrink-0 flex justify-between items-center">
+          <span className="flex items-center gap-2">
+            유저 목록
+            <span className="text-sm text-secondary font-normal">({filteredUsers.length}명 접속 중)</span>
+          </span>
+        </h2>
 
-        <div className="flex-1 overflow-y-auto space-y-1">
-          {/* AI봇 대결 */}
-          {mode === 'STRATEGY' && (
-            <div
-              className="group flex items-center justify-between rounded border border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2 transition-all hover:border-green-400 dark:border-gray-700 dark:from-green-900/20 dark:to-emerald-900/20"
-            >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-sm">
-                  <span className="text-xs">🤖</span>
+        {/* AI봇 대결 */}
+        {mode === 'STRATEGY' && (
+          <div className="flex-shrink-0 mb-2">
+            <div className="bg-panel rounded-lg shadow-lg p-3 flex items-center justify-between flex-shrink-0 text-on-panel">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-purple-600 text-white border-2 border-purple-400">
+                  <span className="text-base">🤖</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
-                    AI봇 대결
-                  </p>
-                  <div className="mt-0.5 flex items-center gap-1">
-                    <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                      🤖 AI
-                    </span>
-                  </div>
+                <div>
+                  <h3 className="text-base font-bold text-purple-300">AI와 대결하기</h3>
+                  <p className="text-xs text-tertiary">AI와 즉시 대국을 시작합니다.</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowAIModal(true)}
-                className="rounded bg-gradient-to-r from-green-500 to-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm transition-all hover:from-green-600 hover:to-emerald-700 flex-shrink-0"
+                className="rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 px-4 py-2 text-xs font-bold text-white shadow-md transition-all hover:from-purple-600 hover:to-purple-700 hover:shadow-lg"
               >
-                대결
+                설정 및 시작
               </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 내 프로필사진 + 레이팅 + 상태 변경 */}
-          {currentUser && currentUserProfile && (
-            <div className="mb-2 rounded border border-indigo-400 bg-gradient-to-r from-indigo-50 to-purple-50 p-2 dark:from-indigo-900/30 dark:to-purple-900/30 dark:border-indigo-500">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border-2 border-indigo-400 shadow-sm">
-                    {(() => {
-                      const avatar = currentUserProfile.avatarId
-                        ? DEFAULT_AVATARS.find((a) => a.id === currentUserProfile.avatarId) || DEFAULT_AVATARS[0]
-                        : DEFAULT_AVATARS[0];
-                      return avatar.imagePath ? (
-                        <Image
-                          src={avatar.imagePath}
-                          alt={currentUserProfile.nickname || '아바타'}
-                          fill
-                          className="object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-                          <span className="text-xs">
-                            {currentUserProfile.nickname?.[0] || currentUser.username[0]?.toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
-                      {currentUserProfile.nickname || currentUser.username}
-                    </p>
-                    <div className="mt-0.5 flex items-center gap-1">
-                      {currentUserRating !== null && (
-                        <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
-                          {currentUserRating}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {/* 상태 변경 드롭다운 */}
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <select
-                    value={currentUser.status}
-                    onChange={(e) => handleStatusChange(e.target.value)}
-                    className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-medium shadow-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-                  >
-                    <option value="WAITING">대기중</option>
-                    <option value="RESTING">휴식중</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 다른 유저 목록 */}
-          {filteredUsers.map((user) => {
-            const userRating = userRatings.get(user.id) || 1500;
-            return (
-              <div
-                key={user.id}
-                className="group flex items-center justify-between rounded border border-gray-200 bg-gradient-to-r from-white to-gray-50 p-2 transition-all hover:border-indigo-400 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700"
+        {currentUser && currentUserProfile && (
+          <div className="flex-shrink-0 mb-2">
+            <div className={`flex items-center justify-between p-1.5 rounded-lg bg-blue-900/40 border border-blue-700`}>
+              <div 
+                className="flex items-center gap-2 lg:gap-3 overflow-hidden"
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-purple-500 text-white shadow-sm">
-                    <span className="text-xs">
-                      {user.nickname?.[0] || user.username[0]?.toUpperCase() || 'U'}
-                    </span>
+                <div className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border-2 border-color">
+                  {(() => {
+                    const avatar = currentUserProfile.avatarId
+                      ? DEFAULT_AVATARS.find((a) => a.id === currentUserProfile.avatarId) || DEFAULT_AVATARS[0]
+                      : DEFAULT_AVATARS[0];
+                    return avatar.imagePath ? (
+                      <Image
+                        src={avatar.imagePath}
+                        alt={currentUserProfile.nickname || '아바타'}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                        <span className="text-sm">
+                          {currentUserProfile.nickname?.[0] || currentUser.username[0]?.toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div className="overflow-hidden">
+                  <h3 className="font-bold text-sm lg:text-base truncate">{currentUserProfile.nickname || currentUser.username}</h3>
+                  <span className="text-xs text-green-400">● 대기 중</span>
+                </div>
+              </div>
+              <select
+                value={currentUser.status}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={!['WAITING', 'RESTING'].includes(currentUser.status)}
+                className="px-2 py-1 lg:px-3 lg:py-1.5 bg-secondary border border-color rounded-lg text-xs lg:text-sm transition-colors w-20 lg:w-24 text-center focus:ring-accent focus:border-accent disabled:opacity-50 text-on-panel"
+              >
+                <option value="WAITING">대기 중</option>
+                <option value="RESTING">휴식 중</option>
+                {!['WAITING', 'RESTING'].includes(currentUser.status) && (
+                  <option value={currentUser.status} disabled>{statusLabels[currentUser.status] || currentUser.status}</option>
+                )}
+              </select>
+            </div>
+          </div>
+        )}
+        
+        <ul className="space-y-2 overflow-y-auto pr-2 max-h-[calc(var(--vh,1vh)*25)] min-h-[96px] flex-1">
+          {filteredUsers.length > 0 ? filteredUsers.map((user) => {
+            const userRating = userRatings.get(user.id) || 1500;
+            const statusInfo = {
+              WAITING: { text: '대기 중', color: 'text-green-400' },
+              PLAYING: { text: '대국 중', color: 'text-blue-400' },
+              RESTING: { text: '휴식 중', color: 'text-gray-400' },
+              SPECTATING: { text: '관전 중', color: 'text-purple-400' },
+            }[user.status] || { text: user.status, color: 'text-gray-400' };
+            
+            const avatar = DEFAULT_AVATARS.find((a) => a.id === user.avatarId) || DEFAULT_AVATARS[0];
+            
+            return (
+              <li key={user.id} className={`flex items-center justify-between p-1.5 rounded-lg bg-tertiary/50`}>
+                <div 
+                  className="flex items-center gap-2 lg:gap-3 overflow-hidden cursor-pointer"
+                  onClick={() => handleRequestGame(user)}
+                  title={`${user.nickname || user.username} 프로필 보기`}
+                >
+                  <div className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border-2 border-color">
+                    {avatar.imagePath ? (
+                      <Image
+                        src={avatar.imagePath}
+                        alt={user.nickname || user.username}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-400 to-purple-500 text-white">
+                        <span className="text-sm">{user.nickname?.[0] || user.username[0]?.toUpperCase() || 'U'}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
-                      {user.nickname || user.username}
-                    </p>
-                    <div className="mt-0.5 flex items-center gap-1">
-                      <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300">
-                        {userRating}
-                      </span>
-                    </div>
+                  <div className="overflow-hidden">
+                    <h3 className="font-bold text-sm lg:text-base truncate">{user.nickname || user.username}</h3>
+                    <span className={`text-xs ${statusInfo.color}`}>● {statusInfo.text}</span>
                   </div>
                 </div>
-                {/* 대국 신청 버튼 */}
-                <button
-                  onClick={() => handleRequestGame(user)}
-                  className="rounded bg-gradient-to-r from-blue-500 to-indigo-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm transition-all hover:from-blue-600 hover:to-indigo-700 flex-shrink-0"
-                >
-                  신청
-                </button>
-              </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleRequestGame(user)}
+                    className="rounded-lg bg-accent hover:bg-accent-hover px-3 py-1.5 text-xs font-bold text-white transition-colors"
+                  >
+                    대국 신청
+                  </button>
+                </div>
+              </li>
             );
-          })}
-        </div>
+          }) : (
+            <p className="text-center text-tertiary pt-8">다른 플레이어가 없습니다.</p>
+          )}
+        </ul>
       </div>
 
       {/* 대국 신청 모달 */}

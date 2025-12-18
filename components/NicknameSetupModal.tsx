@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { DEFAULT_AVATARS, DEFAULT_AVATAR_ID } from '@/lib/constants/avatars';
 import AvatarSelector from './AvatarSelector';
 
@@ -98,17 +99,23 @@ export default function NicknameSetupModal({ isOpen, onComplete }: NicknameSetup
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-800 animate-fade-in">
-        <div className="mb-6 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
-              <span className="text-3xl">👤</span>
-            </div>
+  const modalContent = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="w-auto min-w-[320px] max-w-md mx-4 bg-panel text-on-panel rounded-xl p-6 shadow-2xl animate-fade-in border border-color">
+        <div className="mb-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-on-panel">닉네임 및 아바타 설정</h2>
+            <button
+              onClick={onComplete}
+              className="rounded-md p-1.5 text-secondary transition-all hover:bg-tertiary hover:text-on-panel"
+              aria-label="닫기"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <h2 className="mb-2 text-3xl font-bold">닉네임 및 아바타 설정</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-secondary">
             게임을 시작하기 전에 닉네임과 아바타를 설정해주세요.
           </p>
         </div>
@@ -116,7 +123,7 @@ export default function NicknameSetupModal({ isOpen, onComplete }: NicknameSetup
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 닉네임 입력 */}
           <div>
-            <label htmlFor="nickname" className="mb-2 block text-sm font-bold text-gray-700 dark:text-gray-300">
+            <label htmlFor="nickname" className="mb-2 block text-sm font-bold text-on-panel">
               닉네임 (한글 1-6글자)
             </label>
             <div className="flex gap-2">
@@ -130,7 +137,7 @@ export default function NicknameSetupModal({ isOpen, onComplete }: NicknameSetup
                 }}
                 onBlur={handleCheckNickname}
                 maxLength={6}
-                className="flex-1 rounded-lg border-2 border-gray-300 px-4 py-3 font-medium transition-colors focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                className="flex-1 rounded-lg border-2 border-color bg-secondary px-4 py-3.5 font-medium text-on-panel transition-colors focus:border-accent focus:outline-none focus:ring-accent"
                 placeholder="닉네임을 입력하세요"
                 disabled={loading}
               />
@@ -150,7 +157,7 @@ export default function NicknameSetupModal({ isOpen, onComplete }: NicknameSetup
 
           {/* 아바타 선택 */}
           <div>
-            <label className="mb-3 block text-sm font-bold text-gray-700 dark:text-gray-300">
+            <label className="mb-3 block text-sm font-bold text-on-panel">
               아바타 선택
             </label>
             <AvatarSelector
@@ -181,5 +188,12 @@ export default function NicknameSetupModal({ isOpen, onComplete }: NicknameSetup
       </div>
     </div>
   );
+
+  // Portal을 사용하여 document.body에 직접 렌더링
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+  
+  return null;
 }
 

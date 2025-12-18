@@ -86,77 +86,98 @@ export default function ProfilePanel() {
     ? DEFAULT_AVATARS.find((a) => a.id === profile.user.avatarId) || DEFAULT_AVATARS[0]
     : DEFAULT_AVATARS[0];
 
+  const totalWins = profile.strategyStats.wins + profile.playStats.wins;
+  const totalLosses = profile.strategyStats.losses + profile.playStats.losses;
+  const totalDraws = profile.strategyStats.draws + profile.playStats.draws;
+  const totalGames = profile.strategyStats.total + profile.playStats.total;
+  const winRate = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
+
   return (
-    <div className="p-5 h-full flex flex-col">
-      <div className="mb-3 flex items-center gap-2 border-b border-indigo-200 pb-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
-          <span className="text-base">👤</span>
+    <div className="p-4 h-full flex flex-col text-on-panel">
+      <div className="mb-3 flex items-center justify-between border-b border-color pb-2">
+        <div>
+          <h2 className="text-lg font-semibold text-on-panel">내 프로필</h2>
         </div>
-        <h2 className="text-base font-bold text-gray-800">내 프로필</h2>
+        <button
+          onClick={() => setShowDetailedStats(true)}
+          className="rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all hover:from-indigo-600 hover:to-purple-700 hover:shadow-lg hover:scale-105"
+        >
+          상세보기
+        </button>
       </div>
-      <div className="flex-1 space-y-2 overflow-y-auto">
-        {/* 아바타 */}
-        <div className="flex justify-center">
-          <div className="relative h-16 w-16 rounded-full overflow-hidden border-2 border-gradient-to-br from-blue-400 to-purple-500 shadow-md">
-            {avatar.imagePath ? (
-              <Image
-                src={avatar.imagePath}
-                alt={profile.user.nickname || '아바타'}
-                fill
-                className="object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-400 to-purple-500 text-white">
-                <span className="text-2xl">👤</span>
-              </div>
-            )}
+      
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+        {/* 프로필 헤더 */}
+        <div className="rounded-lg bg-tertiary/30 p-3 border border-color">
+          <div className="flex items-center gap-3">
+            {/* 아바타 슬롯 */}
+            <div className="relative h-16 w-16 rounded-lg overflow-hidden border-2 border-color bg-tertiary/50 flex-shrink-0">
+              {avatar.imagePath ? (
+                <Image
+                  src={avatar.imagePath}
+                  alt={profile.user.nickname || '아바타'}
+                  fill
+                  className="object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-400 to-purple-500 text-white">
+                  <span className="text-2xl">👤</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-on-panel truncate mb-1">
+                {profile.user.nickname || '닉네임 없음'}
+              </h3>
+            </div>
           </div>
         </div>
 
-        {/* 닉네임 */}
-        <div className="text-center">
-          <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
-            {profile.user.nickname || '닉네임 없음'}
-          </p>
-        </div>
-
-        {/* 통합 전적 */}
-        <div className="space-y-2 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-100 p-3 dark:from-indigo-900/20 dark:to-purple-900/20">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">전적</h3>
-            <button
-              onClick={() => setShowDetailedStats(true)}
-              className="rounded bg-gradient-to-r from-indigo-500 to-purple-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm transition-all hover:from-indigo-600 hover:to-purple-700"
-            >
-              상세보기
-            </button>
+        {/* 전적 표 - 무승부 제거, 여백 추가 */}
+        <div className="rounded-lg border border-color bg-tertiary/30 overflow-hidden">
+          <div className="bg-tertiary/50 px-4 py-2.5 border-b border-color">
+            <h3 className="text-xs font-semibold text-on-panel">통합 전적</h3>
           </div>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded bg-green-50 p-2 dark:bg-green-900/20">
-              <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                {profile.strategyStats.wins + profile.playStats.wins}
-              </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">승</p>
-            </div>
-            <div className="rounded bg-red-50 p-2 dark:bg-red-900/20">
-              <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                {profile.strategyStats.losses + profile.playStats.losses}
-              </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">패</p>
-            </div>
-            <div className="rounded bg-blue-50 p-2 dark:bg-blue-900/20">
-              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                {(() => {
-                  const total = profile.strategyStats.total + profile.playStats.total;
-                  const wins = profile.strategyStats.wins + profile.playStats.wins;
-                  return total > 0 ? Math.round((wins / total) * 100) : 0;
-                })()}%
-              </p>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">승률</p>
-            </div>
+          <div className="overflow-x-auto p-2">
+            <table className="w-full text-xs">
+              <thead className="bg-tertiary/30">
+                <tr>
+                  <th className="px-4 py-2.5 text-left font-semibold text-on-panel">구분</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-on-panel">전략바둑</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-on-panel">놀이바둑</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-on-panel">합계</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-color/50">
+                <tr className="hover:bg-tertiary/40 transition-colors">
+                  <td className="px-4 py-2.5 font-medium text-on-panel">승</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-green-400">{profile.strategyStats.wins}</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-green-400">{profile.playStats.wins}</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-green-400">{totalWins}</td>
+                </tr>
+                <tr className="hover:bg-tertiary/40 transition-colors">
+                  <td className="px-4 py-2.5 font-medium text-on-panel">패</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-red-400">{profile.strategyStats.losses}</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-red-400">{profile.playStats.losses}</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-red-400">{totalLosses}</td>
+                </tr>
+                <tr className="bg-tertiary/50 font-semibold">
+                  <td className="px-4 py-2.5 font-semibold text-on-panel">합계</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-on-panel">{profile.strategyStats.total}</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-on-panel">{profile.playStats.total}</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-on-panel">{totalGames}</td>
+                </tr>
+                <tr className="bg-highlight/20">
+                  <td className="px-4 py-2.5 font-semibold text-on-panel">승률</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-highlight" colSpan={3}>
+                    {winRate}%
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

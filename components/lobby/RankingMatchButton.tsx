@@ -42,21 +42,17 @@ export default function RankingMatchButton({
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (matching && waitingTime < 5) {
+    if (matching) {
+      // 1초부터 시작하여 계속 증가
       interval = setInterval(() => {
-        setWaitingTime((prev) => {
-          if (prev >= 4) {
-            return 5;
-          }
-          return prev + 1;
-        });
+        setWaitingTime((prev) => prev + 1);
       }, 1000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [matching, waitingTime]);
+  }, [matching]);
 
   const handleStartMatching = async () => {
     const gameType = localGameType || selectedGameType;
@@ -66,7 +62,7 @@ export default function RankingMatchButton({
     }
 
     setMatching(true);
-    setWaitingTime(0);
+    setWaitingTime(1); // 1초부터 시작
 
     try {
       const token = localStorage.getItem('token');
@@ -171,13 +167,13 @@ export default function RankingMatchButton({
               {waitingTime < 5 ? (
                 <div className="text-center">
                   <p className="text-[10px] text-gray-600 dark:text-gray-400">
-                    {5 - waitingTime}초 후 시작
+                    대기시간: {waitingTime}초
                   </p>
                 </div>
               ) : (
                 <div className="text-center">
                   <p className="text-[10px] text-gray-600 dark:text-gray-400">
-                    상대를 찾는 중...
+                    상대를 찾는 중... ({waitingTime}초)
                   </p>
                 </div>
               )}

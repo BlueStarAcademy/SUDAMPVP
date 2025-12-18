@@ -1,12 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket/client';
+import Button from '@/components/ui/Button';
 
 interface UserInfo {
   gold: number;
   gameTickets: number;
+  nickname?: string;
+  strategyLevel?: number;
+  playfulLevel?: number;
+  avatarId?: number;
+  borderId?: number;
+  mbti?: string;
 }
 
 interface HeaderProps {
@@ -14,20 +21,45 @@ interface HeaderProps {
   onModeChange: (mode: 'STRATEGY' | 'PLAY') => void;
 }
 
+const ResourceDisplay = ({ icon, value, className }: { icon: string; value: number; className?: string }) => {
+  const formattedValue = useMemo(() => value.toLocaleString(), [value]);
+  return (
+    <div className={`flex items-center gap-1 sm:gap-2 bg-tertiary/50 rounded-full py-1 pl-1 pr-2 sm:pr-3 shadow-inner flex-shrink-0 ${className ?? ''}`}>
+      <div className="bg-primary w-7 h-7 flex items-center justify-center rounded-full text-lg flex-shrink-0">
+        <span className="text-lg">{icon}</span>
+      </div>
+      <span className="font-bold text-[9px] sm:text-sm text-primary whitespace-nowrap">{formattedValue}</span>
+    </div>
+  );
+};
+
 export default function Header({ mode, onModeChange }: HeaderProps) {
   const router = useRouter();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const handleModeSwitch = () => {
-    const newMode = mode === 'STRATEGY' ? 'PLAY' : 'STRATEGY';
-    const token = localStorage.getItem('token');
-    if (token) {
-      const socket = getSocket(token);
-      socket.emit('lobby:leave', { mode });
-      socket.emit('lobby:join', { mode: newMode });
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isMobileMenuOpen && !target.closest('.mobile-menu-container')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    if (isMobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-    onModeChange(newMode);
-  };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -35,7 +67,6 @@ export default function Header({ mode, onModeChange }: HeaderProps) {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        // 이용권 회복 처리
         await fetch('/api/tickets/recover', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
@@ -49,6 +80,12 @@ export default function Header({ mode, onModeChange }: HeaderProps) {
           setUserInfo({
             gold: data.user.gold || 0,
             gameTickets: data.user.gameTickets || 10,
+            nickname: data.user.nickname,
+            strategyLevel: data.user.strategyLevel || 1,
+            playfulLevel: data.user.playfulLevel || 1,
+            avatarId: data.user.avatarId,
+            borderId: data.user.borderId,
+            mbti: data.user.mbti,
           });
         }
       } catch (error) {
@@ -57,8 +94,7 @@ export default function Header({ mode, onModeChange }: HeaderProps) {
     };
 
     fetchUserInfo();
-    // 주기적으로 업데이트 (골드, 이용권)
-    const interval = setInterval(fetchUserInfo, 30000); // 30초마다
+    const interval = setInterval(fetchUserInfo, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -67,86 +103,113 @@ export default function Header({ mode, onModeChange }: HeaderProps) {
     router.push('/login');
   };
 
-  return (
-    <>
-      <header className="baduk-header mb-2 flex items-center justify-between p-3 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white bg-opacity-20">
-            <span className="text-lg">{mode === 'STRATEGY' ? '⚫' : '🎮'}</span>
-          </div>
-          <h1 className="text-lg font-bold">
-            {mode === 'STRATEGY' ? '전략바둑 대기실' : '놀이바둑 대기실'}
-          </h1>
-          <button
-            onClick={handleModeSwitch}
-            className={`rounded-lg border-2 px-3 py-1.5 text-xs font-bold shadow-md transition-all ${
-              mode === 'STRATEGY'
-                ? 'border-purple-600 bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-600 hover:to-pink-700'
-                : 'border-blue-600 bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700'
-            }`}
-          >
-            {mode === 'STRATEGY' ? '→ 놀이바둑 대기실' : '→ 전략바둑 대기실'}
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* 골드 표시 */}
-          {userInfo && (
-            <div className="flex items-center gap-1 rounded bg-yellow-100 px-2 py-1 dark:bg-yellow-900/30">
-              <span className="text-sm">💰</span>
-              <span className="text-xs font-bold text-yellow-700 dark:text-yellow-300">
-                {userInfo.gold.toLocaleString()}
-              </span>
-            </div>
-          )}
+  const openShop = () => {
+    alert('상점 기능은 준비 중입니다.');
+  };
 
-          {/* 대국 이용권 표시 */}
-          {userInfo && (
-            <div className="flex items-center gap-1 rounded bg-blue-100 px-2 py-1 dark:bg-blue-900/30">
-              <span className="text-sm">🎫</span>
-              <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
-                {userInfo.gameTickets}/10
+  const openSettingsModal = () => {
+    router.push('/settings');
+  };
+
+  if (!userInfo) return null;
+
+  return (
+    <header className="flex-shrink-0 bg-primary/80 backdrop-blur-sm shadow-lg relative z-50">
+      <div className="p-2.5 sm:p-3 flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-2 sm:gap-3 min-h-[70px] sm:min-h-[75px]">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0 cursor-pointer relative">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-secondary border-2 border-color flex items-center justify-center">
+            <span className="text-xl">👤</span>
+          </div>
+          <div className="hidden sm:block min-w-0">
+            <h1 className="font-bold text-primary truncate whitespace-nowrap">{userInfo.nickname || '사용자'}</h1>
+            <p className="text-xs text-tertiary truncate whitespace-nowrap">전략 Lv.{userInfo.strategyLevel} / 놀이 Lv.{userInfo.playfulLevel}</p>
+          </div>
+          {!userInfo.mbti && (
+            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+          )}
+        </div>
+
+        <div className="flex-1 w-full sm:w-auto flex flex-wrap sm:flex-nowrap items-center justify-end gap-1 sm:gap-2">
+          <ResourceDisplay icon="💰" value={userInfo.gold} className="flex-shrink-0" />
+          <ResourceDisplay icon="🎫" value={userInfo.gameTickets} className="flex-shrink-0" />
+          
+          <div className="h-9 w-px bg-border-color mx-1 sm:mx-2 flex-shrink-0"></div>
+          
+          {/* 데스크톱 버튼들 */}
+          <div className="hidden sm:flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={openShop}
+              className="p-2 rounded-lg text-xl hover:bg-secondary transition-colors"
+              title="상점"
+            >
+              🛒
+            </button>
+            <button
+              onClick={openSettingsModal}
+              className="p-2 rounded-lg text-xl hover:bg-secondary transition-colors"
+              title="설정"
+            >
+              ⚙️
+            </button>
+            <Button
+              onClick={handleLogout}
+              colorScheme="none"
+              className="whitespace-nowrap !px-3 !py-1.5 text-[9px] sm:text-xs rounded-lg border border-rose-300/55 bg-gradient-to-r from-rose-500/85 via-red-500/80 to-orange-400/80 text-white shadow-[0_10px_22px_-18px_rgba(248,113,113,0.55)] hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-16px_rgba(248,113,113,0.6)]"
+              style={{ letterSpacing: '0.08em' }}
+            >
+              로그아웃
+            </Button>
+          </div>
+
+          {/* 모바일 메뉴 버튼 */}
+          <div className="sm:hidden relative mobile-menu-container">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg text-xl hover:bg-secondary transition-colors flex items-center"
+              title="메뉴"
+            >
+              <span className={`transition-transform duration-200 ${isMobileMenuOpen ? 'rotate-180' : ''}`}>
+                ▼
               </span>
-              {userInfo.gameTickets < 10 && (
+            </button>
+            {isMobileMenuOpen && (
+              <div className="fixed right-2 top-[70px] bg-primary border border-color rounded-lg shadow-2xl z-[9999999] min-w-[60px] py-2" style={{ zIndex: 9999999 }}>
                 <button
                   onClick={() => {
-                    // TODO: 이용권 구매 모달
-                    alert('이용권 구매 기능은 준비 중입니다.');
+                    setIsMobileMenuOpen(false);
+                    openShop();
                   }}
-                  className="ml-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-blue-700"
+                  className="w-full px-3 py-3 hover:bg-secondary transition-colors flex items-center justify-center"
+                  title="상점"
                 >
-                  +
+                  <span className="text-2xl">🛒</span>
                 </button>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={() => {
-              // TODO: 상점 모달 구현
-              alert('상점 기능은 준비 중입니다.');
-            }}
-            className="baduk-button-primary flex items-center gap-1 px-2 py-1 text-xs"
-          >
-            <span>🛒</span>
-            <span>상점</span>
-          </button>
-          <button
-            onClick={() => router.push('/settings')}
-            className="baduk-button-secondary flex items-center gap-1 px-2 py-1 text-xs"
-          >
-            <span>⚙️</span>
-            <span>설정</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="baduk-button-danger flex items-center gap-1 px-2 py-1 text-xs"
-          >
-            <span>🚪</span>
-            <span>로그아웃</span>
-          </button>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    openSettingsModal();
+                  }}
+                  className="w-full px-3 py-3 hover:bg-secondary transition-colors flex items-center justify-center"
+                  title="설정"
+                >
+                  <span className="text-2xl">⚙️</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full px-3 py-3 bg-red-500/90 hover:bg-red-600 transition-colors flex items-center justify-center rounded"
+                  title="로그아웃"
+                >
+                  <span className="text-2xl">⏻</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </header>
-    </>
+      </div>
+    </header>
   );
 }
 

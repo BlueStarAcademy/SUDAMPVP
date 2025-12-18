@@ -62,7 +62,7 @@ export default function RegisterPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-3.5 dark:border-gray-600 dark:bg-gray-700"
               />
             </div>
             <div>
@@ -75,7 +75,7 @@ export default function RegisterPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-3.5 dark:border-gray-600 dark:bg-gray-700"
               />
             </div>
             <div>
@@ -89,7 +89,7 @@ export default function RegisterPage() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-3.5 dark:border-gray-600 dark:bg-gray-700"
               />
             </div>
           </div>

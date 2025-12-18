@@ -2,95 +2,143 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    if (!email.trim() || !password.trim()) {
+      setError('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
+      
       if (!response.ok) {
-        setError(data.error || 'Login failed');
-        return;
+        let errorMessage = `로그인 실패 (${response.statusText})`;
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.error) {
+                errorMessage = errorData.error;
+            }
+        } catch (e) {
+            console.error("Login failed with a non-JSON response body.", e);
+        }
+        throw new Error(errorMessage);
       }
 
-      // Store token
+      const data = await response.json();
       localStorage.setItem('token', data.token);
-      router.push('/lobby');
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+      
+      // 닉네임이 없거나 임시 닉네임이면 닉네임 설정 화면으로, 아니면 로비로
+      if (!data.user.nickname || data.user.nickname.startsWith('user_')) {
+        router.push('/lobby'); // 닉네임 설정은 로비에서 처리
+      } else {
+        router.push('/lobby');
+      }
+    } catch (err: any) {
+      setError(err.message || '로그인에 실패했습니다.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
-        <h2 className="text-center text-3xl font-bold">Login</h2>
+    <div className="flex items-center justify-center min-h-screen bg-login-background">
+      <div className="w-full max-w-sm p-6 space-y-6 bg-gray-800 rounded-lg shadow-2xl border border-color">
+        <div>
+          <p className="mt-2 text-center text-gray-400">이메일과 비밀번호를 입력하여 로그인하세요.</p>
+        </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 text-red-800 dark:bg-red-900 dark:text-red-200">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4">
+          <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium">
-                Email
-              </label>
+              <label htmlFor="email-login" className="sr-only">Email</label>
               <input
-                id="email"
+                id="email-login"
+                name="email"
                 type="email"
+                autoComplete="email"
                 required
+                className="appearance-none rounded-md relative block w-full px-4 py-3 border border-gray-700 bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="이메일"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
               />
             </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium">
-                Password
-              </label>
+             <div>
+              <label htmlFor="password-login" className="sr-only">Password</label>
               <input
-                id="password"
+                id="password-login"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 required
+                className="appearance-none rounded-md relative block w-full px-4 py-3 border border-gray-700 bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="비밀번호"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
               />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-          <p className="text-center text-sm">
-            Don't have an account?{' '}
-            <a href="/register" className="text-blue-600 hover:underline">
-              Register
-            </a>
-          </p>
+          
+          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+
+          <div className="w-full flex justify-center">
+             <Button 
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3 text-lg"
+             >
+                {isLoading ? '로그인 중...' : '로그인'}
+             </Button>
+          </div>
         </form>
+         <div className="text-sm text-center">
+            <a href="/register" className="font-medium text-blue-400 hover:text-blue-300">
+              계정이 없으신가요? 회원가입
+            </a>
+          </div>
+
+        <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-800 text-gray-400">또는 소셜 계정으로 로그인</span>
+            </div>
+        </div>
+
+        <div className="flex justify-center gap-3">
+             <Button 
+                colorScheme="yellow" 
+                className="w-full"
+                onClick={async () => {
+                    try {
+                        const response = await fetch('/api/auth/kakao/url');
+                        const data = await response.json();
+                        if (data.url) {
+                            window.location.href = data.url;
+                        }
+                    } catch (err: any) {
+                        setError('카카오 로그인에 실패했습니다.');
+                    }
+                }}
+             >
+                카카오 로그인
+             </Button>
+        </div>
       </div>
     </div>
   );

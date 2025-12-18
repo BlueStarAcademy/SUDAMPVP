@@ -28,8 +28,22 @@ export default function ChatPanel({ gameId, type = 'GLOBAL' }: ChatPanelProps) {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [cooldown, setCooldown] = useState(0);
+  const [showQuickMenu, setShowQuickMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 퀵 메시지 목록
+  const quickMessages = [
+    '안녕하세요! 👋',
+    '좋은 게임 되세요! 🎮',
+    '화이팅! 💪',
+    '잘하셨습니다! 👏',
+    '다음에 또 대국해요! 😊',
+    '재밌는 게임이었어요! 🎯',
+  ];
+
+  // 이모지 목록
+  const emojis = ['😊', '👍', '👏', '🎉', '🔥', '💪', '🎮', '⭐', '❤️', '🎯', '🏆', '👋'];
 
   useEffect(() => {
     fetchMessages();
@@ -119,8 +133,8 @@ export default function ChatPanel({ gameId, type = 'GLOBAL' }: ChatPanelProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!newMessage.trim() || cooldown > 0) return;
 
     // 비속어 필터링
@@ -147,12 +161,22 @@ export default function ChatPanel({ gameId, type = 'GLOBAL' }: ChatPanelProps) {
         const data = await response.json();
         setMessages((prev) => [...prev, data.message]);
         setNewMessage('');
+        setShowQuickMenu(false);
         // 3초 쿨다운 설정
         setCooldown(3);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
     }
+  };
+
+  const handleQuickMessage = (message: string) => {
+    setNewMessage(message);
+    // 자동 전송하지 않고 입력창에만 넣기
+  };
+
+  const handleEmojiClick = (emoji: string) => {
+    setNewMessage((prev) => prev + emoji);
   };
 
   if (loading) {
@@ -164,14 +188,15 @@ export default function ChatPanel({ gameId, type = 'GLOBAL' }: ChatPanelProps) {
   }
 
   return (
-    <div className="flex h-full flex-col p-5">
-      <div className="mb-3 flex items-center gap-2 border-b border-indigo-200 pb-3">
-        <span className="text-xl">💬</span>
-        <h3 className="font-bold text-gray-800">{type === 'GAME' ? '대국실 채팅' : '전체 채팅'}</h3>
+    <div className="flex h-full flex-col p-4 text-on-panel">
+      <div className="mb-3 flex items-center justify-between border-b border-color pb-2">
+        <h3 className="text-base font-semibold text-on-panel">
+          {type === 'GAME' ? '대국실 채팅' : '전체 채팅'}
+        </h3>
       </div>
 
       {/* 메시지 목록 */}
-      <div className="mb-3 flex-1 space-y-1 overflow-y-auto">
+      <div className="mb-3 flex-1 space-y-0.5 overflow-y-auto pr-1 bg-tertiary/40 p-1 rounded-md">
         {messages.map((msg) => {
           const avatar = msg.user.avatarId
             ? DEFAULT_AVATARS.find((a) => a.id === msg.user.avatarId) || DEFAULT_AVATARS[0]
@@ -183,63 +208,80 @@ export default function ChatPanel({ gameId, type = 'GLOBAL' }: ChatPanelProps) {
           });
 
           return (
-            <div key={msg.id} className="flex items-center gap-2 text-sm">
-              {/* 프로필 사진 */}
-              <div className="relative flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full overflow-hidden border border-gray-300">
-                {avatar.imagePath ? (
-                  <Image
-                    src={avatar.imagePath}
-                    alt={msg.user.nickname || msg.user.username}
-                    fill
-                    className="object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-400 to-purple-500 text-xs font-bold text-white">
-                    {msg.user.nickname?.[0] || msg.user.username[0]?.toUpperCase() || 'U'}
-                  </div>
-                )}
-              </div>
-              {/* [프로필사진]닉네임 (시간) : 할말 형식 */}
-              <div className="flex-1 text-gray-800 dark:text-gray-200">
-                <span className="font-bold">{msg.user.nickname || msg.user.username}</span>
-                <span className="text-xs text-gray-500 ml-1">({timeString})</span>
-                <span className="ml-1">:</span>
-                <span className="ml-1">{msg.message}</span>
-              </div>
+            <div key={msg.id} className="text-xs">
+              <span className="font-semibold text-tertiary cursor-pointer hover:underline pr-2">
+                {msg.user.nickname || msg.user.username}:
+              </span>
+              <span className="text-on-panel">{msg.message}</span>
             </div>
           );
         })}
         <div ref={messagesEndRef} />
       </div>
 
+      {/* 퀵 메뉴 버튼 */}
+      <div className="mb-2 relative flex-shrink-0">
+
+        {/* 퀵 메뉴 (퀵 메시지 + 이모지) */}
+        {showQuickMenu && (
+          <div className="absolute bottom-full mb-2 w-full bg-secondary rounded-lg shadow-xl p-1 z-10 max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-5 gap-1 text-xl mb-1 border-b border-color pb-1">
+              {emojis.map((emoji, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleEmojiClick(emoji)}
+                  className="w-full p-1 rounded-md hover:bg-accent transition-colors text-center"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            <ul className="space-y-0.5">
+              {quickMessages.map((msg, index) => (
+                <li key={index}>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickMessage(msg)}
+                    className="w-full text-left text-xs p-1 rounded-md hover:bg-accent transition-colors"
+                  >
+                    {msg}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
       {/* 메시지 입력 */}
-      <form onSubmit={handleSendMessage} className="flex flex-col gap-2">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="메시지를 입력하세요... (최대 60자)"
-            maxLength={60}
-            className="flex-1 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-          />
-          <button
-            type="submit"
-            disabled={!newMessage.trim() || cooldown > 0}
-            className="rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {cooldown > 0 ? `${cooldown}초` : '전송'}
-          </button>
-        </div>
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>{newMessage.length}/60</span>
-          {cooldown > 0 && (
-            <span className="text-orange-500">다음 메시지는 {cooldown}초 후에 전송할 수 있습니다</span>
-          )}
-        </div>
+      <form onSubmit={handleSendMessage} className="flex gap-1 flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setShowQuickMenu(!showQuickMenu)}
+          className="bg-secondary hover:bg-tertiary text-primary font-bold px-2.5 py-2.5 rounded-md transition-colors text-lg flex items-center justify-center"
+          title="빠른 채팅"
+          disabled={cooldown > 0}
+        >
+          <span>🙂</span>
+        </button>
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder={cooldown > 0 ? `(${cooldown}초)` : `[메시지 입력] ${newMessage.length}/30`}
+          maxLength={30}
+          className="flex-grow bg-tertiary border border-color rounded-md px-3 py-2.5 focus:ring-accent focus:border-accent text-sm disabled:bg-secondary disabled:text-tertiary text-on-panel"
+          disabled={cooldown > 0}
+        />
+        <button
+          type="submit"
+          disabled={!newMessage.trim() || cooldown > 0}
+          className="bg-accent hover:bg-accent-hover text-white font-bold px-2.5 py-2.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="보내기"
+        >
+          💬
+        </button>
       </form>
     </div>
   );

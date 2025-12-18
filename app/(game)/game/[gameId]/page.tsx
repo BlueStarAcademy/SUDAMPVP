@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getSocket, getSocketInstance } from '@/lib/socket/client';
 import Link from 'next/link';
-import { getGameType, ALL_GAME_TYPES } from '@/lib/game/types';
-import GameBoard from '@/components/game/GameBoard';
-import ChatPanel from '@/components/chat/ChatPanel';
+import { getGameType } from '@/lib/game/types';
+import GameArena from '@/components/game/GameArena';
+import PlayerPanel from '@/components/game/PlayerPanel';
+import TurnDisplay from '@/components/game/TurnDisplay';
+import GameControls from '@/components/game/GameControls';
+import Sidebar from '@/components/game/Sidebar';
+import { Player, Point } from '@/lib/game/boardTypes';
 
 export default function GamePage() {
   const router = useRouter();
@@ -16,6 +20,14 @@ export default function GamePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -82,9 +94,7 @@ export default function GamePage() {
 
   const handleMakeMove = async (x: number, y: number) => {
     try {
-      const token = localStorage.getItem('token');
       const socket = getSocketInstance();
-      
       socket?.emit('game:move', {
         gameId,
         x,
@@ -104,57 +114,9 @@ export default function GamePage() {
     }
   };
 
-  const handleHint = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/ai/hint', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ gameId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.hint?.suggestedMove) {
-          alert(`힌트: (${data.hint.suggestedMove.x}, ${data.hint.suggestedMove.y}) 위치를 추천합니다.`);
-        } else {
-          alert('힌트를 가져올 수 없습니다.');
-        }
-      }
-    } catch (err) {
-      console.error('Hint error:', err);
-    }
-  };
-
-  const handleScoring = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/ai/score', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ gameId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.scoring) {
-          alert(`계가 결과: ${data.scoring.winner === 1 ? game.player1?.username : game.player2?.username || 'AI'} 승리 (${data.scoring.score > 0 ? '+' : ''}${data.scoring.score}점)`);
-        }
-      }
-    } catch (err) {
-      console.error('Scoring error:', err);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-primary text-primary">
         <p>로딩 중...</p>
       </div>
     );
@@ -162,7 +124,7 @@ export default function GamePage() {
 
   if (error || !game) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-primary text-primary">
         <div className="text-center">
           <p className="mb-4 text-red-600">{error || '게임을 찾을 수 없습니다.'}</p>
           <Link href="/lobby" className="text-blue-600 hover:underline">
@@ -173,142 +135,105 @@ export default function GamePage() {
     );
   }
 
-  return (
-    <div className="flex min-h-screen flex-col p-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-4xl font-bold">게임 진행</h1>
-          <Link
-            href="/lobby"
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
-            ← 대기실로
-          </Link>
-        </div>
+  const isMyTurn =
+    !!currentUserId &&
+    ((game.currentPlayer === 1 && game.player1?.id === currentUserId) ||
+      (game.currentPlayer === 2 && game.player2?.id === currentUserId));
 
-        <div className="baduk-card p-6 animate-fade-in">
-          <div className="mb-6 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-700">
-            <div className="flex items-center gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg">{game.player1?.nickname || game.player1?.username}</span>
-                  <span className="text-2xl">⚫</span>
-                  <span className="text-2xl text-gray-300">⚪</span>
-                  <span className="font-bold text-lg">
-                    {game.player2?.nickname || game.player2?.username || `AI (${game.aiType})`}
-                  </span>
-                </div>
+  const isStrategic = game.mode === 'STRATEGY';
+  const backgroundClass = isStrategic ? 'bg-strategic-background' : 'bg-playful-background';
+
+  // 게임 데이터를 GoBoard 형식으로 변환
+  const convertedBoardState = useMemo(() => {
+    const board = game.boardState?.board || [];
+    return board.map((row: any[]) => 
+      row.map((cell: any) => {
+        if (cell === 'black' || cell === 1) return Player.Black;
+        if (cell === 'white' || cell === 2) return Player.White;
+        return Player.None;
+      })
+    );
+  }, [game.boardState]);
+
+  const convertedCurrentPlayer = useMemo(() => {
+    return game.currentPlayer === 1 ? Player.Black : Player.White;
+  }, [game.currentPlayer]);
+
+  const convertedLastMove = useMemo(() => {
+    if (!game.lastMove || game.lastMove.x === undefined || game.lastMove.y === undefined) return null;
+    return { x: game.lastMove.x, y: game.lastMove.y };
+  }, [game.lastMove]);
+
+  const myPlayerEnum = useMemo(() => {
+    if (!currentUserId) return Player.None;
+    if (game.player1?.id === currentUserId) {
+      return game.currentPlayer === 1 ? Player.Black : Player.White;
+    }
+    if (game.player2?.id === currentUserId) {
+      return game.currentPlayer === 2 ? Player.Black : Player.White;
+    }
+    return Player.None;
+  }, [currentUserId, game.player1, game.player2, game.currentPlayer]);
+
+  return (
+    <div
+      className={`w-full flex flex-col p-1 lg:p-2 relative max-w-full ${backgroundClass}`}
+      style={{
+        height: '100dvh',
+        maxHeight: '100dvh',
+        paddingBottom: typeof window !== 'undefined' && window.innerWidth < 768 ? 'env(safe-area-inset-bottom, 0px)' : '0px',
+      }}
+    >
+      <div className="flex-1 flex flex-col lg:flex-row gap-2 min-h-0">
+        <main className="flex-1 flex items-center justify-center min-w-0 min-h-0">
+          <div className="w-full h-full max-h-full max-w-full lg:max-w-[calc(100vh-8rem)] flex flex-col items-center gap-1 lg:gap-2">
+            {/* PlayerPanel 영역 */}
+            <div className="flex-shrink-0 w-full flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <PlayerPanel game={game} currentUserId={currentUserId} isMobile={isMobile} />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {game.gameType && (
-                <span className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-3 py-1 text-xs font-bold text-white">
-                  {getGameType(game.gameType)?.name || game.gameType}
-                </span>
-              )}
-              <span className="rounded-full bg-gray-200 px-3 py-1 text-xs font-medium dark:bg-gray-700">
-                {game.mode === 'STRATEGY' ? '전략바둑' : '놀이바둑'}
-              </span>
-              {game.boardSize && (
-                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
-                  {game.boardSize}×{game.boardSize}
-                </span>
-              )}
-            </div>
-          </div>
 
-          {/* Game board */}
-          <div className="mb-6 flex justify-center">
-            <div className="rounded-lg border-4 border-amber-800 bg-amber-100 p-4 dark:border-amber-900 dark:bg-amber-900/30">
-              <GameBoard
-                boardState={game.boardState}
-                boardSize={game.boardSize || 19}
-                currentPlayer={game.currentPlayer}
-                onMakeMove={handleMakeMove}
-                isMyTurn={
-                  !!currentUserId &&
-                  ((game.currentPlayer === 1 && game.player1?.id === currentUserId) ||
-                    (game.currentPlayer === 2 && game.player2?.id === currentUserId))
-                }
+            {/* GameArena 영역 */}
+            <div className="flex-1 w-full relative">
+              <div className="absolute inset-0">
+                <GameArena
+                  boardState={convertedBoardState}
+                  boardSize={game.boardSize || 19}
+                  onBoardClick={handleMakeMove}
+                  lastMove={convertedLastMove}
+                  isBoardDisabled={!isMyTurn}
+                  stoneColor={myPlayerEnum}
+                  currentPlayer={convertedCurrentPlayer}
+                  isMyTurn={isMyTurn}
+                  showLastMoveMarker={true}
+                  mode={game.mode}
+                  gameStatus={game.status}
+                  isMobile={isMobile}
+                />
+              </div>
+            </div>
+
+            {/* TurnDisplay + GameControls 영역 */}
+            <div className="flex-shrink-0 w-full flex flex-col gap-1">
+              <TurnDisplay game={game} isMobile={isMobile} />
+              <GameControls 
+                game={game} 
+                isMyTurn={isMyTurn} 
+                onPass={handlePass}
+                isMobile={isMobile}
               />
             </div>
           </div>
+        </main>
 
-          <div className="mb-4 grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">현재 차례</div>
-              <div className="font-bold">
-                {game.currentPlayer === 1 
-                  ? (game.player1?.nickname || game.player1?.username) 
-                  : (game.player2?.nickname || game.player2?.username || 'AI')}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">남은 시간</div>
-              <div className="font-bold">
-                {game.player1?.nickname || game.player1?.username}: {Math.floor(game.player1Time / 60)}:{(game.player1Time % 60).toString().padStart(2, '0')}
-              </div>
-              {game.player2Time !== null && (
-                <div className="font-bold">
-                  {game.player2?.nickname || game.player2?.username || 'AI'}: {Math.floor((game.player2Time || 0) / 60)}:{((game.player2Time || 0) % 60).toString().padStart(2, '0')}
-                </div>
-              )}
-            </div>
+        {/* Sidebar */}
+        {!isMobile && (
+          <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0">
+            <Sidebar gameId={gameId} game={game} isMobile={isMobile} />
           </div>
-
-          {/* 게임 종료 상태 표시 */}
-          {game.status === 'FINISHED' && (
-            <div className="mb-4 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 p-4 text-center text-white">
-              <div className="text-2xl font-bold">
-                {game.winnerId === game.player1?.id
-                  ? `🎉 ${game.player1?.nickname || game.player1?.username} 승리!`
-                  : game.winnerId === game.player2?.id
-                  ? `🎉 ${game.player2?.nickname || game.player2?.username} 승리!`
-                  : '무승부'}
-              </div>
-              {game.result && (
-                <div className="mt-2 text-sm opacity-90">
-                  {game.result === 'PLAYER1_WIN' && '흑 승리'}
-                  {game.result === 'PLAYER2_WIN' && '백 승리'}
-                  {game.result === 'DRAW' && '무승부'}
-                  {game.result === 'TIMEOUT' && '시간 초과'}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 게임 액션 버튼 */}
-          {game.status === 'IN_PROGRESS' && (
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                onClick={handlePass}
-                disabled={!currentUserId || (game.currentPlayer === 1 && game.player1?.id !== currentUserId) || (game.currentPlayer === 2 && game.player2?.id !== currentUserId)}
-                className="baduk-button-secondary rounded-full px-6 py-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                패스
-              </button>
-              <button
-                onClick={handleHint}
-                className="baduk-button-primary rounded-full px-6 py-2 font-medium"
-              >
-                💡 힌트 (KataGo)
-              </button>
-              <button
-                onClick={handleScoring}
-                className="baduk-button-success rounded-full px-6 py-2 font-medium"
-              >
-                📊 계가 (KataGo)
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* 대국실 채팅 */}
-        <div className="mt-6">
-          <ChatPanel gameId={gameId} type="GAME" />
-        </div>
+        )}
       </div>
     </div>
   );
 }
-

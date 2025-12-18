@@ -53,11 +53,36 @@ export default function LobbyPage() {
     checkSetup();
 
     // Initialize socket connection
-    const socket = getSocket(token);
-    socket.emit('lobby:join', { mode: selectedMode });
+    let socket: ReturnType<typeof getSocket> | null = null;
+    
+    try {
+      socket = getSocket(token);
+      
+      // 소켓이 연결되면 로비에 참가
+      const handleConnect = () => {
+        if (socket) {
+          socket.emit('lobby:join', { mode: selectedMode });
+        }
+      };
+      
+      // 이미 연결되어 있으면 즉시 참가
+      if (socket.connected) {
+        socket.emit('lobby:join', { mode: selectedMode });
+      } else {
+        // 연결 대기
+        socket.on('connect', handleConnect);
+      }
+    } catch (error) {
+      console.error('Failed to initialize socket:', error);
+    }
 
     return () => {
-      socket.emit('lobby:leave');
+      if (socket) {
+        socket.off('connect');
+        if (socket.connected) {
+          socket.emit('lobby:leave');
+        }
+      }
     };
   }, [router, selectedMode]);
 
@@ -76,24 +101,21 @@ export default function LobbyPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden premium-lobby-bg p-3">
-      <div className="mx-auto h-full w-full max-w-[1600px] flex flex-col">
-        <div className="mb-2">
-          <Header mode={selectedMode} onModeChange={setSelectedMode} />
-        </div>
-
-        <div className="flex-1 grid grid-cols-[3fr_1fr] gap-3 overflow-hidden">
+    <div className="bg-primary text-primary flex flex-col h-screen max-w-full overflow-hidden">
+      <Header mode={selectedMode} onModeChange={setSelectedMode} />
+      <div className="flex-1 min-h-0 overflow-hidden px-2 sm:px-4 lg:px-6 pb-2 sm:pb-4 lg:pb-6">
+        <div className="h-full grid grid-cols-[3fr_1fr] gap-3 overflow-hidden">
           {/* 좌측 레이아웃: 프로필+레이팅, 진행중인 대국, 채팅 */}
           <div className="flex flex-col gap-3 overflow-hidden">
             {/* 프로필 패널 + 레이팅 패널 (가로로 나눔) */}
             <div className="grid grid-cols-2 gap-3 flex-shrink-0">
               <div className="min-w-0">
-                <div className="premium-card h-full">
+                <div className="bg-panel h-full rounded-lg shadow-lg border border-color">
                   <ProfilePanel />
                 </div>
               </div>
               <div className="min-w-0">
-                <div className="premium-card h-full">
+                <div className="bg-panel h-full rounded-lg shadow-lg border border-color">
                   <RatingDisplay mode={selectedMode} />
                 </div>
               </div>
@@ -101,14 +123,14 @@ export default function LobbyPage() {
             
             {/* 진행중인 대국 패널 (높이 비율 2) */}
             <div className="flex-[2] min-h-0">
-              <div className="premium-card h-full">
+              <div className="bg-panel h-full rounded-lg shadow-lg border border-color">
                 <OngoingGamesList mode={selectedMode} />
               </div>
             </div>
             
             {/* 채팅 패널 (높이 비율 1) */}
             <div className="flex-[1] min-h-0">
-              <div className="premium-card h-full">
+              <div className="bg-panel h-full rounded-lg shadow-lg border border-color">
                 <ChatPanel type="GLOBAL" />
               </div>
             </div>
@@ -118,14 +140,14 @@ export default function LobbyPage() {
           <div className="flex flex-col gap-3 overflow-hidden">
             {/* 유저목록 패널 (높이 비율 3) */}
             <div className="flex-[3] min-h-0">
-              <div className="premium-card h-full">
+              <div className="bg-panel h-full rounded-lg shadow-lg border border-color">
                 <OnlineUsersList mode={selectedMode} />
               </div>
             </div>
             
             {/* 랭킹 패널 (높이 비율 2) */}
             <div className="flex-[2] min-h-0">
-              <div className="premium-card h-full">
+              <div className="bg-panel h-full rounded-lg shadow-lg border border-color">
                 <RankingLeaderboard mode={selectedMode} />
               </div>
             </div>

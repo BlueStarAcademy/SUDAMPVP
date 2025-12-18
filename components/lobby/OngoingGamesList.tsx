@@ -93,53 +93,57 @@ export default function OngoingGamesList({ mode }: OngoingGamesListProps) {
     : 'from-purple-500 to-pink-600';
 
   return (
-    <div className="p-5 h-full flex flex-col">
-      <div className="mb-3 flex items-center gap-2 border-b border-indigo-200 pb-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${modeColor} shadow-lg`}>
-          <span className="text-base">🔥</span>
-        </div>
-        <div>
-          <h2 className="text-base font-bold text-gray-800">진행중인 대국</h2>
-        </div>
+    <div className="p-4 h-full flex flex-col text-on-panel">
+      <div className="mb-3 flex items-center justify-between border-b border-color pb-2">
+        <h2 className="text-lg font-semibold text-on-panel">진행중인 대국</h2>
       </div>
+      
       {games.length === 0 ? (
-        <div className="py-4 text-center flex-1 flex items-center justify-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">진행 중인 대국 없음</p>
+        <div className="py-8 text-center flex-1 flex items-center justify-center">
+          <p className="text-tertiary">진행 중인 대국이 없습니다</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto space-y-1">
-          {games.map((game) => (
-            <div
-              key={game.id}
-              className="group flex items-center justify-between rounded border border-gray-200 bg-gradient-to-r from-white to-gray-50 p-2 transition-all hover:border-blue-400 dark:border-gray-700 dark:from-gray-800 dark:to-gray-700"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
-                    {game.player1.nickname || game.player1.username}
-                  </span>
-                  <span className="text-xs">⚫</span>
-                  <span className="text-xs">⚪</span>
-                  <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">
-                    {game.player2?.nickname || game.player2?.username || '대기중'}
-                  </span>
+        <ul className="space-y-3 overflow-y-auto pr-2 flex-1">
+          {games.map((game, index) => (
+            <li key={game.id} className="relative">
+              <div className="flex items-center justify-between p-2.5 bg-tertiary/50 rounded-lg">
+                <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                  <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-secondary rounded-full font-bold text-sm">
+                    {index + 1}
+                  </div>
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="text-center truncate">
+                      <div className="w-9 h-9 rounded-full bg-tertiary border-2 border-color mx-auto mb-1 flex items-center justify-center">
+                        <span className="text-xs">👤</span>
+                      </div>
+                      <span className="text-xs font-semibold block truncate">{game.player1.nickname || game.player1.username}</span>
+                    </div>
+                    <span className="text-tertiary font-bold">vs</span>
+                    <div className="text-center truncate">
+                      <div className="w-9 h-9 rounded-full bg-tertiary border-2 border-color mx-auto mb-1 flex items-center justify-center">
+                        <span className="text-xs">👤</span>
+                      </div>
+                      <span className="text-xs font-semibold block truncate">{game.player2?.nickname || game.player2?.username || '대기중'}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
-                  <span className="rounded bg-blue-100 px-1 py-0.5 font-medium dark:bg-blue-900/30">
-                    {game.gameType || '게임'}
-                  </span>
-                  <span>{game.boardSize}x{game.boardSize}</span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {game.gameType && (
+                    <div className="text-sm text-highlight truncate max-w-xs hidden md:block" title={game.gameType}>
+                      {game.gameType}
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => handleSpectate(game.id)} 
+                    className="ml-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-lg text-sm transition-colors shrink-0"
+                  >
+                    관전하기
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={() => handleSpectate(game.id)}
-                className="baduk-button-primary ml-2 px-2 py-1 text-xs font-medium shadow-sm transition-transform hover:scale-105 flex-shrink-0"
-              >
-                👁️
-              </button>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

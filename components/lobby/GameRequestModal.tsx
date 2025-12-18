@@ -89,16 +89,16 @@ export default function GameRequestModal({
       modalId="game-request"
       maxWidth="max-w-lg"
     >
-      <div className="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-3">
-        <p className="text-sm font-medium text-gray-800">
-          상대방: <span className="font-bold text-blue-600">{receiverName}</span>
+      <div className="mb-4 rounded-lg bg-tertiary/30 border border-color p-3">
+        <p className="text-sm font-medium text-on-panel">
+          상대방: <span className="font-bold text-highlight">{receiverName}</span>
         </p>
       </div>
 
       <div className="space-y-6">
           {/* 게임 타입 선택 */}
           <div>
-            <label className="mb-3 block text-sm font-bold text-gray-800">
+            <label className="mb-3 block text-sm font-bold text-on-panel">
               게임 타입
             </label>
             <div className="space-y-3">
@@ -106,7 +106,7 @@ export default function GameRequestModal({
               <div>
                 <div className="mb-2 flex items-center gap-2">
                   <span className="text-lg">⚔️</span>
-                  <p className="text-xs font-semibold text-gray-600">
+                  <p className="text-xs font-semibold text-secondary">
                     전략바둑
                   </p>
                 </div>
@@ -117,8 +117,8 @@ export default function GameRequestModal({
                       onClick={() => handleGameTypeSelect(gameType.id)}
                       className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                         selectedGameType === gameType.id
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg scale-105'
-                          : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          ? 'bg-accent text-white shadow-lg scale-105'
+                          : 'bg-tertiary/30 text-on-panel hover:bg-tertiary/50 border border-color'
                       }`}
                     >
                       {gameType.name}
@@ -131,7 +131,7 @@ export default function GameRequestModal({
               <div>
                 <div className="mb-2 flex items-center gap-2">
                   <span className="text-lg">🎮</span>
-                  <p className="text-xs font-semibold text-gray-600">
+                  <p className="text-xs font-semibold text-secondary">
                     놀이바둑
                   </p>
                 </div>
@@ -142,8 +142,8 @@ export default function GameRequestModal({
                       onClick={() => handleGameTypeSelect(gameType.id)}
                       className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                         selectedGameType === gameType.id
-                          ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg scale-105'
-                          : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          ? 'bg-accent text-white shadow-lg scale-105'
+                          : 'bg-tertiary/30 text-on-panel hover:bg-tertiary/50 border border-color'
                       }`}
                     >
                       {gameType.name}
@@ -157,7 +157,7 @@ export default function GameRequestModal({
         {/* 보드 크기 선택 */}
         {selectedGame && (
           <div>
-            <label className="mb-3 block text-sm font-bold text-gray-800">
+            <label className="mb-3 block text-sm font-bold text-on-panel">
               보드 크기
             </label>
             <div className="flex gap-2">
@@ -167,8 +167,8 @@ export default function GameRequestModal({
                     onClick={() => setSelectedBoardSize(size)}
                     className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
                       selectedBoardSize === size
-                        ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg scale-105'
-                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                        ? 'bg-highlight text-white shadow-lg scale-105'
+                        : 'bg-tertiary/30 text-on-panel hover:bg-tertiary/50 border border-color'
                     }`}
                   >
                     {size}×{size}
@@ -180,13 +180,13 @@ export default function GameRequestModal({
 
         {/* 시간 제한 */}
         <div>
-            <label className="mb-3 block text-sm font-bold text-gray-800">
+            <label className="mb-3 block text-sm font-bold text-on-panel">
               시간 제한
             </label>
             <select
               value={timeLimit}
               onChange={(e) => setTimeLimit(Number(e.target.value))}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 shadow-sm transition-colors hover:bg-gray-50 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full rounded-lg border border-color bg-secondary px-4 py-3.5 text-sm font-medium text-on-panel shadow-sm transition-colors hover:bg-tertiary/30 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value={600}>10분</option>
               <option value={900}>15분</option>
@@ -199,7 +199,7 @@ export default function GameRequestModal({
         <button
             onClick={handleSendRequest}
             disabled={!selectedGameType || loading}
-            className="w-full rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-3 text-lg font-bold text-white shadow-lg transition-all hover:from-green-600 hover:to-emerald-700 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-lg bg-accent hover:bg-accent-hover px-6 py-3 text-lg font-bold text-white shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
           {loading ? '신청 중...' : '대국 신청하기'}
         </button>
