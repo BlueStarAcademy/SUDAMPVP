@@ -12,19 +12,11 @@ WORKDIR /app
 # Copy workspace configuration files
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
 
-# Copy package.json files for all packages
-COPY app/package.json ./app/
-COPY packages/database/package.json ./packages/database/
-COPY packages/game-logic/package.json ./packages/game-logic/
-COPY packages/shared/package.json ./packages/shared/
+# Copy all source files (including package.json files for packages)
+COPY . .
 
 # Install all dependencies first
 RUN pnpm install --no-frozen-lockfile
-
-# Prisma schema will be copied with the rest of the files
-
-# Copy all remaining source files
-COPY . .
 
 # Set dummy DATABASE_URL for Prisma Client generation
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
