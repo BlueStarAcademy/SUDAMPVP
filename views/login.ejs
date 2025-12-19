@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUDAM - 로그인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .form-toggle {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .form-toggle a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .form-toggle a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>SUDAM</h1>
+            <p>바둑 게임 플랫폼</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">로그인</button>
+        </form>
+
+        <form id="registerForm" style="display: none;">
+            <div class="form-group">
+                <label for="regEmail">이메일</label>
+                <input type="email" id="regEmail" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="regNickname">닉네임</label>
+                <input type="text" id="regNickname" name="nickname" required>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">비밀번호</label>
+                <input type="password" id="regPassword" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">회원가입</button>
+        </form>
+
+        <div class="form-toggle">
+            <a href="#" id="toggleForm">회원가입</a>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const toggleForm = document.getElementById('toggleForm');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let isLoginMode = true;
+
+        toggleForm.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            
+            if (isLoginMode) {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                toggleForm.textContent = '회원가입';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                toggleForm.textContent = '로그인';
+            }
+            errorMessage.classList.remove('show');
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.classList.remove('show');
+
+            const formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+            };
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/waiting-room';
+                } else {
+                    showError(data.error || '로그인에 실패했습니다.');
+                }
+            } catch (error) {
+                showError('서버 오류가 발생했습니다.');
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.classList.remove('show');
+
+            const formData = {
+                email: document.getElementById('regEmail').value,
+                nickname: document.getElementById('regNickname').value,
+                password: document.getElementById('regPassword').value,
+            };
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/waiting-room';
+                } else {
+                    showError(data.error || '회원가입에 실패했습니다.');
+                }
+            } catch (error) {
+                showError('서버 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+</html>
+

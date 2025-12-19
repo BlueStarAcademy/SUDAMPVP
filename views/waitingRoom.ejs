@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUDAM - 대기실</title>
+    <link rel="stylesheet" href="/css/modal.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .waiting-room {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .main-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .user-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .user-card {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .user-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .user-card.matching {
+            border-color: #ff9800;
+            background: #fff3e0;
+        }
+
+        .user-card.in-game {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .user-nickname {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-rating {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .user-status {
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .user-status.waiting {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .user-status.matching {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .user-status.in-game {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .matching-status {
+            text-align: center;
+            padding: 20px;
+            background: #fff3e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .matching-status.active {
+            display: block;
+        }
+
+        .ai-bot-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .ai-level-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ai-level-btn {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .ai-level-btn:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .ai-level-btn.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .profile-nickname {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .profile-rating {
+            font-size: 16px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header', { user: user }) %>
+
+    <div class="container">
+        <div class="waiting-room">
+            <div class="main-section">
+                <h2 class="section-title">온라인 유저</h2>
+                <div class="user-list" id="userList">
+                    <!-- 유저 목록이 실시간으로 업데이트됩니다 -->
+                </div>
+
+                <div class="matching-status" id="matchingStatus">
+                    <div style="font-weight: 600; margin-bottom: 10px;">매칭 중...</div>
+                    <div style="font-size: 14px; color: #666;">적절한 상대를 찾고 있습니다.</div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="startMatchingBtn">랭킹전 매칭 시작</button>
+                    <button class="btn btn-secondary" id="cancelMatchingBtn" style="display: none;">매칭 취소</button>
+                </div>
+
+                <div class="ai-bot-section">
+                    <h3 class="section-title">AI봇과 대국</h3>
+                    <p style="color: #666; margin-bottom: 15px;">난이도를 선택하세요 (1-10단)</p>
+                    <div class="ai-level-selector" id="aiLevelSelector">
+                        <% for (let i = 1; i <= 10; i++) { %>
+                            <button class="ai-level-btn" data-level="<%= i %>"><%= i %>단</button>
+                        <% } %>
+                    </div>
+                    <button class="btn btn-primary" id="startAiGameBtn" style="margin-top: 20px; width: 100%;">AI봇과 대국 시작</button>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar"><%= user.nickname.charAt(0).toUpperCase() %></div>
+                        <div class="profile-nickname"><%= user.nickname %></div>
+                        <div class="profile-rating">레이팅: <%= user.rating %></div>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-value"><%= user.wins || 0 %></div>
+                            <div class="stat-label">승</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value"><%= user.losses || 0 %></div>
+                            <div class="stat-label">패</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value"><%= user.draws || 0 %></div>
+                            <div class="stat-label">무</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/modal.js"></script>
+    <script>
+        const socket = io();
+        const userList = document.getElementById('userList');
+        const startMatchingBtn = document.getElementById('startMatchingBtn');
+        const cancelMatchingBtn = document.getElementById('cancelMatchingBtn');
+        const matchingStatus = document.getElementById('matchingStatus');
+        const startAiGameBtn = document.getElementById('startAiGameBtn');
+        const aiLevelSelector = document.getElementById('aiLevelSelector');
+        let selectedAiLevel = null;
+        let isMatching = false;
+
+        // Socket events
+        socket.on('user_joined', (user) => {
+            updateUserList();
+        });
+
+        socket.on('user_left', (userId) => {
+            updateUserList();
+        });
+
+        socket.on('user_status_changed', (data) => {
+            updateUserList();
+        });
+
+        socket.on('user_list_update', (users) => {
+            renderUserList(users);
+        });
+
+        socket.on('match_found', (data) => {
+            // Check if this match is for current user
+            if (data.userIds && data.userIds.includes('<%= user.id %>')) {
+                isMatching = false;
+                window.location.href = `/api/game/${data.gameId}`;
+            }
+        });
+
+        socket.on('match_cancelled', () => {
+            isMatching = false;
+            startMatchingBtn.style.display = 'block';
+            cancelMatchingBtn.style.display = 'none';
+            matchingStatus.classList.remove('active');
+        });
+
+        // Request initial user list
+        socket.emit('get_user_list');
+
+        function updateUserList() {
+            socket.emit('get_user_list');
+        }
+
+        function renderUserList(users) {
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const card = document.createElement('div');
+                card.className = `user-card ${user.status}`;
+                card.innerHTML = `
+                    <div class="user-nickname">${user.nickname}</div>
+                    <div class="user-rating">레이팅: ${user.rating}</div>
+                    <div class="user-status ${user.status}">${getStatusText(user.status)}</div>
+                `;
+                userList.appendChild(card);
+            });
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'waiting': '대기 중',
+                'matching': '매칭 중',
+                'in-game': '게임 중'
+            };
+            return statusMap[status] || status;
+        }
+
+        // Matching
+        startMatchingBtn.addEventListener('click', () => {
+            socket.emit('start_matching');
+            isMatching = true;
+            startMatchingBtn.style.display = 'none';
+            cancelMatchingBtn.style.display = 'block';
+            matchingStatus.classList.add('active');
+        });
+
+        cancelMatchingBtn.addEventListener('click', () => {
+            socket.emit('cancel_matching');
+            isMatching = false;
+            startMatchingBtn.style.display = 'block';
+            cancelMatchingBtn.style.display = 'none';
+            matchingStatus.classList.remove('active');
+        });
+
+        // AI Level Selection
+        aiLevelSelector.querySelectorAll('.ai-level-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                aiLevelSelector.querySelectorAll('.ai-level-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedAiLevel = parseInt(btn.dataset.level);
+            });
+        });
+
+        startAiGameBtn.addEventListener('click', () => {
+            if (!selectedAiLevel) {
+                alert('난이도를 선택해주세요.');
+                return;
+            }
+            socket.emit('start_ai_game', { level: selectedAiLevel });
+        });
+
+        socket.on('ai_game_started', (data) => {
+            window.location.href = `/api/game/${data.gameId}`;
+        });
+    </script>
+</body>
+</html>
+

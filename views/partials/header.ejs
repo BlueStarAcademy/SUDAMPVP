@@ -1,0 +1,41 @@
+<header style="background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 30px;">
+        <a href="/waiting-room" style="text-decoration: none; color: #333;">
+            <h1 style="margin: 0; font-size: 24px; color: #667eea;">SUDAM</h1>
+        </a>
+        <nav style="display: flex; gap: 20px;">
+            <a href="/waiting-room" style="text-decoration: none; color: #666; font-weight: 500;">대기실</a>
+            <a href="/ranking" style="text-decoration: none; color: #666; font-weight: 500;">랭킹</a>
+        </nav>
+    </div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <% if (user) { %>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="text-align: right;">
+                    <div style="font-weight: 600; color: #333;"><%= user.nickname %></div>
+                    <div style="font-size: 12px; color: #666;">레이팅: <span style="color: #667eea; font-weight: 600;"><%= user.rating %></span></div>
+                </div>
+                <button id="logoutBtn" style="padding: 8px 20px; background: #f5f5f5; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">로그아웃</button>
+            </div>
+        <% } else { %>
+            <a href="/login" style="text-decoration: none; color: #667eea; font-weight: 500;">로그인</a>
+        <% } %>
+    </div>
+</header>
+
+<script>
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    });
+</script>
+
