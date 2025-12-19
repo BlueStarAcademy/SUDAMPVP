@@ -1,12 +1,14 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 # Install system dependencies including OpenSSL for Prisma
-RUN apk add --no-cache \
+# Using Debian-based image for better OpenSSL compatibility with Prisma
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
-    openssl1.1-compat \
     openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
     && npm install -g pnpm@8.10.0
 
 WORKDIR /app
