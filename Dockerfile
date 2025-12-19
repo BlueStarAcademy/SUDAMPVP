@@ -1,10 +1,12 @@
 FROM node:20-alpine
 
-# Install system dependencies
+# Install system dependencies including OpenSSL for Prisma
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
+    openssl1.1-compat \
+    openssl \
     && npm install -g pnpm@8.10.0
 
 WORKDIR /app
