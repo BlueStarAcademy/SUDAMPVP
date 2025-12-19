@@ -48,24 +48,32 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('Login attempt for email:', email);
+
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    console.log('Looking up user...');
     const user = await userService.findUserByEmail(email);
     if (!user) {
+      console.log('User not found');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    console.log('User found, verifying password...');
     const isValid = await userService.verifyPassword(password, user.password);
     if (!isValid) {
+      console.log('Invalid password');
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    console.log('Password verified, setting session...');
     // Set session
     req.session.userId = user.id;
     req.session.nickname = user.nickname;
 
+    console.log('Login successful for user:', user.id);
     res.json({
       success: true,
       user: {
@@ -77,7 +85,18 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
+    
+    // Check if it's a database connection error
+    if (error.code === 'P1001' || error.message.includes('connect')) {
+      return res.status(500).json({ 
+        error: 'Database connection failed',
+        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+    
     res.status(500).json({ 
       error: 'Internal server error',
       message: process.env.NODE_ENV === 'development' ? error.message : undefined

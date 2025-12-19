@@ -27,9 +27,14 @@ class UserService {
   }
 
   async findUserByEmail(email) {
-    return await prisma.user.findUnique({
-      where: { email },
-    });
+    try {
+      return await prisma.user.findUnique({
+        where: { email },
+      });
+    } catch (error) {
+      console.error('Database error in findUserByEmail:', error);
+      throw error;
+    }
   }
 
   async findUserByNickname(nickname) {
