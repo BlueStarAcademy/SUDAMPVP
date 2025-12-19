@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-# Install system dependencies including OpenSSL for Prisma
+# Install system dependencies including OpenSSL for Prisma and Gnugo
 # Using Debian-based image for better OpenSSL compatibility with Prisma
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     openssl \
     ca-certificates \
+    gnugo \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g pnpm@8.10.0
 
