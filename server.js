@@ -22,13 +22,22 @@ const io = new Server(server, {
 app.set('io', io);
 global.io = io;
 
-// Initialize Redis
-initializeRedis().catch(console.error);
+// Initialize Redis (non-blocking, won't block server startup)
+// Redis is optional - app will work with memory store if Redis is unavailable
+initializeRedis()
+    .then(() => {
+        const client = getRedisClient();
+        if (client) {
+            console.log('Redis initialized successfully');
+        }
+    })
+    .catch((error) => {
+        console.error('Redis initialization failed, using memory store:', error.message);
+    });
 
 // Session configuration
-const redisClient = getRedisClient();
+// Use memory store by default (Redis is optional for caching, not required for sessions)
 app.use(session({
-    store: new RedisStore({ client: redisClient }),
     secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,

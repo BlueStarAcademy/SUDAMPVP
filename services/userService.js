@@ -71,8 +71,14 @@ class UserService {
 
     // Invalidate cache
     const redis = getRedisClient();
-    await redis.del(`user:${userId}`);
-    await redis.del(`ranking:${userId}`);
+    if (redis) {
+      try {
+        await redis.del(`user:${userId}`);
+        await redis.del(`ranking:${userId}`);
+      } catch (error) {
+        console.error('Redis cache invalidation error:', error);
+      }
+    }
 
     return user;
   }
@@ -81,10 +87,16 @@ class UserService {
     const cacheKey = `user:${userId}`;
     const redis = getRedisClient();
     
-    // Try cache first
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
+    // Try cache first (if Redis is available)
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (error) {
+        console.error('Redis cache read error:', error);
+      }
     }
 
     const user = await this.findUserById(userId);
@@ -101,8 +113,14 @@ class UserService {
       totalGames: user._count.gamesAsBlack + user._count.gamesAsWhite,
     };
 
-    // Cache for 5 minutes
-    await redis.setEx(cacheKey, 300, JSON.stringify(profile));
+    // Cache for 5 minutes (if Redis is available)
+    if (redis) {
+      try {
+        await redis.setEx(cacheKey, 300, JSON.stringify(profile));
+      } catch (error) {
+        console.error('Redis cache write error:', error);
+      }
+    }
 
     return profile;
   }
@@ -111,10 +129,16 @@ class UserService {
     const cacheKey = 'top_rankings';
     const redis = getRedisClient();
     
-    // Try cache first
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
+    // Try cache first (if Redis is available)
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (error) {
+        console.error('Redis cache read error:', error);
+      }
     }
 
     const rankings = await prisma.ranking.findMany({
@@ -144,8 +168,14 @@ class UserService {
       draws: r.user.draws,
     }));
 
-    // Cache for 1 minute
-    await redis.setEx(cacheKey, 60, JSON.stringify(result));
+    // Cache for 1 minute (if Redis is available)
+    if (redis) {
+      try {
+        await redis.setEx(cacheKey, 60, JSON.stringify(result));
+      } catch (error) {
+        console.error('Redis cache write error:', error);
+      }
+    }
 
     return result;
   }

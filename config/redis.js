@@ -43,7 +43,7 @@ async function initializeRedis() {
 
 function getRedisClient() {
   if (!redisClient) {
-    throw new Error('Redis client not initialized. Call initializeRedis() first.');
+    return null; // Return null instead of throwing error
   }
   return redisClient;
 }
