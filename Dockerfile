@@ -56,10 +56,15 @@ RUN if [ -f "schema.prisma" ]; then \
       npx prisma generate --schema ./schema.prisma; \
     fi
 
-# Build Next.js app
-WORKDIR /app/app
-RUN pnpm build
-
-# Start application
+# Build Next.js app (if app directory exists)
 WORKDIR /app
-CMD ["pnpm", "--filter", "@sudam/app", "start"]
+RUN if [ -d "app" ] && [ -f "app/package.json" ]; then \
+      cd app && \
+      pnpm build; \
+    else \
+      echo "App directory not found, skipping Next.js build"; \
+    fi
+
+# Start application - use shell to check and start appropriate app
+WORKDIR /app
+CMD sh -c "if [ -d 'app' ] && [ -f 'app/package.json' ]; then pnpm --filter '@sudam/app' start; else node server.js; fi"
