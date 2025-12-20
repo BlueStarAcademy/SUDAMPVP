@@ -216,18 +216,36 @@
             };
 
             try {
+                console.log('로그인 시도:', formData.email);
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include', // 세션 쿠키를 포함하기 위해 필요
                     body: JSON.stringify(formData),
                 });
 
+                console.log('응답 상태:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: '서버 오류가 발생했습니다.' }));
+                    console.error('로그인 실패:', errorData);
+                    showError(errorData.error || '로그인에 실패했습니다.');
+                    return;
+                }
+
                 const data = await response.json();
+                console.log('로그인 성공:', data);
 
                 if (data.success) {
-                    window.location.href = '/waiting-room';
+                    console.log('리다이렉트 시도: /waiting-room');
+                    // 세션 쿠키가 브라우저에 저장될 시간을 확보 (더 긴 지연)
+                    setTimeout(() => {
+                        console.log('실제 리다이렉트 실행');
+                        // window.location.href 사용 (쿠키 전송 보장)
+                        window.location.href = '/waiting-room';
+                    }, 800);
                 } else {
                     showError(data.error || '로그인에 실패했습니다.');
                 }
@@ -252,8 +270,15 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include', // 세션 쿠키를 포함하기 위해 필요
                     body: JSON.stringify(formData),
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: '서버 오류가 발생했습니다.' }));
+                    showError(errorData.error || '회원가입에 실패했습니다.');
+                    return;
+                }
 
                 const data = await response.json();
 

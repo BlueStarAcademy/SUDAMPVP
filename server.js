@@ -38,14 +38,24 @@ initializeRedis()
 // Session configuration
 // Use memory store by default (Redis is optional for caching, not required for sessions)
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
+    name: 'connect.sid', // 명시적으로 세션 쿠키 이름 설정
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production', // 프로덕션에서는 HTTPS 사용 시 true
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 프로덕션에서는 cross-site 쿠키 허용
+        path: '/' // 쿠키 경로 명시
     }
+}));
+
+// CORS 설정 (같은 origin이므로 실제로는 필요 없지만 명시적으로 설정)
+const cors = require('cors');
+app.use(cors({
+  origin: true, // 모든 origin 허용 (로컬 개발용)
+  credentials: true
 }));
 
 // Middleware
@@ -54,6 +64,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', './views');
+
+// Ignore favicon requests (404 방지)
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // Routes
 app.get('/', (req, res) => {
@@ -72,12 +85,20 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/waiting-room', requireAuth, async (req, res) => {
+    console.log('=== WAITING ROOM REQUEST ===');
+    console.log('Session userId:', req.session?.userId);
+    console.log('Session nickname:', req.session?.nickname);
+    
     try {
         const userService = require('./services/userService');
         const user = await userService.getUserProfile(req.session.userId);
+        console.log('User profile loaded:', user?.nickname);
+        console.log('Rendering waitingRoom template...');
         res.render('waitingRoom', { user });
+        console.log('waitingRoom template rendered successfully');
     } catch (error) {
         console.error('Waiting room error:', error);
+        console.error('Error stack:', error.stack);
         res.redirect('/login');
     }
 });

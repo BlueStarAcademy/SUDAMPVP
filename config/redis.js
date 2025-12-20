@@ -26,9 +26,16 @@ async function initializeRedis() {
     // Subscriber client for Pub/Sub
     subClient = createClient(redisConfig);
 
-    redisClient.on('error', (err) => console.error('Redis Client Error:', err));
-    pubClient.on('error', (err) => console.error('Redis Pub Client Error:', err));
-    subClient.on('error', (err) => console.error('Redis Sub Client Error:', err));
+    // Redis 오류는 조용히 처리 (Redis는 선택사항이므로)
+    redisClient.on('error', (err) => {
+      // 개발 모드에서만 첫 번째 오류만 표시
+      if (process.env.NODE_ENV === 'development' && !redisClient._errorLogged) {
+        console.log('Redis 연결 실패 (선택사항, 메모리 스토어 사용):', err.message);
+        redisClient._errorLogged = true;
+      }
+    });
+    pubClient.on('error', () => {}); // 조용히 무시
+    subClient.on('error', () => {}); // 조용히 무시
 
     await redisClient.connect();
     await pubClient.connect();

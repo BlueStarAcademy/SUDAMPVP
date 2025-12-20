@@ -48,23 +48,29 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log('Login attempt for email:', email);
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Email:', email);
+    console.log('Password provided:', password ? 'Yes' : 'No');
+    console.log('Request body:', JSON.stringify(req.body));
 
     if (!email || !password) {
+      console.log('Missing email or password');
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
     console.log('Looking up user...');
     const user = await userService.findUserByEmail(email);
     if (!user) {
-      console.log('User not found');
+      console.log('User not found for email:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log('User found, verifying password...');
+    console.log('User found:', user.email, user.nickname);
+    console.log('Verifying password...');
     const isValid = await userService.verifyPassword(password, user.password);
+    console.log('Password valid:', isValid);
     if (!isValid) {
-      console.log('Invalid password');
+      console.log('Invalid password for user:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -72,16 +78,32 @@ router.post('/login', async (req, res) => {
     // Set session
     req.session.userId = user.id;
     req.session.nickname = user.nickname;
-
-    console.log('Login successful for user:', user.id);
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        nickname: user.nickname,
-        rating: user.rating,
-      },
+    
+    // 세션 저장 확인
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        console.error('Session save error details:', {
+          message: err.message,
+          stack: err.stack
+        });
+        return res.status(500).json({ 
+          error: 'Failed to save session',
+          message: process.env.NODE_ENV === 'development' ? err.message : '세션 저장에 실패했습니다.'
+        });
+      }
+      
+      console.log('Session saved successfully, userId:', req.session.userId);
+      console.log('Login successful for user:', user.id);
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          nickname: user.nickname,
+          rating: user.rating,
+        },
+      });
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -90,16 +112,24 @@ router.post('/login', async (req, res) => {
     console.error('Error stack:', error.stack);
     
     // Check if it's a database connection error
-    if (error.code === 'P1001' || error.message.includes('connect')) {
+    if (error.code === 'P1001' || error.message.includes('connect') || error.message.includes('database')) {
       return res.status(500).json({ 
         error: 'Database connection failed',
-        message: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: process.env.NODE_ENV === 'development' ? error.message : '데이터베이스 연결에 실패했습니다.'
+      });
+    }
+    
+    // Check if it's a Prisma error
+    if (error.code && error.code.startsWith('P')) {
+      return res.status(500).json({ 
+        error: 'Database error',
+        message: process.env.NODE_ENV === 'development' ? error.message : '데이터베이스 오류가 발생했습니다.'
       });
     }
     
     res.status(500).json({ 
       error: 'Internal server error',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: process.env.NODE_ENV === 'development' ? error.message : '서버 오류가 발생했습니다.'
     });
   }
 });
