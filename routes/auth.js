@@ -7,27 +7,40 @@ router.post('/register', async (req, res) => {
   try {
     const { email, nickname, password } = req.body;
 
+    console.log('=== REGISTRATION ATTEMPT ===');
+    console.log('Email:', email);
+    console.log('Nickname:', nickname);
+    console.log('Password provided:', password ? 'Yes' : 'No');
+
     if (!email || !nickname || !password) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
     // Check if user exists
+    console.log('Checking if email exists...');
     const existingEmail = await userService.findUserByEmail(email);
     if (existingEmail) {
+      console.log('Email already exists:', email);
       return res.status(400).json({ error: 'Email already exists' });
     }
 
+    console.log('Checking if nickname exists...');
     const existingNickname = await userService.findUserByNickname(nickname);
     if (existingNickname) {
+      console.log('Nickname already exists:', nickname);
       return res.status(400).json({ error: 'Nickname already exists' });
     }
 
+    console.log('Creating user...');
     const user = await userService.createUser(email, nickname, password);
+    console.log('User created successfully:', user.id);
 
     // Set session
+    console.log('Setting session...');
     req.session.userId = user.id;
     req.session.nickname = user.nickname;
 
+    console.log('Registration successful for user:', user.id);
     res.json({
       success: true,
       user: {
@@ -39,7 +52,41 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    
+    // Check if it's a database connection error
+    if (error.code === 'P1001' || error.message.includes('connect') || error.message.includes('database')) {
+      return res.status(500).json({ 
+        error: 'Database connection failed',
+        message: process.env.NODE_ENV === 'development' ? error.message : '데이터베이스 연결에 실패했습니다.'
+      });
+    }
+    
+    // Check if it's a Prisma error
+    if (error.code && error.code.startsWith('P')) {
+      return res.status(500).json({ 
+        error: 'Database error',
+        message: process.env.NODE_ENV === 'development' ? error.message : '데이터베이스 오류가 발생했습니다.',
+        code: error.code
+      });
+    }
+    
+    // Check for unique constraint violations
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0] || 'field';
+      return res.status(400).json({ 
+        error: `${field} already exists`,
+        message: `이미 사용 중인 ${field === 'email' ? '이메일' : '닉네임'}입니다.`
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error.message : '서버 오류가 발생했습니다.'
+    });
   }
 });
 
@@ -79,22 +126,36 @@ router.post('/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.nickname = user.nickname;
     
-    // 세션 저장 확인
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        console.error('Session save error details:', {
-          message: err.message,
-          stack: err.stack
+    // 세션 저장 확인 - Promise로 래핑하여 에러 처리 개선
+    try {
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session save error:', err);
+            console.error('Session save error details:', {
+              message: err.message,
+              stack: err.stack,
+              code: err.code
+            });
+            reject(err);
+            return;
+          }
+          
+          console.log('Session saved successfully, userId:', req.session.userId);
+          console.log('Session ID:', req.sessionID);
+          console.log('Login successful for user:', user.id);
+          
+          // 세션이 제대로 저장되었는지 확인
+          if (!req.session.userId) {
+            console.error('WARNING: Session userId is missing after save!');
+            reject(new Error('Session userId is missing after save'));
+            return;
+          }
+          
+          resolve();
         });
-        return res.status(500).json({ 
-          error: 'Failed to save session',
-          message: process.env.NODE_ENV === 'development' ? err.message : '세션 저장에 실패했습니다.'
-        });
-      }
+      });
       
-      console.log('Session saved successfully, userId:', req.session.userId);
-      console.log('Login successful for user:', user.id);
       res.json({
         success: true,
         user: {
@@ -103,8 +164,15 @@ router.post('/login', async (req, res) => {
           nickname: user.nickname,
           rating: user.rating,
         },
+        sessionId: req.sessionID // 디버깅용
       });
-    });
+    } catch (sessionError) {
+      console.error('Session save failed:', sessionError);
+      return res.status(500).json({ 
+        error: 'Failed to save session',
+        message: process.env.NODE_ENV === 'development' ? sessionError.message : '세션 저장에 실패했습니다.'
+      });
+    }
   } catch (error) {
     console.error('Login error:', error);
     console.error('Error name:', error.name);

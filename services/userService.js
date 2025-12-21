@@ -6,24 +6,29 @@ class UserService {
   async createUser(email, nickname, password) {
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const user = await prisma.user.create({
-      data: {
-        email,
-        nickname,
-        password: hashedPassword,
-        rating: 1500,
-      },
+    // Use transaction to ensure both user and ranking are created atomically
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          nickname,
+          password: hashedPassword,
+          rating: 1500,
+        },
+      });
+
+      // Create ranking entry
+      await tx.ranking.create({
+        data: {
+          userId: user.id,
+          rating: 1500,
+        },
+      });
+
+      return user;
     });
 
-    // Create ranking entry
-    await prisma.ranking.create({
-      data: {
-        userId: user.id,
-        rating: 1500,
-      },
-    });
-
-    return user;
+    return result;
   }
 
   async findUserByEmail(email) {

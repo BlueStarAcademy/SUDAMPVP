@@ -11,4 +11,6 @@ prisma/migrations/
 *.swp
 *.swo
 *~
+prisma/*.db
+prisma/*.db-journal
 
