@@ -29,16 +29,22 @@ class GameService {
         return game;
     }
 
-    async createAiGame(userId, aiLevel) {
+    async createAiGame(userId, aiLevel, userColor = 'black') {
         const user = await prisma.user.findUnique({ where: { id: userId } });
-        const aiColor = 'white'; // User plays black, AI plays white
+        if (!user) {
+            throw new Error('User not found');
+        }
+        
+        // Determine which color the user plays
+        const isUserBlack = userColor === 'black';
+        const aiColor = isUserBlack ? 'white' : 'black';
 
         const game = await prisma.game.create({
             data: {
-                blackId: userId,
-                whiteId: 'ai', // Special AI user ID
-                blackRating: user.rating,
-                whiteRating: 1500 + (aiLevel * 100), // AI rating based on level
+                blackId: isUserBlack ? userId : null, // User plays black, or null if AI plays black
+                whiteId: isUserBlack ? null : userId, // User plays white, or null if AI plays white
+                blackRating: isUserBlack ? user.rating : (1500 + (aiLevel * 100)),
+                whiteRating: isUserBlack ? (1500 + (aiLevel * 100)) : user.rating,
                 isAiGame: true,
                 aiLevel: aiLevel,
                 aiColor: aiColor,
@@ -47,16 +53,22 @@ class GameService {
 
         // Cache game info
         const redis = getRedisClient();
-        await redis.setEx(`game:${game.id}`, 3600, JSON.stringify({
-            id: game.id,
-            blackId: game.blackId,
-            whiteId: game.whiteId,
-            blackRating: game.blackRating,
-            whiteRating: game.whiteRating,
-            isAiGame: game.isAiGame,
-            aiLevel: game.aiLevel,
-            aiColor: game.aiColor,
-        }));
+        if (redis) {
+            try {
+                await redis.setEx(`game:${game.id}`, 3600, JSON.stringify({
+                    id: game.id,
+                    blackId: game.blackId,
+                    whiteId: game.whiteId,
+                    blackRating: game.blackRating,
+                    whiteRating: game.whiteRating,
+                    isAiGame: game.isAiGame,
+                    aiLevel: game.aiLevel,
+                    aiColor: game.aiColor,
+                }));
+            } catch (error) {
+                console.error('Redis cache error:', error);
+            }
+        }
 
         // Initialize timer
         await timerService.initializeTimer(game.id);
@@ -81,9 +93,15 @@ class GameService {
         const cacheKey = `game:${gameId}`;
         const redis = getRedisClient();
         
-        const cached = await redis.get(cacheKey);
-        if (cached) {
-            return JSON.parse(cached);
+        if (redis) {
+            try {
+                const cached = await redis.get(cacheKey);
+                if (cached) {
+                    return JSON.parse(cached);
+                }
+            } catch (error) {
+                console.error('Redis get error:', error);
+            }
         }
 
         const game = await prisma.game.findUnique({
@@ -98,8 +116,12 @@ class GameService {
             },
         });
 
-        if (game) {
-            await redis.setEx(cacheKey, 3600, JSON.stringify(game));
+        if (game && redis) {
+            try {
+                await redis.setEx(cacheKey, 3600, JSON.stringify(game));
+            } catch (error) {
+                console.error('Redis cache error:', error);
+            }
         }
 
         return game;
@@ -107,10 +129,15 @@ class GameService {
 
     async getGameState(gameId) {
         const redis = getRedisClient();
-        const state = await redis.get(`game:state:${gameId}`);
-        
-        if (state) {
-            return JSON.parse(state);
+        if (redis) {
+            try {
+                const state = await redis.get(`game:state:${gameId}`);
+                if (state) {
+                    return JSON.parse(state);
+                }
+            } catch (error) {
+                console.error('Redis get error:', error);
+            }
         }
 
         // Load from database if not in cache
@@ -149,7 +176,13 @@ class GameService {
 
     async cacheGameState(gameId, state) {
         const redis = getRedisClient();
-        await redis.setEx(`game:state:${gameId}`, 3600, JSON.stringify(state));
+        if (redis) {
+            try {
+                await redis.setEx(`game:state:${gameId}`, 3600, JSON.stringify(state));
+            } catch (error) {
+                console.error('Redis cache error:', error);
+            }
+        }
     }
 
     async makeMove(gameId, userId, move) {
@@ -165,7 +198,7 @@ class GameService {
         if (expectedColor === 'black' && game.blackId !== userId) {
             throw new Error('Not your turn');
         }
-        if (expectedColor === 'white' && game.whiteId !== userId && game.whiteId !== 'ai') {
+        if (expectedColor === 'white' && game.whiteId !== userId && game.whiteId !== null) {
             throw new Error('Not your turn');
         }
 
@@ -178,7 +211,7 @@ class GameService {
         const gameMove = await prisma.gameMove.create({
             data: {
                 gameId,
-                userId: game.whiteId === 'ai' ? null : userId,
+                userId: game.whiteId === null ? null : userId, // AI games have null whiteId
                 moveNumber: state.moveNumber + 1,
                 color: expectedColor,
                 x: move.x,
@@ -237,6 +270,16 @@ class GameService {
         // Stop timer
         await timerService.stopTimer(gameId);
 
+        // Update user statuses to waiting
+        if (global.waitingRoomSocket) {
+            if (game.blackId !== null) {
+                await global.waitingRoomSocket.setUserWaiting(game.blackId);
+            }
+            if (game.whiteId !== null) {
+                await global.waitingRoomSocket.setUserWaiting(game.whiteId);
+            }
+        }
+
         return result;
     }
 
@@ -259,6 +302,16 @@ class GameService {
         }
 
         await timerService.stopTimer(gameId);
+
+        // Update user statuses to waiting
+        if (global.waitingRoomSocket) {
+            if (game.blackId !== null) {
+                await global.waitingRoomSocket.setUserWaiting(game.blackId);
+            }
+            if (game.whiteId !== null) {
+                await global.waitingRoomSocket.setUserWaiting(game.whiteId);
+            }
+        }
 
         return result;
     }

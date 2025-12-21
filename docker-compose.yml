@@ -11,6 +11,9 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SESSION_SECRET=${SESSION_SECRET}
+      - AI_MODE=${AI_MODE:-gnugo}
+      - GNUGO_PATH=gnugo
+      - KATAGO_PATH=katago
     depends_on:
       - db
       - redis

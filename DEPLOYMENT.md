@@ -213,6 +213,14 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=your-redis-password
 SESSION_SECRET=your-strong-random-secret-key-here
+
+# AI Engines
+# Docker를 사용하는 경우 GNU Go는 이미 설치되어 있으므로 기본값 사용
+# 직접 설치한 경우 전체 경로를 지정하세요
+GNUGO_PATH=gnugo
+KATAGO_PATH=katago
+KATAGO_MODEL=default_model.bin.gz
+KATAGO_CONFIG=analysis.cfg
 ```
 
 ## Docker 배포 상세 가이드

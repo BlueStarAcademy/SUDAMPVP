@@ -14,260 +14,1671 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            <% if (typeof roomType !== 'undefined' && roomType === 'casual') { %>
+            background: linear-gradient(135deg, #9ae6b4 0%, #7dd3a0 100%);
+            <% } else { %>
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            <% } %>
             min-height: 100vh;
+            padding-bottom: 20px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            /* 텍스트 선명도 개선 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
         .container {
-            max-width: 1200px;
+            width: 1600px;
             margin: 0 auto;
             padding: 20px;
+            box-sizing: border-box;
+            transform-origin: top center;
+            position: relative;
         }
 
-        .waiting-room {
+
+        /* 전광판 */
+        .notice-board {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 메인 그리드 레이아웃 */
+        .waiting-room-grid {
             display: grid;
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: minmax(280px, 350px) 1.7fr 1fr;
+            grid-template-rows: auto 1fr auto;
             gap: 20px;
             margin-top: 20px;
+            height: auto;
+            min-height: 600px;
+            width: 100%;
+            max-width: 1560px; /* 1600px - 40px padding */
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+            align-items: stretch;
         }
 
-        .main-section {
+
+        .panel {
             background: white;
             border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .section-title {
-            font-size: 20px;
+
+        .panel-title {
+            font-size: 18px;
             font-weight: 600;
-            margin-bottom: 20px;
             color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
 
-        .user-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+
+        .panel-title-text {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .user-card {
-            background: #f9f9f9;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 15px;
+        .panel-title-text::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .panel-title-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .transform-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            border: 2px solid #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s;
         }
 
-        .user-card:hover {
-            border-color: #667eea;
+        .transform-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .transform-btn:active {
+            transform: translateY(0);
+        }
+
+        .ai-battle-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+            border: 2px solid #f5576c;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ai-battle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        .ai-battle-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 대국중인 경기장 */
+        .ongoing-games {
+            grid-column: 2;
+            grid-row: 1 / 3;
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ongoing-games .panel-title {
+            flex-shrink: 0;
+        }
+
+        .room-number-input-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        
+        .room-number-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            border-color: #667eea;
+            transition: border-color 0.3s;
+        }
+        
+        .room-number-input:focus {
+            outline: none;
+            border-color: #5568d3;
+        }
+        
+        .watch-by-room-btn {
+            background: #667eea;
+            border: 2px solid #5568d3;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .watch-by-room-btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+        
+        .ongoing-games #ongoingGamesList {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 0;
+        }
+
+        .game-item {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .game-item-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 0 0 auto;
+            min-width: 0;
+        }
+        
+        .game-room-number {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        
+        .game-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #667eea;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-item:hover {
+            border-color: #667eea;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
         }
 
-        .user-card.matching {
-            border-color: #ff9800;
-            background: #fff3e0;
+        .game-players {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1 1 auto;
+            justify-content: center;
+            min-width: 0;
         }
 
-        .user-card.in-game {
-            border-color: #4caf50;
-            background: #e8f5e9;
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .player-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            flex-shrink: 0;
+        }
+
+        .player-color.black {
+            background: #000;
+        }
+
+        .player-color.white {
+            background: #fff;
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .player-rating {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .game-item-right {
+            display: flex;
+            align-items: center;
+            flex: 0 0 auto;
+        }
+
+        .watch-btn {
+            background: #667eea;
+            border: 2px solid #5568d3;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .watch-btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        /* 접속중인 유저 */
+        .online-users {
+            grid-column: 3;
+            grid-row: 1 / 4;
+            overflow-y: auto;
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .online-users .panel-title {
+            flex-shrink: 0;
+        }
+
+        .online-users #onlineUsersList {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+        }
+
+        .user-item:hover {
+            background: #f5f5f5;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
         }
 
         .user-nickname {
             font-weight: 600;
             color: #333;
-            margin-bottom: 5px;
+            font-size: 14px;
         }
 
         .user-rating {
-            font-size: 14px;
+            font-size: 12px;
             color: #666;
         }
 
-        .user-status {
-            font-size: 12px;
-            margin-top: 8px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
+        .user-stats-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 4px;
         }
 
-        .user-status.waiting {
+        .user-manner {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .user-status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-waiting {
             background: #e3f2fd;
             color: #1976d2;
         }
 
-        .user-status.matching {
+        .status-matching {
             background: #fff3e0;
             color: #f57c00;
         }
 
-        .user-status.in-game {
+        .status-in-game {
             background: #e8f5e9;
             color: #388e3c;
         }
 
-        .action-buttons {
+        .status-resting {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .status-spectating {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+
+        .status-dropdown {
+            padding: 4px 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 11px;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .status-dropdown:focus {
+            border-color: #667eea;
+        }
+
+        .current-user-item {
+            background: #f0f4ff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 프로필 패널 */
+        .profile-panel {
+            grid-column: 1;
+            grid-row: 1;
             display: flex;
             flex-direction: column;
             gap: 15px;
+            min-height: 0;
+            height: auto;
+            overflow: visible;
+            box-sizing: border-box;
         }
 
-        .btn {
-            padding: 14px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+        @media (max-width: 1200px) {
+            .profile-panel {
+                gap: 12px;
+            }
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        @media (max-width: 1000px) {
+            .profile-panel {
+                gap: 10px;
+            }
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .matching-status {
-            text-align: center;
-            padding: 20px;
-            background: #fff3e0;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .matching-status.active {
-            display: block;
-        }
-
-        .ai-bot-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #e0e0e0;
-        }
-
-        .ai-level-selector {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .ai-level-btn {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .ai-level-btn:hover {
-            border-color: #667eea;
-            background: #f0f0ff;
-        }
-
-        .ai-level-btn.selected {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-
-        .sidebar {
+        .profile-content {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+            min-height: 0;
+            flex: 1;
+            overflow: visible;
+            box-sizing: border-box;
+            height: auto;
+        }
+
+        @media (max-width: 1200px) {
+            .profile-content {
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .profile-content {
+                gap: 10px;
+            }
         }
 
         .profile-card {
-            background: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            color: white;
+            flex: 0 0 auto;
+            flex-shrink: 0;
+            min-height: 0;
+            box-sizing: border-box;
         }
 
-        .profile-header {
-            text-align: center;
-            margin-bottom: 20px;
+        @media (max-width: 1200px) {
+            .profile-card {
+                padding: 18px;
+            }
         }
 
-        .profile-avatar {
+        @media (max-width: 1000px) {
+            .profile-card {
+                padding: 15px;
+            }
+        }
+
+        .profile-avatar-large {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0 auto 15px;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid white;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 600;
+            margin: 0 auto 15px;
         }
 
-        .profile-nickname {
+        @media (max-width: 1200px) {
+            .profile-avatar-large {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+                margin-bottom: 12px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .profile-avatar-large {
+                width: 60px;
+                height: 60px;
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+        }
+
+        .profile-name {
+            text-align: center;
             font-size: 20px;
             font-weight: 600;
-            color: #333;
             margin-bottom: 5px;
+            color: white;
         }
 
-        .profile-rating {
+        @media (max-width: 1200px) {
+            .profile-name {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .profile-name {
+                font-size: 16px;
+            }
+        }
+
+        .profile-rating-large {
+            text-align: center;
             font-size: 16px;
-            color: #667eea;
-            font-weight: 600;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            color: white;
         }
 
-        .profile-stats {
+        .profile-stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
             margin-top: 20px;
         }
 
-        .stat-item {
+        .profile-stats-with-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .profile-stats-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .detail-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            width: 100%;
             text-align: center;
+        }
+
+        .detail-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .profile-stat {
+            text-align: center;
+            background: rgba(255,255,255,0.1);
             padding: 10px;
-            background: #f9f9f9;
             border-radius: 8px;
         }
 
-        .stat-value {
+        .profile-stat-value {
             font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+
+        @media (max-width: 1200px) {
+            .profile-stat-value {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .profile-stat-value {
+            font-size: 16px;
+            }
+        }
+
+        .profile-stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+            color: white;
+        }
+
+        @media (max-width: 1000px) {
+            .profile-stat-label {
+                font-size: 11px;
+            }
+        }
+
+        /* 랭킹보드 */
+        .ranking-board {
+            grid-column: 1;
+            grid-row: 2 / 4;
+            overflow-y: auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .ranking-board .panel-title {
+            flex-shrink: 0;
+        }
+
+        .ranking-board #rankingList {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .current-ranking-item {
+            background: #f0f4ff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: background 0.2s;
+        }
+
+        .ranking-item:hover {
+            background: #f5f5f5;
+        }
+
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank-number {
+            width: 30px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .rank-number.top3 {
+            color: #ff9800;
+            font-size: 18px;
+        }
+
+        .ranking-user-info {
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .ranking-nickname {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .ranking-stats {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .ranking-rating {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        /* 채팅창 */
+        .chat-panel {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            flex-direction: column;
+            max-height: 400px;
+            min-height: 350px;
+            flex: 0 0 auto;
+            position: relative;
+            overflow: visible !important;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            min-height: 0;
+        }
+
+        .chat-message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0;
+        }
+
+        .message-user {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            color: #333;
+            font-size: 14px;
+            word-wrap: break-word;
+            flex: 1;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            flex-shrink: 0;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+            margin-top: auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .emoji-btn {
+            padding: 12px 16px;
+            background: #667eea;
+            border: 2px solid #5568d3;
+            color: white;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .emoji-btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        .emoji-btn:active {
+            transform: scale(0.95);
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            position: relative;
+            min-width: 0;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .chat-input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .chat-countdown {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #667eea;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        @media (max-width: 1200px) {
+            .chat-input {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .chat-input {
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .chat-send-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: 2px solid #5568d3;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chat-send-btn:hover {
+            background: #5568d3;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .chat-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 이모지 및 퀵 메시지 팝업 */
+        .emoji-popup {
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            width: 350px;
+            max-height: 0;
+            height: 280px;
+            z-index: 10001;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            border: 1px solid #e0e0e0;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease;
+        }
+        
+        /* 팝업이 채팅 입력창 위에 나타나도록 보장 */
+        .chat-input-container {
+            overflow: visible;
+        }
+        
+        /* 팝업이 상단에서 잘리지 않도록 패널의 overflow 조정 */
+        .chat-messages {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .emoji-popup.show {
+            display: flex;
+            max-height: 280px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .emoji-popup-header {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f9f9f9;
+            flex-shrink: 0;
+        }
+
+        .emoji-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .emoji-tab:hover {
+            background: #f0f0f0;
+        }
+
+        .emoji-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .emoji-popup-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .emoji-section {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            min-height: 0;
+        }
+
+        .emoji-section.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            height: fit-content;
+            /* 5열 3행 (15개)만 보이도록 제한 */
+            max-height: calc((24px + 8px) * 3 + 8px); /* 이모지 높이 + gap * 3행 + 여유 공간 */
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .emoji-item {
+            font-size: 24px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+            user-select: none;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emoji-item:hover {
+            background: #f0f0f0;
+        }
+
+        .quick-message-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .quick-message-btn {
+            padding: 10px 15px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .quick-message-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* 레이팅 매칭 */
+        .matching-panel {
+            grid-column: 1 / 3;
+            grid-row: 3;
+            margin-top: 20px;
+        }
+
+        .matching-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            min-height: 0;
+            flex: 0 0 auto;
+            flex-shrink: 0;
+            overflow: visible;
+            box-sizing: border-box;
+            height: auto;
+        }
+
+        @media (max-width: 1200px) {
+            .matching-content {
+                padding: 15px;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .matching-content {
+                padding: 12px;
+                gap: 8px;
+            }
+        }
+
+        .matching-info {
+            flex: 0 0 auto;
+            min-height: 0;
+        }
+
+        .matching-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        @media (max-width: 1200px) {
+            .matching-title {
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .matching-title {
+                font-size: 15px;
+                margin-bottom: 4px;
+            }
+        }
+
+        .matching-rating {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            opacity: 0.95;
+            line-height: 1.3;
+        }
+
+        @media (max-width: 1200px) {
+            .matching-rating {
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .matching-rating {
+                font-size: 13px;
+                margin-bottom: 4px;
+            }
+        }
+
+        .matching-status {
+            font-size: 13px;
+            opacity: 0.9;
+            line-height: 1.3;
+        }
+
+        @media (max-width: 1000px) {
+            .matching-status {
+                font-size: 12px;
+            }
+        }
+
+        .matching-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            justify-content: center;
+            margin-top: auto;
+        }
+
+        @media (max-width: 1200px) {
+            .matching-buttons {
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .matching-buttons {
+                gap: 6px;
+            flex-direction: column;
+            }
+            
+            .matching-buttons .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+                width: 100%;
+            }
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1200px) {
+            .btn {
+                padding: 9px 20px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .matching-active {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .matching-active .matching-title {
+            color: #f57c00;
+        }
+
+        .matching-active .matching-status {
+            color: #f57c00;
+        }
+
+        /* 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+
+        /* 빈 상태 메시지 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 통계 모달 */
+        .stats-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            overflow: auto;
+            animation: fadeIn 0.3s ease;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .stats-modal.show {
+            display: flex;
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .stats-modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: default;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .stats-modal.show .stats-modal-content {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .stats-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            cursor: move;
+            user-select: none;
+        }
+
+        .stats-modal-header:active {
+            cursor: grabbing;
+        }
+
+        .stats-modal-title {
+            font-size: 24px;
             font-weight: 600;
             color: #333;
         }
 
-        .stat-label {
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .stats-modal-options {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .stats-modal-options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .stats-modal-options input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        /* AI봇 대결 모달 스타일 */
+        .ai-battle-content {
+            padding: 20px 0;
+        }
+
+        .ai-battle-section {
+            margin-bottom: 25px;
+        }
+
+        .ai-battle-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .ai-level-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .ai-level-btn {
+            padding: 12px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ai-level-btn:hover {
+            background: #e8e8e8;
+            border-color: #667eea;
+        }
+
+        .ai-level-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .ai-color-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-color-btn {
+            flex: 1;
+            padding: 12px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ai-color-btn:hover {
+            background: #e8e8e8;
+            border-color: #667eea;
+        }
+
+        .ai-color-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .ai-battle-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .stats-section {
+            margin-bottom: 25px;
+        }
+
+        .stats-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .stats-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .stats-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: -2px;
+        }
+
+        .stats-tab:hover {
+            color: #667eea;
+            background: #f9f9f9;
+        }
+
+        .stats-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .stats-tab-content {
+            display: none;
+        }
+
+        .stats-tab-content.active {
+            display: block;
+        }
+
+        .stats-summary {
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stats-item {
+            text-align: center;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .stats-item-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stats-item-label {
             font-size: 12px;
             color: #666;
-            margin-top: 5px;
+        }
+
+        .game-types-list {
+            margin-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+        }
+
+        .game-type-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        .game-type-item:hover {
+            background: #f0f0f0;
+        }
+
+        .game-type-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .game-type-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .game-type-stats {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        @media (max-width: 600px) {
+            .stats-modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .game-type-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -275,56 +1686,594 @@
     <%- include('partials/header', { user: user }) %>
 
     <div class="container">
-        <div class="waiting-room">
-            <div class="main-section">
-                <h2 class="section-title">온라인 유저</h2>
-                <div class="user-list" id="userList">
-                    <!-- 유저 목록이 실시간으로 업데이트됩니다 -->
+        <!-- 전광판 -->
+        <div class="notice-board" id="noticeBoard">
+            🎮 SUDAM 바둑 게임 플랫폼에 오신 것을 환영합니다! 즐거운 게임 되세요!
                 </div>
 
-                <div class="matching-status" id="matchingStatus">
-                    <div style="font-weight: 600; margin-bottom: 10px;">매칭 중...</div>
-                    <div style="font-size: 14px; color: #666;">적절한 상대를 찾고 있습니다.</div>
+        <!-- 메인 그리드 -->
+        <div class="waiting-room-grid">
+            <!-- 프로필 및 레이팅 매칭 (왼쪽 세로 배치) -->
+            <div class="panel profile-panel">
+                <div class="profile-content">
+                    <!-- 프로필 카드 -->
+                    <div class="profile-card">
+                        <div class="profile-avatar-large"><%= user.nickname.charAt(0).toUpperCase() %></div>
+                        <div class="profile-name"><%= user.nickname %></div>
+                        <div class="profile-stats-with-detail">
+                            <div class="profile-stats-compact">
+                                <div class="profile-stat">
+                                    <div class="profile-stat-value"><%= user.wins || 0 %></div>
+                                    <div class="profile-stat-label">승</div>
+                                </div>
+                                <div class="profile-stat">
+                                    <div class="profile-stat-value"><%= user.losses || 0 %></div>
+                                    <div class="profile-stat-label">패</div>
+                                </div>
+                                <div class="profile-stat">
+                                    <div class="profile-stat-value"><% 
+                                        const total = (user.wins || 0) + (user.losses || 0) + (user.draws || 0);
+                                        const winRate = total > 0 ? Math.round(((user.wins || 0) / total) * 100) : 0;
+                                    %><%= winRate %>%</div>
+                                    <div class="profile-stat-label">승률</div>
+                                </div>
+                            </div>
+                            <button class="detail-btn" id="detailBtn">상세보기</button>
+                        </div>
                 </div>
 
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="startMatchingBtn">랭킹전 매칭 시작</button>
+                    <!-- 매칭 패널 -->
+                    <div class="matching-content" id="matchingContent">
+                        <div class="matching-info">
+                            <div class="matching-title">랭킹전 매칭</div>
+                            <div class="matching-rating">레이팅: <%= user.rating %></div>
+                            <div class="matching-status" id="matchingStatus">대기 중</div>
+                        </div>
+                        <div class="matching-buttons">
+                            <button class="btn btn-primary" id="startMatchingBtn">매칭 시작</button>
                     <button class="btn btn-secondary" id="cancelMatchingBtn" style="display: none;">매칭 취소</button>
+                        </div>
+                    </div>
+                </div>
                 </div>
 
-                <div class="ai-bot-section">
-                    <h3 class="section-title">AI봇과 대국</h3>
-                    <p style="color: #666; margin-bottom: 15px;">난이도를 선택하세요 (1-10단)</p>
-                    <div class="ai-level-selector" id="aiLevelSelector">
-                        <% for (let i = 1; i <= 10; i++) { %>
-                            <button class="ai-level-btn" data-level="<%= i %>"><%= i %>단</button>
+            <!-- 대국중인 경기장 -->
+            <div class="panel ongoing-games">
+                <div class="panel-title">
+                    <div class="panel-title-left">
+                        <div class="panel-title-text"><%= (typeof roomType !== 'undefined' && roomType === 'casual') ? '놀이바둑 대기실' : '전략바둑 대기실' %></div>
+                        <% if (typeof roomType === 'undefined' || roomType === 'strategy') { %>
+                            <button class="transform-btn" onclick="window.location.href='/waiting-room-casual'">놀이바둑 대기실</button>
+                        <% } else { %>
+                            <button class="transform-btn" onclick="window.location.href='/waiting-room'">전략바둑 대기실</button>
                         <% } %>
                     </div>
-                    <button class="btn btn-primary" id="startAiGameBtn" style="margin-top: 20px; width: 100%;">AI봇과 대국 시작</button>
+                    <button class="ai-battle-btn" id="aiBattleBtn">AI봇 대결</button>
+                </div>
+                <div class="room-number-input-container">
+                    <input type="text" id="roomNumberInput" placeholder="방번호 입력 (1-5)" class="room-number-input" pattern="[1-5]" maxlength="1">
+                    <button id="watchByRoomNumberBtn" class="watch-by-room-btn">관전하기</button>
+                </div>
+                <div id="ongoingGamesList">
+                    <div class="empty-state">진행 중인 게임이 없습니다.</div>
                 </div>
             </div>
 
-            <div class="sidebar">
-                <div class="profile-card">
-                    <div class="profile-header">
-                        <div class="profile-avatar"><%= user.nickname.charAt(0).toUpperCase() %></div>
-                        <div class="profile-nickname"><%= user.nickname %></div>
-                        <div class="profile-rating">레이팅: <%= user.rating %></div>
+            <!-- 접속중인 유저 -->
+            <div class="panel online-users">
+                <div class="panel-title">접속중인 유저</div>
+                <div id="onlineUsersList">
+                    <div class="empty-state">접속 중인 유저가 없습니다.</div>
                     </div>
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <div class="stat-value"><%= user.wins || 0 %></div>
-                            <div class="stat-label">승</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value"><%= user.losses || 0 %></div>
-                            <div class="stat-label">패</div>
+
+            <!-- 랭킹보드 -->
+            <div class="panel ranking-board">
+                <div class="panel-title">랭킹보드</div>
+                <div id="rankingList">
+                    <div class="empty-state">랭킹 데이터를 불러오는 중...</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value"><%= user.draws || 0 %></div>
-                            <div class="stat-label">무</div>
+                        </div>
+
+            <!-- 채팅창 -->
+            <div class="panel chat-panel">
+                <div class="panel-title">채팅</div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message">
+                        <div class="message-header">
+                            <span class="message-user">시스템</span>
+                            <span class="message-content">대기실에 오신 것을 환영합니다!</span>
+                            <span class="message-time">방금 전</span>
+                    </div>
+                </div>
+            </div>
+                <div class="chat-input-container">
+                    <button class="emoji-btn" id="emojiBtn" title="이모지 및 퀵 메시지">😊</button>
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="200">
+                        <div class="chat-countdown" id="chatCountdown" style="display: none;">3</div>
+                    </div>
+                    <button class="chat-send-btn" id="chatSendBtn">전송</button>
+                    <!-- 이모지 및 퀵 메시지 팝업 -->
+                    <div class="emoji-popup" id="emojiPopup">
+                    <div class="emoji-popup-header">
+                        <button class="emoji-tab active" data-tab="emoji">이모지</button>
+                        <button class="emoji-tab" data-tab="quick">퀵 메시지</button>
+                    </div>
+                    <div class="emoji-popup-content">
+                        <div class="emoji-section active" id="emojiSection">
+                            <div class="emoji-grid">
+                                <span class="emoji-item">😊</span>
+                                <span class="emoji-item">😄</span>
+                                <span class="emoji-item">😁</span>
+                                <span class="emoji-item">😆</span>
+                                <span class="emoji-item">😅</span>
+                                <span class="emoji-item">🤣</span>
+                                <span class="emoji-item">🙂</span>
+                                <span class="emoji-item">🙃</span>
+                                <span class="emoji-item">😉</span>
+                                <span class="emoji-item">😌</span>
+                                <span class="emoji-item">😍</span>
+                                <span class="emoji-item">🥰</span>
+                                <span class="emoji-item">😘</span>
+                                <span class="emoji-item">😗</span>
+                                <span class="emoji-item">😙</span>
+                                <span class="emoji-item">😚</span>
+                                <span class="emoji-item">😋</span>
+                                <span class="emoji-item">😛</span>
+                                <span class="emoji-item">😝</span>
+                                <span class="emoji-item">😜</span>
+                                <span class="emoji-item">🤪</span>
+                                <span class="emoji-item">🤨</span>
+                                <span class="emoji-item">🧐</span>
+                                <span class="emoji-item">🤓</span>
+                                <span class="emoji-item">😎</span>
+                                <span class="emoji-item">🤩</span>
+                                <span class="emoji-item">🥳</span>
+                                <span class="emoji-item">😏</span>
+                                <span class="emoji-item">😒</span>
+                                <span class="emoji-item">😞</span>
+                                <span class="emoji-item">😔</span>
+                                <span class="emoji-item">😟</span>
+                                <span class="emoji-item">😕</span>
+                                <span class="emoji-item">🙁</span>
+                                <span class="emoji-item">☹️</span>
+                                <span class="emoji-item">😣</span>
+                                <span class="emoji-item">😖</span>
+                                <span class="emoji-item">😫</span>
+                                <span class="emoji-item">😩</span>
+                                <span class="emoji-item">🥺</span>
+                                <span class="emoji-item">😢</span>
+                                <span class="emoji-item">😭</span>
+                                <span class="emoji-item">😤</span>
+                                <span class="emoji-item">😠</span>
+                                <span class="emoji-item">😡</span>
+                                <span class="emoji-item">🤬</span>
+                                <span class="emoji-item">🤯</span>
+                                <span class="emoji-item">😳</span>
+                                <span class="emoji-item">🥵</span>
+                                <span class="emoji-item">🥶</span>
+                                <span class="emoji-item">😱</span>
+                                <span class="emoji-item">😨</span>
+                                <span class="emoji-item">😰</span>
+                                <span class="emoji-item">😥</span>
+                                <span class="emoji-item">😓</span>
+                                <span class="emoji-item">🤗</span>
+                                <span class="emoji-item">🤔</span>
+                                <span class="emoji-item">🤭</span>
+                                <span class="emoji-item">🤫</span>
+                                <span class="emoji-item">🤥</span>
+                                <span class="emoji-item">😶</span>
+                                <span class="emoji-item">😐</span>
+                                <span class="emoji-item">😑</span>
+                                <span class="emoji-item">😬</span>
+                                <span class="emoji-item">🙄</span>
+                                <span class="emoji-item">😯</span>
+                                <span class="emoji-item">😦</span>
+                                <span class="emoji-item">😧</span>
+                                <span class="emoji-item">😮</span>
+                                <span class="emoji-item">😲</span>
+                                <span class="emoji-item">🥱</span>
+                                <span class="emoji-item">😴</span>
+                                <span class="emoji-item">🤤</span>
+                                <span class="emoji-item">😪</span>
+                                <span class="emoji-item">😵</span>
+                                <span class="emoji-item">🤐</span>
+                                <span class="emoji-item">🥴</span>
+                                <span class="emoji-item">🤢</span>
+                                <span class="emoji-item">🤮</span>
+                                <span class="emoji-item">🤧</span>
+                                <span class="emoji-item">😷</span>
+                                <span class="emoji-item">🤒</span>
+                                <span class="emoji-item">🤕</span>
+                                <span class="emoji-item">🤑</span>
+                                <span class="emoji-item">🤠</span>
+                                <span class="emoji-item">😈</span>
+                                <span class="emoji-item">👿</span>
+                                <span class="emoji-item">👹</span>
+                                <span class="emoji-item">👺</span>
+                                <span class="emoji-item">🤡</span>
+                                <span class="emoji-item">💩</span>
+                                <span class="emoji-item">👻</span>
+                                <span class="emoji-item">💀</span>
+                                <span class="emoji-item">☠️</span>
+                                <span class="emoji-item">👽</span>
+                                <span class="emoji-item">👾</span>
+                                <span class="emoji-item">🤖</span>
+                                <span class="emoji-item">🎃</span>
+                                <span class="emoji-item">😺</span>
+                                <span class="emoji-item">😸</span>
+                                <span class="emoji-item">😹</span>
+                                <span class="emoji-item">😻</span>
+                                <span class="emoji-item">😼</span>
+                                <span class="emoji-item">😽</span>
+                                <span class="emoji-item">🙀</span>
+                                <span class="emoji-item">😿</span>
+                                <span class="emoji-item">😾</span>
+                                <span class="emoji-item">👋</span>
+                                <span class="emoji-item">🤚</span>
+                                <span class="emoji-item">🖐️</span>
+                                <span class="emoji-item">✋</span>
+                                <span class="emoji-item">🖖</span>
+                                <span class="emoji-item">👌</span>
+                                <span class="emoji-item">🤏</span>
+                                <span class="emoji-item">✌️</span>
+                                <span class="emoji-item">🤞</span>
+                                <span class="emoji-item">🤟</span>
+                                <span class="emoji-item">🤘</span>
+                                <span class="emoji-item">🤙</span>
+                                <span class="emoji-item">👈</span>
+                                <span class="emoji-item">👉</span>
+                                <span class="emoji-item">👆</span>
+                                <span class="emoji-item">🖕</span>
+                                <span class="emoji-item">👇</span>
+                                <span class="emoji-item">☝️</span>
+                                <span class="emoji-item">👍</span>
+                                <span class="emoji-item">👎</span>
+                                <span class="emoji-item">✊</span>
+                                <span class="emoji-item">👊</span>
+                                <span class="emoji-item">🤛</span>
+                                <span class="emoji-item">🤜</span>
+                                <span class="emoji-item">👏</span>
+                                <span class="emoji-item">🙌</span>
+                                <span class="emoji-item">👐</span>
+                                <span class="emoji-item">🤲</span>
+                                <span class="emoji-item">🤝</span>
+                                <span class="emoji-item">🙏</span>
+                                <span class="emoji-item">✍️</span>
+                                <span class="emoji-item">💪</span>
+                                <span class="emoji-item">🦾</span>
+                                <span class="emoji-item">🦿</span>
+                                <span class="emoji-item">🦵</span>
+                                <span class="emoji-item">🦶</span>
+                                <span class="emoji-item">👂</span>
+                                <span class="emoji-item">🦻</span>
+                                <span class="emoji-item">👃</span>
+                                <span class="emoji-item">🧠</span>
+                                <span class="emoji-item">🦷</span>
+                                <span class="emoji-item">🦴</span>
+                                <span class="emoji-item">👀</span>
+                                <span class="emoji-item">👁️</span>
+                                <span class="emoji-item">👅</span>
+                                <span class="emoji-item">👄</span>
+                                <span class="emoji-item">💋</span>
+                                <span class="emoji-item">💘</span>
+                                <span class="emoji-item">💝</span>
+                                <span class="emoji-item">💖</span>
+                                <span class="emoji-item">💗</span>
+                                <span class="emoji-item">💓</span>
+                                <span class="emoji-item">💞</span>
+                                <span class="emoji-item">💕</span>
+                                <span class="emoji-item">💟</span>
+                                <span class="emoji-item">❣️</span>
+                                <span class="emoji-item">💔</span>
+                                <span class="emoji-item">❤️</span>
+                                <span class="emoji-item">🧡</span>
+                                <span class="emoji-item">💛</span>
+                                <span class="emoji-item">💚</span>
+                                <span class="emoji-item">💙</span>
+                                <span class="emoji-item">💜</span>
+                                <span class="emoji-item">🖤</span>
+                                <span class="emoji-item">🤍</span>
+                                <span class="emoji-item">🤎</span>
+                                <span class="emoji-item">💯</span>
+                                <span class="emoji-item">💢</span>
+                                <span class="emoji-item">💥</span>
+                                <span class="emoji-item">💫</span>
+                                <span class="emoji-item">💦</span>
+                                <span class="emoji-item">💨</span>
+                                <span class="emoji-item">🕳️</span>
+                                <span class="emoji-item">💣</span>
+                                <span class="emoji-item">💬</span>
+                                <span class="emoji-item">👁️‍🗨️</span>
+                                <span class="emoji-item">🗨️</span>
+                                <span class="emoji-item">🗯️</span>
+                                <span class="emoji-item">💭</span>
+                                <span class="emoji-item">💤</span>
+                                <span class="emoji-item">👋</span>
+                                <span class="emoji-item">🤚</span>
+                                <span class="emoji-item">🖐️</span>
+                                <span class="emoji-item">✋</span>
+                                <span class="emoji-item">🖖</span>
+                                <span class="emoji-item">👌</span>
+                                <span class="emoji-item">🤏</span>
+                                <span class="emoji-item">✌️</span>
+                                <span class="emoji-item">🤞</span>
+                                <span class="emoji-item">🤟</span>
+                                <span class="emoji-item">🤘</span>
+                                <span class="emoji-item">🤙</span>
+                                <span class="emoji-item">👈</span>
+                                <span class="emoji-item">👉</span>
+                                <span class="emoji-item">👆</span>
+                                <span class="emoji-item">🖕</span>
+                                <span class="emoji-item">👇</span>
+                                <span class="emoji-item">☝️</span>
+                                <span class="emoji-item">👍</span>
+                                <span class="emoji-item">👎</span>
+                                <span class="emoji-item">✊</span>
+                                <span class="emoji-item">👊</span>
+                                <span class="emoji-item">🤛</span>
+                                <span class="emoji-item">🤜</span>
+                                <span class="emoji-item">👏</span>
+                                <span class="emoji-item">🙌</span>
+                                <span class="emoji-item">👐</span>
+                                <span class="emoji-item">🤲</span>
+                                <span class="emoji-item">🤝</span>
+                                <span class="emoji-item">🙏</span>
+                                <span class="emoji-item">✍️</span>
+                                <span class="emoji-item">💪</span>
+                                <span class="emoji-item">🦾</span>
+                                <span class="emoji-item">🦿</span>
+                                <span class="emoji-item">🦵</span>
+                                <span class="emoji-item">🦶</span>
+                                <span class="emoji-item">👂</span>
+                                <span class="emoji-item">🦻</span>
+                                <span class="emoji-item">👃</span>
+                                <span class="emoji-item">🧠</span>
+                                <span class="emoji-item">🦷</span>
+                                <span class="emoji-item">🦴</span>
+                                <span class="emoji-item">👀</span>
+                                <span class="emoji-item">👁️</span>
+                                <span class="emoji-item">👅</span>
+                                <span class="emoji-item">👄</span>
+                                <span class="emoji-item">💋</span>
+                                <span class="emoji-item">💘</span>
+                                <span class="emoji-item">💝</span>
+                                <span class="emoji-item">💖</span>
+                                <span class="emoji-item">💗</span>
+                                <span class="emoji-item">💓</span>
+                                <span class="emoji-item">💞</span>
+                                <span class="emoji-item">💕</span>
+                                <span class="emoji-item">💟</span>
+                                <span class="emoji-item">❣️</span>
+                                <span class="emoji-item">💔</span>
+                                <span class="emoji-item">❤️</span>
+                                <span class="emoji-item">🧡</span>
+                                <span class="emoji-item">💛</span>
+                                <span class="emoji-item">💚</span>
+                                <span class="emoji-item">💙</span>
+                                <span class="emoji-item">💜</span>
+                                <span class="emoji-item">🖤</span>
+                                <span class="emoji-item">🤍</span>
+                                <span class="emoji-item">🤎</span>
+                                <span class="emoji-item">💯</span>
+                                <span class="emoji-item">💢</span>
+                                <span class="emoji-item">💥</span>
+                                <span class="emoji-item">💫</span>
+                                <span class="emoji-item">💦</span>
+                                <span class="emoji-item">💨</span>
+                                <span class="emoji-item">🕳️</span>
+                                <span class="emoji-item">💣</span>
+                                <span class="emoji-item">💬</span>
+                                <span class="emoji-item">👁️‍🗨️</span>
+                                <span class="emoji-item">🗨️</span>
+                                <span class="emoji-item">🗯️</span>
+                                <span class="emoji-item">💭</span>
+                                <span class="emoji-item">💤</span>
+                            </div>
+                        </div>
+                        <div class="emoji-section" id="quickSection">
+                            <div class="quick-message-list">
+                                <button class="quick-message-btn">안녕하세요</button>
+                                <button class="quick-message-btn">반갑습니다</button>
+                                <button class="quick-message-btn">좋은 수 두셨네요</button>
+                                <button class="quick-message-btn">잘 두셨습니다</button>
+                                <button class="quick-message-btn">감사합니다</button>
+                                <button class="quick-message-btn">고맙습니다</button>
+                                <button class="quick-message-btn">실력이 뛰어나시네요</button>
+                                <button class="quick-message-btn">잘 배웠습니다</button>
+                                <button class="quick-message-btn">다음에 또 대국하죠</button>
+                                <button class="quick-message-btn">재밌는 대국이었습니다</button>
+                                <button class="quick-message-btn">수고하셨습니다</button>
+                                <button class="quick-message-btn">화이팅!</button>
+                                <button class="quick-message-btn">화이팅입니다</button>
+                                <button class="quick-message-btn">좋은 경기 되세요</button>
+                                <button class="quick-message-btn">행운을 빕니다</button>
+                                <button class="quick-message-btn">건승하세요</button>
+                                <button class="quick-message-btn">좋은 하루 되세요</button>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 통계 모달 -->
+    <div id="statsModal" class="stats-modal">
+        <div class="stats-modal-content">
+            <div class="stats-modal-header" id="statsModalHeader">
+                <div class="stats-modal-title">전적 상세보기</div>
+                <button class="close-modal" id="closeStatsModalBtn">&times;</button>
+            </div>
+            <!-- 탭 네비게이션 -->
+            <div class="stats-tabs">
+                <button class="stats-tab active" onclick="switchStatsTab('strategy')">전략바둑</button>
+                <button class="stats-tab" onclick="switchStatsTab('casual')">놀이바둑</button>
+            </div>
+            <!-- 전략바둑 탭 -->
+            <div id="strategyTab" class="stats-tab-content active">
+                <div class="stats-summary">
+                    <div class="stats-grid">
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="strategyWins">0</div>
+                            <div class="stats-item-label">승</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="strategyLosses">0</div>
+                            <div class="stats-item-label">패</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="strategyWinRate">0%</div>
+                            <div class="stats-item-label">승률</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-types-list">
+                    <div class="game-type-item">
+                        <div class="game-type-name">클래식바둑</div>
+                        <div class="game-type-stats">
+                            <span id="strategyClassicWins">0승</span> / <span id="strategyClassicLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">따내기바둑</div>
+                        <div class="game-type-stats">
+                            <span id="strategyCaptureWins">0승</span> / <span id="strategyCaptureLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">스피드바둑</div>
+                        <div class="game-type-stats">
+                            <span id="strategySpeedWins">0승</span> / <span id="strategySpeedLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">베이스바둑</div>
+                        <div class="game-type-stats">
+                            <span id="strategyBaseWins">0승</span> / <span id="strategyBaseLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">히든바둑</div>
+                        <div class="game-type-stats">
+                            <span id="strategyHiddenWins">0승</span> / <span id="strategyHiddenLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">미사일바둑</div>
+                        <div class="game-type-stats">
+                            <span id="strategyMissileWins">0승</span> / <span id="strategyMissileLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">믹스룰바둑</div>
+                        <div class="game-type-stats">
+                            <span id="strategyMixWins">0승</span> / <span id="strategyMixLosses">0패</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 놀이바둑 탭 -->
+            <div id="casualTab" class="stats-tab-content">
+                <div class="stats-summary">
+                    <div class="stats-grid">
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="casualWins">0</div>
+                            <div class="stats-item-label">승</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="casualLosses">0</div>
+                            <div class="stats-item-label">패</div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="casualWinRate">0%</div>
+                            <div class="stats-item-label">승률</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-types-list">
+                    <div class="game-type-item">
+                        <div class="game-type-name">주사위바둑</div>
+                        <div class="game-type-stats">
+                            <span id="casualDiceWins">0승</span> / <span id="casualDiceLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">경찰과도둑</div>
+                        <div class="game-type-stats">
+                            <span id="casualCopsWins">0승</span> / <span id="casualCopsLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">오목</div>
+                        <div class="game-type-stats">
+                            <span id="casualOmokWins">0승</span> / <span id="casualOmokLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">따목</div>
+                        <div class="game-type-stats">
+                            <span id="casualTtakWins">0승</span> / <span id="casualTtakLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">알까기</div>
+                        <div class="game-type-stats">
+                            <span id="casualAlkkagiWins">0승</span> / <span id="casualAlkkagiLosses">0패</span>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">바둑컬링</div>
+                        <div class="game-type-stats">
+                            <span id="casualCurlingWins">0승</span> / <span id="casualCurlingLosses">0패</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 위치 기억 옵션 -->
+            <div class="stats-modal-options">
+                <label>
+                    <input type="checkbox" id="rememberPositionCheckbox">
+                    <span>창 위치 기억</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI봇 대결 모달 -->
+    <div id="aiBattleModal" class="stats-modal">
+        <div class="stats-modal-content">
+            <div class="stats-modal-header">
+                <div class="stats-modal-title">AI봇 대결 설정</div>
+                <button class="close-modal" onclick="closeAiBattleModal()">&times;</button>
+            </div>
+            <div class="ai-battle-content">
+                <div class="ai-battle-section">
+                    <label class="ai-battle-label">AI 난이도 선택</label>
+                    <div class="ai-level-buttons">
+                        <button class="ai-level-btn" data-level="1">1단</button>
+                        <button class="ai-level-btn" data-level="2">2단</button>
+                        <button class="ai-level-btn" data-level="3">3단</button>
+                        <button class="ai-level-btn" data-level="4">4단</button>
+                        <button class="ai-level-btn" data-level="5">5단</button>
+                        <button class="ai-level-btn" data-level="6">6단</button>
+                        <button class="ai-level-btn" data-level="7">7단</button>
+                        <button class="ai-level-btn" data-level="8">8단</button>
+                        <button class="ai-level-btn" data-level="9">9단</button>
+                    </div>
+                </div>
+                <div class="ai-battle-section">
+                    <label class="ai-battle-label">내 색상 선택</label>
+                    <div class="ai-color-buttons">
+                        <button class="ai-color-btn" data-color="black">흑 (선수)</button>
+                        <button class="ai-color-btn" data-color="white">백 (후수)</button>
+                        <button class="ai-color-btn active" data-color="random">랜덤</button>
+                    </div>
+                </div>
+                <div class="ai-battle-actions">
+                    <button class="btn btn-primary" id="startAiBattleBtn">대결 시작</button>
+                    <button class="btn btn-secondary" onclick="closeAiBattleModal()">취소</button>
                 </div>
             </div>
         </div>
@@ -333,85 +2282,1023 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/modal.js"></script>
     <script>
-        const socket = io();
-        const userList = document.getElementById('userList');
+        const socket = io({
+            withCredentials: true,
+            transports: ['websocket', 'polling']
+        });
+        const currentUserId = '<%= user.id %>';
+        const currentUserNickname = '<%= user.nickname %>';
+
+        // DOM Elements
+        const ongoingGamesList = document.getElementById('ongoingGamesList');
+        const onlineUsersList = document.getElementById('onlineUsersList');
+        const rankingList = document.getElementById('rankingList');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
         const startMatchingBtn = document.getElementById('startMatchingBtn');
         const cancelMatchingBtn = document.getElementById('cancelMatchingBtn');
         const matchingStatus = document.getElementById('matchingStatus');
-        const startAiGameBtn = document.getElementById('startAiGameBtn');
-        const aiLevelSelector = document.getElementById('aiLevelSelector');
-        let selectedAiLevel = null;
+        const matchingContent = document.getElementById('matchingContent');
+
         let isMatching = false;
 
-        // Socket events
-        socket.on('user_joined', (user) => {
-            updateUserList();
+        // 전체 레이아웃 스케일링 함수
+        function scaleLayout() {
+            const container = document.querySelector('.container');
+            if (!container) return;
+            
+            // 이미 스케일링 중이면 무시 (중복 실행 방지)
+            if (isScaling) {
+                return;
+            }
+            
+            isScaling = true; // 스케일링 시작
+
+            // 먼저 스케일을 제거하여 실제 크기 측정
+            container.style.transform = 'scale(1)';
+            container.style.width = '1600px';
+            container.style.height = 'auto';
+            
+            // 강제로 리플로우를 발생시켜 정확한 크기 측정
+            void container.offsetHeight;
+            
+            // 실제 컨테이너 크기 측정 (스케일 없이)
+            const baseWidth = 1600; // 기준 너비
+            
+            // 실제 높이 측정 (스크롤 높이와 오프셋 높이 중 더 큰 값 사용)
+            const scrollHeight = container.scrollHeight;
+            const offsetHeight = container.offsetHeight;
+            const actualHeight = Math.max(scrollHeight, offsetHeight);
+            const baseHeight = Math.max(actualHeight, 800); // 최소 800px 보장
+            
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // 최소 스케일 제한 (너무 작아지지 않도록)
+            const minScale = 0.3;
+            // 최대 스케일 제한
+            const maxScale = 1.0;
+            
+            // 사용 가능한 공간 계산 (헤더와 여백 고려)
+            const header = document.querySelector('header');
+            const headerHeight = header ? header.offsetHeight : 80;
+            const padding = 40;
+            const availableWidth = Math.max(viewportWidth - padding, baseWidth * minScale);
+            const availableHeight = Math.max(viewportHeight - headerHeight - padding - 20, baseHeight * minScale);
+            
+            // 너비와 높이 모두 고려하여 스케일 계산
+            const scaleX = availableWidth / baseWidth;
+            const scaleY = availableHeight / baseHeight;
+            
+            // 더 작은 스케일을 사용하여 전체가 화면에 들어오도록
+            let scale = Math.min(scaleX, scaleY);
+            
+            // 스케일 제한 적용
+            scale = Math.max(Math.min(scale, maxScale), minScale);
+            
+            // 컨테이너에 스케일 적용
+            container.style.transform = `scale(${scale})`;
+            container.style.transformOrigin = 'top center';
+            container.style.width = `${baseWidth}px`;
+            container.style.height = 'auto';
+            
+            // 스케일된 크기 계산
+            const scaledWidth = baseWidth * scale;
+            const scaledHeight = baseHeight * scale;
+            
+            // 컨테이너가 중앙에 오도록
+            if (scaledWidth < viewportWidth) {
+                container.style.marginLeft = 'auto';
+                container.style.marginRight = 'auto';
+            } else {
+                container.style.marginLeft = '0';
+                container.style.marginRight = '0';
+            }
+            
+            // body 높이를 스케일된 높이에 맞춰 조정 (스크롤 가능하도록)
+            const totalHeight = scaledHeight + headerHeight + 100; // 여유 공간 추가
+            document.body.style.minHeight = `${Math.max(totalHeight, viewportHeight)}px`;
+            
+            // 스케일링 완료
+            isScaling = false;
+            
+            // 디버깅용 (개발 환경에서만) - 주석 처리하여 무한 로그 방지
+            // if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            //     console.log('Scale Layout:', {
+            //         baseWidth,
+            //         baseHeight,
+            //         viewportWidth,
+            //         viewportHeight,
+            //         scaleX,
+            //         scaleY,
+            //         scale,
+            //         scaledWidth,
+            //         scaledHeight
+            //     });
+            // }
+        }
+
+        // 초기 스케일링 및 리사이즈 이벤트 리스너
+        let resizeTimeout;
+        let scaleTimeout;
+        let isScaling = false; // 스케일링 중 플래그
+        
+        // 페이지 로드 후 약간의 지연을 두고 실행 (레이아웃이 완전히 렌더링된 후)
+        window.addEventListener('load', () => {
+            setTimeout(scaleLayout, 200);
+        });
+        
+        // 리사이즈 이벤트 (디바운싱)
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(scaleLayout, 100);
+        });
+        
+        // DOMContentLoaded 시에도 실행
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(scaleLayout, 200);
+            });
+        } else {
+            // 약간의 지연을 두고 실행하여 레이아웃이 완전히 렌더링된 후 스케일 적용
+            setTimeout(scaleLayout, 200);
+        }
+        
+        // 컨텐츠 변경 시에도 스케일 재계산 (동적 컨텐츠 대응)
+        const observer = new MutationObserver((mutations) => {
+            // 스케일링 중이면 무시 (무한루프 방지)
+            if (isScaling) {
+                return;
+            }
+            
+            // 이모지 팝업이나 stats 모달의 변경사항은 무시
+            let shouldIgnore = false;
+            for (const mutation of mutations) {
+                const target = mutation.target;
+                if (target && (
+                    target.id === 'emojiPopup' ||
+                    target.closest('#emojiPopup') ||
+                    target.id === 'statsModal' ||
+                    target.closest('#statsModal') ||
+                    target.closest('.stats-modal-content') ||
+                    target.closest('.ai-battle-modal')
+                )) {
+                    shouldIgnore = true;
+                    break;
+                }
+                // 스타일 변경이 scaleLayout에 의한 것인지 확인
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    // container의 transform 변경은 무시
+                    if (target === container || target.closest('.container') === container) {
+                        const style = target.getAttribute('style');
+                        if (style && style.includes('transform')) {
+                            shouldIgnore = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!shouldIgnore) {
+                clearTimeout(scaleTimeout);
+                scaleTimeout = setTimeout(scaleLayout, 300);
+            }
+        });
+        
+        // 컨테이너의 자식 요소 변경 감지 (style 속성은 제외하여 무한루프 방지)
+        const container = document.querySelector('.container');
+        if (container) {
+            observer.observe(container, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['class'] // style 제외하여 무한루프 방지
+            });
+        }
+
+        // Socket Events
+        // 대기실 타입 확인
+        const currentRoomType = '<%= typeof roomType !== "undefined" ? roomType : "strategy" %>';
+        
+        socket.on('connect', () => {
+            console.log('Socket connected, joining room:', currentRoomType);
+            // 대기실 타입에 맞는 룸에 조인
+            socket.emit('join_waiting_room', currentRoomType);
+            
+            // 초기 데이터 로드 함수
+            function loadInitialData() {
+                console.log('Requesting initial data...');
+                socket.emit('get_user_list', currentRoomType);
+                socket.emit('get_ongoing_games');
+                socket.emit('get_rankings');
+            }
+            
+            // 즉시 로드 시도
+            loadInitialData();
+            
+            // 약간의 지연 후 재시도 (서버가 준비되지 않았을 수 있음)
+            setTimeout(loadInitialData, 100);
+            setTimeout(loadInitialData, 500);
+        });
+        
+        // 연결 실패 시 재연결 시도
+        socket.on('connect_error', (error) => {
+            console.error('Socket connection error:', error);
+            // 연결 실패해도 기본 데이터는 이미 표시되어 있음
+        });
+        
+        // 재연결 성공 시
+        socket.on('reconnect', () => {
+            console.log('Socket reconnected');
+            socket.emit('join_waiting_room', currentRoomType);
+            setTimeout(() => {
+                socket.emit('get_user_list', currentRoomType);
+                socket.emit('get_ongoing_games');
+                socket.emit('get_rankings');
+            }, 100);
         });
 
-        socket.on('user_left', (userId) => {
-            updateUserList();
-        });
-
-        socket.on('user_status_changed', (data) => {
-            updateUserList();
-        });
-
+        // 사용자 목록 업데이트
         socket.on('user_list_update', (users) => {
-            renderUserList(users);
+            console.log('User list update received:', users);
+            if (!users) {
+                console.error('user_list_update received null or undefined');
+                renderOnlineUsers([]);
+                return;
+            }
+            if (!Array.isArray(users)) {
+                console.error('user_list_update received non-array:', typeof users);
+                renderOnlineUsers([]);
+                return;
+            }
+            renderOnlineUsers(users);
         });
 
+        socket.on('user_joined', () => {
+            socket.emit('get_user_list', currentRoomType);
+        });
+
+        socket.on('user_left', () => {
+            socket.emit('get_user_list', currentRoomType);
+        });
+
+        socket.on('user_status_changed', () => {
+            socket.emit('get_user_list', currentRoomType);
+        });
+
+        // 진행 중인 게임 업데이트
+        socket.on('ongoing_games_update', (games) => {
+            renderOngoingGames(games);
+        });
+
+        // 랭킹 업데이트
+        socket.on('rankings_update', (rankings) => {
+            console.log('Rankings update received:', rankings);
+            if (!rankings) {
+                console.error('rankings_update received null or undefined');
+                renderRankings([]);
+                return;
+            }
+            if (!Array.isArray(rankings)) {
+                console.error('rankings_update received non-array:', typeof rankings);
+                renderRankings([]);
+                return;
+            }
+            renderRankings(rankings);
+        });
+
+        // 채팅 메시지
+        socket.on('chat_message', (data) => {
+            console.log('Chat message received:', data);
+            if (data && data.user && data.message) {
+                const roomType = data.roomType || currentRoomType || 'strategy';
+                addChatMessage(data.user, data.message, data.timestamp, roomType);
+            } else {
+                console.error('Invalid chat message data:', data);
+            }
+        });
+
+        socket.on('chat_error', (data) => {
+            console.error('Chat error:', data.error);
+            if (data.error) {
+                alert('채팅 오류: ' + data.error);
+            }
+        });
+
+        // 매칭 이벤트
         socket.on('match_found', (data) => {
-            // Check if this match is for current user
-            if (data.userIds && data.userIds.includes('<%= user.id %>')) {
-                isMatching = false;
+            if (data.userIds && data.userIds.includes(currentUserId)) {
                 window.location.href = `/api/game/${data.gameId}`;
             }
+        });
+
+        // AI 게임 시작 이벤트
+        socket.on('ai_game_started', (data) => {
+            if (data.gameId) {
+                window.location.href = `/api/game/${data.gameId}`;
+            }
+        });
+
+        socket.on('ai_game_error', (data) => {
+            alert(data.error || 'AI 게임을 시작할 수 없습니다.');
         });
 
         socket.on('match_cancelled', () => {
             isMatching = false;
             startMatchingBtn.style.display = 'block';
             cancelMatchingBtn.style.display = 'none';
-            matchingStatus.classList.remove('active');
+            matchingStatus.textContent = '대기 중';
+            matchingContent.classList.remove('matching-active');
         });
 
-        // Request initial user list
-        socket.emit('get_user_list');
+        socket.on('matching_error', (data) => {
+            alert(data.error || '매칭을 시작할 수 없습니다.');
+            isMatching = false;
+            startMatchingBtn.style.display = 'block';
+            cancelMatchingBtn.style.display = 'none';
+            matchingStatus.textContent = '대기 중';
+            matchingContent.classList.remove('matching-active');
+        });
 
-        function updateUserList() {
-            socket.emit('get_user_list');
+        // 렌더링 함수들
+        function renderOnlineUsers(users) {
+            console.log('renderOnlineUsers called with:', users);
+            
+            // 현재 유저 정보 (항상 표시)
+            const currentUserInfo = {
+                id: currentUserId || '',
+                nickname: currentUserNickname || 'Unknown',
+                rating: <%= user.rating || 1500 %>,
+                manner: <%= user.manner || 1500 %>,
+                status: 'waiting'
+            };
+
+            let html = '';
+
+            // 현재 유저를 맨 위에 항상 고정 표시 (users와 무관하게 항상 표시)
+            const nicknameInitial = currentUserInfo.nickname && currentUserInfo.nickname.length > 0 
+                ? currentUserInfo.nickname.charAt(0).toUpperCase() 
+                : 'U';
+            
+            html += `
+                <div class="current-user-item">
+                    <div class="user-info">
+                        <div class="user-avatar">${nicknameInitial}</div>
+                        <div class="user-details">
+                            <div class="user-nickname">${escapeHtml(currentUserInfo.nickname)} (나)</div>
+                            <div class="user-stats-row">
+                                <div class="user-rating">레이팅: ${currentUserInfo.rating}</div>
+                                <div class="user-manner">매너: ${currentUserInfo.manner}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <select class="status-dropdown" id="statusDropdown" onchange="changeStatus(this.value)">
+                        <option value="waiting" ${currentUserInfo.status === 'waiting' ? 'selected' : ''}>대기중</option>
+                        <option value="resting" ${currentUserInfo.status === 'resting' ? 'selected' : ''}>휴식중</option>
+                    </select>
+                </div>
+            `;
+
+            // 다른 유저들 (현재 유저 제외)
+            let otherUsers = [];
+            if (users && Array.isArray(users) && users.length > 0) {
+                otherUsers = users.filter(user => user && user.id && user.id !== currentUserId);
+            }
+            
+            // 실제 유저가 5명 미만이면 데모 유저 추가
+            const demoUsers = [
+                { id: 'demo-user-0', nickname: '바둑고수', rating: 2500, manner: 1600, isDemo: true },
+                { id: 'demo-user-1', nickname: '전략의신', rating: 2400, manner: 1550, isDemo: true },
+                { id: 'demo-user-2', nickname: '명수왕', rating: 2300, manner: 1500, isDemo: true },
+                { id: 'demo-user-3', nickname: '고수킹', rating: 2200, manner: 1450, isDemo: true },
+                { id: 'demo-user-4', nickname: '바둑천재', rating: 2100, manner: 1400, isDemo: true }
+            ];
+            
+            const neededDemoCount = Math.max(0, 5 - otherUsers.length);
+            const usersToShow = [...otherUsers, ...demoUsers.slice(0, neededDemoCount)];
+            
+            // 총 접속 인원수 계산 (현재 유저 + 다른 유저들, 데모 제외)
+            const totalOnlineCount = 1 + otherUsers.length; // 현재 유저(1) + 다른 유저들
+            
+            // 제목 업데이트
+            const onlineUsersTitle = document.querySelector('.online-users .panel-title');
+            if (onlineUsersTitle) {
+                onlineUsersTitle.textContent = `접속중인 유저 (${totalOnlineCount}명 접속중)`;
+            }
+            
+            html += usersToShow.map(user => {
+                const userNickname = user.nickname || 'Unknown';
+                const userInitial = userNickname.length > 0 ? userNickname.charAt(0).toUpperCase() : 'U';
+                
+                return `
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">${userInitial}</div>
+                            <div class="user-details">
+                                <div class="user-nickname">${escapeHtml(userNickname)}${user.isDemo ? ' (데모)' : ''}</div>
+                                <div class="user-stats-row">
+                                    <div class="user-rating">레이팅: ${user.rating || 0}</div>
+                                    ${user.manner ? `<div class="user-manner">매너: ${user.manner}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        ${user.isDemo ? '<button class="btn btn-primary" style="font-size: 12px; padding: 4px 8px;">대국신청</button>' : `<div class="user-status-badge status-${user.status || 'waiting'}">${getStatusText(user.status || 'waiting')}</div>`}
+                    </div>
+                `;
+            }).join('');
+
+            onlineUsersList.innerHTML = html;
         }
 
-        function renderUserList(users) {
-            userList.innerHTML = '';
-            users.forEach(user => {
-                const card = document.createElement('div');
-                card.className = `user-card ${user.status}`;
-                card.innerHTML = `
-                    <div class="user-nickname">${user.nickname}</div>
-                    <div class="user-rating">레이팅: ${user.rating}</div>
-                    <div class="user-status ${user.status}">${getStatusText(user.status)}</div>
-                `;
-                userList.appendChild(card);
+        function renderOngoingGames(games) {
+            if (!games || games.length === 0) {
+                ongoingGamesList.innerHTML = '<div class="empty-state">진행 중인 게임이 없습니다.</div>';
+                return;
+            }
+
+            ongoingGamesList.innerHTML = games.map((game, index) => {
+                const isDemo = game.isDemo || false;
+                const roomNumber = game.roomNumber || (index + 1); // 1, 2, 3, 4, 5 형식
+                const title = game.title || '진행중인 대국';
+                return `
+                <div class="game-item" ${isDemo ? '' : `onclick="watchGame('${game.id}')"`}>
+                    <div class="game-item-left">
+                        <div class="game-room-number">${roomNumber}</div>
+                        <div class="game-title">${escapeHtml(title)}</div>
+                    </div>
+                    <div class="game-players">
+                        <div class="player-info">
+                            <div class="player-color black"></div>
+                            <div class="player-name">${escapeHtml(game.blackPlayer.nickname)} (${game.blackPlayer.rating || 0})</div>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 600; color: #667eea;">VS</div>
+                        <div class="player-info">
+                            <div class="player-name">${escapeHtml(game.whitePlayer.nickname)} (${game.whitePlayer.rating || 0})</div>
+                            <div class="player-color white"></div>
+                        </div>
+                    </div>
+                    <div class="game-item-right">
+                        <button class="watch-btn" ${isDemo ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : `onclick="event.stopPropagation(); watchGame('${game.id}')"`}>관전</button>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        function renderRankings(rankings) {
+            console.log('renderRankings called with:', rankings);
+            
+            // 현재 유저 정보 (항상 표시)
+            const currentUserRanking = {
+                id: currentUserId || '',
+                nickname: currentUserNickname || 'Unknown',
+                rating: <%= user.rating || 1500 %>,
+                wins: <%= user.wins || 0 %>,
+                losses: <%= user.losses || 0 %>,
+                rank: null // 랭킹은 서버에서 계산되거나 별도로 가져와야 함
+            };
+            
+            // 승률 계산
+            const currentUserTotal = currentUserRanking.wins + currentUserRanking.losses;
+            const currentUserWinRate = currentUserTotal > 0 
+                ? Math.round((currentUserRanking.wins / currentUserTotal) * 100) 
+                : 0;
+            
+            let html = '';
+            
+            // 현재 유저를 맨 위에 항상 고정 표시
+            html += `
+                <div class="current-ranking-item">
+                    <div class="rank-number">-</div>
+                    <div class="ranking-user-info">
+                        <div class="ranking-nickname">${escapeHtml(currentUserRanking.nickname)} (나)</div>
+                        <div class="ranking-stats">${currentUserRanking.wins}승 ${currentUserRanking.losses}패 (${currentUserWinRate}%)</div>
+                    </div>
+                    <div class="ranking-rating">${currentUserRanking.rating}</div>
+                </div>
+            `;
+            
+            // rankings가 없거나 빈 배열이거나 유효하지 않으면 빈 배열로 처리
+            let validRankings = [];
+            if (rankings && Array.isArray(rankings) && rankings.length > 0) {
+                // 현재 유저 제외
+                validRankings = rankings.filter(r => r && r.nickname && r.userId !== currentUserId);
+            }
+            
+            // 데모 데이터 추가 (항상 최소 5개가 되도록)
+            const demoRankings = [
+                { rank: 1, nickname: '바둑고수', rating: 2500, wins: 150, losses: 20, isDemo: true },
+                { rank: 2, nickname: '전략의신', rating: 2400, wins: 120, losses: 30, isDemo: true },
+                { rank: 3, nickname: '명수왕', rating: 2300, wins: 100, losses: 40, isDemo: true },
+                { rank: 4, nickname: '고수킹', rating: 2200, wins: 80, losses: 50, isDemo: true },
+                { rank: 5, nickname: '바둑천재', rating: 2100, wins: 60, losses: 60, isDemo: true }
+            ];
+            
+            const neededDemoCount = Math.max(0, 5 - validRankings.length);
+            const allRankings = [...validRankings, ...demoRankings.slice(0, neededDemoCount)];
+            
+            // 레이팅 기준으로 내림차순 정렬 (1등이 맨 위에 오도록)
+            allRankings.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            
+            // 정렬 후 rank 번호 재설정
+            allRankings.forEach((rank, index) => {
+                rank.rank = index + 1;
             });
+            
+            // 다른 유저들의 랭킹 표시
+            html += allRankings.map((rank, index) => {
+                const total = (rank.wins || 0) + (rank.losses || 0);
+                const winRate = total > 0 ? Math.round(((rank.wins || 0) / total) * 100) : 0;
+                return `
+                <div class="ranking-item">
+                    <div class="rank-number ${index < 3 ? 'top3' : ''}">${rank.rank || (index + 1)}</div>
+                    <div class="ranking-user-info">
+                        <div class="ranking-nickname">${escapeHtml(rank.nickname || 'Unknown')}${rank.isDemo ? ' (데모)' : ''}</div>
+                        <div class="ranking-stats">${rank.wins || 0}승 ${rank.losses || 0}패 (${winRate}%)</div>
+                    </div>
+                    <div class="ranking-rating">${rank.rating || 0}</div>
+                </div>
+            `;
+            }).join('');
+            
+            rankingList.innerHTML = html;
+        }
+        
+        // 렌더링 함수들이 모두 정의된 후 기본 데이터 초기화
+        function initializeDefaultData() {
+            console.log('Initializing default data...');
+            // 접속중인 유저 목록에 현재 유저와 데모 유저 표시
+            renderOnlineUsers([]);
+            // 진행중인 게임 데모 데이터 표시
+            const demoGames = [
+                {
+                    id: 'demo-0',
+                    roomNumber: 1,
+                    title: '두뇌싸움의 끝판왕!',
+                    blackPlayer: { nickname: '바둑고수', rating: 2450 },
+                    whitePlayer: { nickname: '전략가', rating: 2380 },
+                    moveCount: 45,
+                    startedAt: new Date(Date.now() - 1800000),
+                    isDemo: true
+                },
+                {
+                    id: 'demo-1',
+                    roomNumber: 2,
+                    title: '명수들의 대결',
+                    blackPlayer: { nickname: '명수', rating: 2320 },
+                    whitePlayer: { nickname: '고수', rating: 2280 },
+                    moveCount: 38,
+                    startedAt: new Date(Date.now() - 1200000),
+                    isDemo: true
+                },
+                {
+                    id: 'demo-2',
+                    roomNumber: 3,
+                    title: '전략의 극치',
+                    blackPlayer: { nickname: '초고수', rating: 2250 },
+                    whitePlayer: { nickname: '달인', rating: 2200 },
+                    moveCount: 52,
+                    startedAt: new Date(Date.now() - 900000),
+                    isDemo: true
+                },
+                {
+                    id: 'demo-3',
+                    roomNumber: 4,
+                    title: '바둑 고수들의 만남',
+                    blackPlayer: { nickname: '고수왕', rating: 2150 },
+                    whitePlayer: { nickname: '바둑신', rating: 2100 },
+                    moveCount: 29,
+                    startedAt: new Date(Date.now() - 600000),
+                    isDemo: true
+                },
+                {
+                    id: 'demo-4',
+                    roomNumber: 5,
+                    title: '실력자들의 격전',
+                    blackPlayer: { nickname: '바둑고수', rating: 2500 },
+                    whitePlayer: { nickname: '전략의신', rating: 2400 },
+                    moveCount: 67,
+                    startedAt: new Date(Date.now() - 300000),
+                    isDemo: true
+                }
+            ];
+            renderOngoingGames(demoGames);
+            // 랭킹보드 데모 데이터 표시
+            renderRankings([]);
+        }
+        
+        // 페이지 로드 시 기본 데이터 초기화 (렌더링 함수들 정의 후)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(initializeDefaultData, 100);
+            });
+        } else {
+            setTimeout(initializeDefaultData, 100);
+        }
+
+        function addChatMessage(user, message, timestamp, roomType) {
+            const roomTypeText = roomType === 'casual' ? '[놀이]' : '[전략]';
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-user">${roomTypeText} ${escapeHtml(user)}</span>
+                    <span class="message-content">${escapeHtml(message)}</span>
+                    <span class="message-time">${formatTime(timestamp)}</span>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // 유틸리티 함수들
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function getStatusText(status) {
             const statusMap = {
                 'waiting': '대기 중',
+                'resting': '휴식 중',
                 'matching': '매칭 중',
-                'in-game': '게임 중'
+                'in-game': '대국 중',
+                'spectating': '관전 중'
             };
             return statusMap[status] || status;
         }
 
-        // Matching
+        // 상태 변경 함수
+        function changeStatus(newStatus) {
+            // 매칭 중이거나 대국 중일 때는 상태 변경 불가
+            if (isMatching) {
+                alert('매칭 중에는 상태를 변경할 수 없습니다.');
+                // 드롭다운을 원래 상태로 되돌림
+                const dropdown = document.getElementById('statusDropdown');
+                if (dropdown) {
+                    socket.emit('get_user_list');
+                }
+                return;
+            }
+            
+            socket.emit('change_status', { status: newStatus });
+        }
+
+        // 상태 변경 이벤트
+        socket.on('status_changed', (data) => {
+            if (data.userId === currentUserId) {
+                // 내 상태가 변경되었을 때
+                const dropdown = document.getElementById('statusDropdown');
+                if (dropdown) {
+                    // 대기중 또는 휴식중일 때만 드롭다운 업데이트
+                    if (data.status === 'waiting' || data.status === 'resting') {
+                        dropdown.value = data.status;
+                    } else {
+                        // 다른 상태일 때는 드롭다운 비활성화
+                        dropdown.disabled = true;
+                        // 상태가 다시 대기중/휴식중으로 돌아오면 활성화
+                        setTimeout(() => {
+                            if (data.status === 'waiting' || data.status === 'resting') {
+                                dropdown.disabled = false;
+                            }
+                        }, 100);
+                    }
+                }
+                socket.emit('get_user_list');
+            }
+        });
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '방금 전';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            if (minutes < 1) return '방금 전';
+            if (minutes < 60) return `${minutes}분 전`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}시간 전`;
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function watchGame(gameId) {
+            window.location.href = `/api/game/${gameId}`;
+        }
+        
+        // 방번호로 관전하기
+        function watchGameByRoomNumber() {
+            const roomNumberInput = document.getElementById('roomNumberInput');
+            const roomNumber = roomNumberInput.value.trim().toUpperCase();
+            
+            if (!roomNumber) {
+                alert('방번호를 입력해주세요.');
+                return;
+            }
+            
+            // ROOM001 형식인지 확인
+            if (!roomNumber.match(/^ROOM\d{3}$/)) {
+                alert('올바른 방번호 형식이 아닙니다. (예: ROOM001)');
+                return;
+            }
+            
+            // 방번호에서 숫자 추출 (ROOM001 -> 001)
+            const roomNum = roomNumber.replace('ROOM', '');
+            const roomIndex = parseInt(roomNum) - 1;
+            
+            // 현재 표시된 게임 목록에서 찾기
+            const gameItems = document.querySelectorAll('.game-item');
+            if (gameItems.length > roomIndex && roomIndex >= 0) {
+                const gameItem = gameItems[roomIndex];
+                const watchBtn = gameItem.querySelector('.watch-btn');
+                if (watchBtn && !watchBtn.disabled) {
+                    // 게임 ID 추출 (onclick 속성에서)
+                    const onclickAttr = gameItem.getAttribute('onclick');
+                    if (onclickAttr) {
+                        const match = onclickAttr.match(/watchGame\('([^']+)'\)/);
+                        if (match && match[1]) {
+                            watchGame(match[1]);
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // 게임 목록에서 찾지 못한 경우, 서버에 요청
+            socket.emit('get_game_by_room_number', { roomNumber: roomNumber }, (response) => {
+                if (response && response.success && response.gameId) {
+                    watchGame(response.gameId);
+                } else {
+                    alert('해당 방번호의 게임을 찾을 수 없습니다.');
+                }
+            });
+        }
+
+        // 채팅 관련 변수
+        let chatCooldown = 0;
+        let chatCooldownInterval = null;
+
+        // 채팅 전송
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !chatInput.disabled) {
+                sendChatMessage();
+            }
+        });
+
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message || chatCooldown > 0) {
+                if (chatCooldown > 0) {
+                    console.log('Chat cooldown active:', chatCooldown);
+                }
+                return;
+            }
+
+            // 메시지 검증
+            if (message.length === 0) {
+                console.log('Empty message, not sending');
+                return;
+            }
+            
+            if (message.length > 200) {
+                alert('메시지는 200자 이하여야 합니다.');
+                return;
+            }
+
+            console.log('Sending chat message:', message);
+            
+            // Socket이 연결되어 있는지 확인
+            if (!socket || !socket.connected) {
+                console.error('Socket not connected');
+                alert('서버에 연결되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+
+            socket.emit('chat_message', {
+                user: currentUserNickname,
+                message: message,
+                timestamp: Date.now()
+            });
+
+            chatInput.value = '';
+            
+            // 쿨다운 시작
+            startChatCooldown();
+        }
+
+        function startChatCooldown() {
+            chatCooldown = 3;
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+            const countdown = document.getElementById('chatCountdown');
+            if (countdown) {
+                countdown.style.display = 'flex';
+                countdown.textContent = chatCooldown;
+            }
+
+            if (chatCooldownInterval) {
+                clearInterval(chatCooldownInterval);
+            }
+
+            chatCooldownInterval = setInterval(() => {
+                chatCooldown--;
+                if (countdown) {
+                    countdown.textContent = chatCooldown;
+                }
+
+                if (chatCooldown <= 0) {
+                    clearInterval(chatCooldownInterval);
+                    chatInput.disabled = false;
+                    chatSendBtn.disabled = false;
+                    if (countdown) {
+                        countdown.style.display = 'none';
+                    }
+                    chatInput.focus();
+                }
+            }, 1000);
+        }
+
+        // 이모지 버튼 클릭
+        const emojiBtn = document.getElementById('emojiBtn');
+        const emojiPopup = document.getElementById('emojiPopup');
+
+        if (emojiBtn && emojiPopup) {
+            function updatePopupPosition() {
+                if (emojiPopup.classList.contains('show') || emojiPopup.style.display === 'flex') {
+                    const btnRect = emojiBtn.getBoundingClientRect();
+                    const popupHeight = 280;
+                    const popupWidth = 350;
+                    
+                    // 버튼 위에 팝업 배치 (버튼의 top 위치에서 팝업 높이 + 간격만큼 위로)
+                    emojiPopup.style.position = 'fixed';
+                    emojiPopup.style.bottom = `${window.innerHeight - btnRect.top + 10}px`;
+                    emojiPopup.style.left = `${btnRect.left}px`;
+                    
+                    // 화면 오른쪽으로 넘어가지 않도록 조정
+                    if (btnRect.left + popupWidth > window.innerWidth) {
+                        emojiPopup.style.left = `${window.innerWidth - popupWidth - 10}px`;
+                    }
+                    
+                    // 화면 왼쪽으로 넘어가지 않도록 조정
+                    if (btnRect.left < 0) {
+                        emojiPopup.style.left = '10px';
+                    }
+                }
+            }
+
+            emojiBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // 스케일링 재계산 방지
+                if (window.scaleTimeout) {
+                    clearTimeout(window.scaleTimeout);
+                }
+                
+                if (emojiPopup.classList.contains('show')) {
+                    // 닫기 애니메이션 (위로 슬라이드)
+                    emojiPopup.classList.remove('show');
+                    setTimeout(() => {
+                        emojiPopup.style.display = 'none';
+                    }, 300); // transition 시간과 동일
+                } else {
+                    // 열기 애니메이션 (아래에서 위로 슬라이드)
+                    emojiPopup.style.display = 'flex';
+                    updatePopupPosition();
+                    // 다음 프레임에서 애니메이션 시작
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            emojiPopup.classList.add('show');
+                            updatePopupPosition(); // 애니메이션 후 위치 재확인
+                        });
+                    });
+                }
+            });
+
+            // 창 크기 변경 시 위치 업데이트 (스케일링과 분리)
+            let popupResizeTimeout;
+            window.addEventListener('resize', () => {
+                if (emojiPopup.classList.contains('show')) {
+                    clearTimeout(popupResizeTimeout);
+                    popupResizeTimeout = setTimeout(() => {
+                        updatePopupPosition();
+                    }, 50);
+                }
+            });
+
+            // 스크롤 시 위치 업데이트
+            let popupScrollTimeout;
+            window.addEventListener('scroll', () => {
+                if (emojiPopup.classList.contains('show')) {
+                    clearTimeout(popupScrollTimeout);
+                    popupScrollTimeout = setTimeout(() => {
+                        updatePopupPosition();
+                    }, 10);
+                }
+            }, true); // capture phase에서도 감지
+
+            // 주기적으로 위치 업데이트 (팝업이 열려있을 때)
+            let positionUpdateInterval;
+            function startPositionUpdate() {
+                if (positionUpdateInterval) {
+                    clearInterval(positionUpdateInterval);
+                }
+                positionUpdateInterval = setInterval(() => {
+                    if (emojiPopup.classList.contains('show')) {
+                        updatePopupPosition();
+                    } else {
+                        clearInterval(positionUpdateInterval);
+                        positionUpdateInterval = null;
+                    }
+                }, 100); // 100ms마다 위치 업데이트
+            }
+
+            // 팝업이 열릴 때 위치 업데이트 시작
+            const originalAddClass = emojiPopup.classList.add.bind(emojiPopup.classList);
+            emojiPopup.classList.add = function(...args) {
+                originalAddClass(...args);
+                if (args.includes('show')) {
+                    startPositionUpdate();
+                }
+            };
+
+            // 팝업이 닫힐 때 위치 업데이트 중지
+            const originalRemoveClass = emojiPopup.classList.remove.bind(emojiPopup.classList);
+            emojiPopup.classList.remove = function(...args) {
+                originalRemoveClass(...args);
+                if (args.includes('show') && positionUpdateInterval) {
+                    clearInterval(positionUpdateInterval);
+                    positionUpdateInterval = null;
+                }
+            };
+
+            // 팝업 외부 클릭 시 닫기
+            document.addEventListener('click', (e) => {
+                if (emojiPopup && !emojiPopup.contains(e.target) && e.target !== emojiBtn && !emojiBtn.contains(e.target)) {
+                    if (emojiPopup.classList.contains('show')) {
+                        emojiPopup.classList.remove('show');
+                        setTimeout(() => {
+                            emojiPopup.style.display = 'none';
+                        }, 300);
+                    }
+                }
+            });
+
+            // 탭 전환
+            const emojiTabs = document.querySelectorAll('.emoji-tab');
+            emojiTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // 모든 탭 비활성화
+                    emojiTabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.emoji-section').forEach(s => s.classList.remove('active'));
+                    
+                    // 선택한 탭 활성화
+                    tab.classList.add('active');
+                    if (tabName === 'emoji') {
+                        const emojiSection = document.getElementById('emojiSection');
+                        if (emojiSection) emojiSection.classList.add('active');
+                    } else if (tabName === 'quick') {
+                        const quickSection = document.getElementById('quickSection');
+                        if (quickSection) quickSection.classList.add('active');
+                    }
+                });
+            });
+
+            // 이모지 클릭
+            const emojiItems = document.querySelectorAll('.emoji-item');
+            emojiItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (chatInput.disabled) return;
+                    const emoji = item.textContent;
+                    chatInput.value += emoji;
+                    chatInput.focus();
+                    emojiPopup.style.display = 'none';
+                });
+            });
+
+            // 퀵 메시지 클릭
+            const quickMessageBtns = document.querySelectorAll('.quick-message-btn');
+            quickMessageBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (chatInput.disabled) return;
+                    const message = btn.textContent;
+                    chatInput.value = message;
+                    chatInput.focus();
+                    emojiPopup.style.display = 'none';
+                });
+            });
+        }
+
+        // 매칭 시작/취소
         startMatchingBtn.addEventListener('click', () => {
             socket.emit('start_matching');
             isMatching = true;
             startMatchingBtn.style.display = 'none';
             cancelMatchingBtn.style.display = 'block';
-            matchingStatus.classList.add('active');
+            matchingStatus.textContent = '매칭 중...';
+            matchingContent.classList.add('matching-active');
         });
 
         cancelMatchingBtn.addEventListener('click', () => {
@@ -419,29 +3306,664 @@
             isMatching = false;
             startMatchingBtn.style.display = 'block';
             cancelMatchingBtn.style.display = 'none';
-            matchingStatus.classList.remove('active');
+            matchingStatus.textContent = '대기 중';
+            matchingContent.classList.remove('matching-active');
         });
 
-        // AI Level Selection
-        aiLevelSelector.querySelectorAll('.ai-level-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                aiLevelSelector.querySelectorAll('.ai-level-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedAiLevel = parseInt(btn.dataset.level);
-            });
-        });
+        // 주기적 업데이트
+        setInterval(() => {
+            socket.emit('get_ongoing_games');
+            socket.emit('get_rankings');
+        }, 10000); // 10초마다 업데이트
 
-        startAiGameBtn.addEventListener('click', () => {
-            if (!selectedAiLevel) {
-                alert('난이도를 선택해주세요.');
+        // 모달 드래그 기능
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        // 모달 요소 참조 (DOM 로드 후 초기화)
+        let modalContent, modalHeader;
+
+        function initModalDrag() {
+            modalContent = document.querySelector('.stats-modal-content');
+            modalHeader = document.getElementById('statsModalHeader');
+            
+            if (modalHeader && modalContent) {
+                // 기존 이벤트 리스너 제거 후 새로 등록 (중복 방지)
+                modalHeader.removeEventListener('mousedown', dragStart);
+                modalHeader.removeEventListener('touchstart', dragStart);
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('touchmove', drag);
+                document.removeEventListener('mouseup', dragEnd);
+                document.removeEventListener('touchend', dragEnd);
+                
+                modalHeader.addEventListener('mousedown', dragStart);
+                modalHeader.addEventListener('touchstart', dragStart);
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag);
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('touchend', dragEnd);
+            }
+        }
+
+        function dragStart(e) {
+            // 닫기 버튼 클릭 시 드래그 방지
+            if (e.target.classList.contains('close-modal') || e.target.closest('.close-modal')) {
                 return;
             }
-            socket.emit('start_ai_game', { level: selectedAiLevel });
+
+            if (e.target === modalHeader || modalHeader.contains(e.target)) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (e.type === "touchstart") {
+                    initialX = e.touches[0].clientX - xOffset;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+                
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (e.type === "touchmove") {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+            } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+            }
+
+            xOffset = currentX;
+            yOffset = currentY;
+
+            setTranslate(currentX, currentY, modalContent);
+        }
+
+        function dragEnd(e) {
+            if (!isDragging) return;
+            
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            
+            // 위치 저장
+            saveModalPosition();
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            if (el) {
+                el.style.transform = `translate(calc(-50% + ${xPos}px), calc(-50% + ${yPos}px))`;
+            }
+        }
+
+        // 모달 위치 저장
+        function saveModalPosition() {
+            const rememberCheckbox = document.getElementById('rememberPositionCheckbox');
+            if (rememberCheckbox && rememberCheckbox.checked) {
+                localStorage.setItem('statsModalX', xOffset.toString());
+                localStorage.setItem('statsModalY', yOffset.toString());
+            }
+        }
+
+        // 모달 위치 복원
+        function restoreModalPosition() {
+            // modalContent가 아직 없으면 가져오기
+            if (!modalContent) {
+                modalContent = document.querySelector('.stats-modal-content');
+            }
+            
+            if (!modalContent) return;
+            
+            const rememberCheckbox = document.getElementById('rememberPositionCheckbox');
+            if (rememberCheckbox && rememberCheckbox.checked) {
+                const savedX = localStorage.getItem('statsModalX');
+                const savedY = localStorage.getItem('statsModalY');
+                
+                if (savedX !== null && savedY !== null) {
+                    xOffset = parseFloat(savedX);
+                    yOffset = parseFloat(savedY);
+                    // 즉시 위치 적용 (표시 전에도 적용되도록)
+                    setTranslate(xOffset, yOffset, modalContent);
+                } else {
+                    // 저장된 위치가 없으면 초기화
+                    xOffset = 0;
+                    yOffset = 0;
+                    setTranslate(0, 0, modalContent);
+                }
+            } else {
+                // 체크박스가 꺼져있으면 위치 초기화
+                xOffset = 0;
+                yOffset = 0;
+                setTranslate(0, 0, modalContent);
+            }
+        }
+
+        // 체크박스 상태 저장/복원
+        function loadRememberPositionSetting() {
+            const saved = localStorage.getItem('rememberPositionEnabled');
+            const checkbox = document.getElementById('rememberPositionCheckbox');
+            if (checkbox) {
+                checkbox.checked = saved === 'true';
+            }
+        }
+
+        function saveRememberPositionSetting() {
+            const checkbox = document.getElementById('rememberPositionCheckbox');
+            if (checkbox) {
+                localStorage.setItem('rememberPositionEnabled', checkbox.checked.toString());
+                if (!checkbox.checked) {
+                    // 체크박스가 꺼지면 저장된 위치도 삭제
+                    localStorage.removeItem('statsModalX');
+                    localStorage.removeItem('statsModalY');
+                    xOffset = 0;
+                    yOffset = 0;
+                    setTranslate(0, 0, modalContent);
+                } else {
+                    // 체크박스가 켜지면 현재 위치 저장
+                    saveModalPosition();
+                }
+            }
+        }
+
+        // 통계 모달 표시 (새로 구현)
+        function showStatsModal(event) {
+            console.log('showStatsModal called', event);
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+            
+            const modal = document.getElementById('statsModal');
+            if (!modal) {
+                console.error('statsModal not found');
+                return;
+            }
+            
+            // 이미 모달이 열려있으면 무시
+            if (statsModalOpen) {
+                console.log('Modal already open, ignoring');
+                return;
+            }
+            
+            // 모달 열림 플래그 설정 (가장 먼저)
+            statsModalOpen = true;
+            console.log('statsModalOpen set to true');
+            
+            // 모달 요소 참조 가져오기
+            modalContent = document.querySelector('.stats-modal-content');
+            modalHeader = document.getElementById('statsModalHeader');
+            
+            // 체크박스 상태 복원
+            loadRememberPositionSetting();
+            
+            // 위치 복원
+            restoreModalPosition();
+            
+            // 모달 표시 (display를 먼저 설정)
+            modal.style.display = 'flex';
+            modal.style.visibility = 'visible';
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none'; // 초기에는 클릭 이벤트 차단
+            document.body.style.overflow = 'hidden';
+            
+            // 강제 리플로우
+            void modal.offsetHeight;
+            
+            // 애니메이션을 위해 다음 프레임에서 show 클래스 추가
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    console.log('Adding show class to modal');
+                    modal.classList.add('show');
+                    modal.style.opacity = '1';
+                    
+                    // 모달이 완전히 표시된 후에만 클릭 이벤트 활성화 (1초 후)
+                    setTimeout(() => {
+                        modal.style.pointerEvents = 'auto';
+                        console.log('Modal pointer-events enabled');
+                    }, 1000);
+                    
+                    // 드래그 기능 초기화
+                    setTimeout(() => {
+                        initModalDrag();
+                    }, 100);
+                    
+                    // 체크박스 변경 이벤트
+                    const checkbox = document.getElementById('rememberPositionCheckbox');
+                    if (checkbox) {
+                        checkbox.removeEventListener('change', saveRememberPositionSetting);
+                        checkbox.addEventListener('change', saveRememberPositionSetting);
+                    }
+                    
+                    // 서버에서 통계 데이터 가져오기 (모달이 완전히 표시된 후)
+                    fetch('/api/auth/stats')
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error('Failed to fetch stats');
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            // 데이터 유효성 검사
+                            if (!data || typeof data !== 'object') {
+                                throw new Error('Invalid data format');
+                            }
+                            // strategy와 casual이 없으면 기본값 추가
+                            if (!data.strategy) {
+                                data.strategy = {
+                                    wins: <%= user.wins || 0 %>,
+                                    losses: <%= user.losses || 0 %>,
+                                    gameTypes: {}
+                                };
+                            }
+                            if (!data.casual) {
+                                data.casual = {
+                                    wins: 0,
+                                    losses: 0,
+                                    gameTypes: {}
+                                };
+                            }
+                            renderStatsModal(data);
+                        })
+                        .catch(err => {
+                            console.error('통계 데이터 로드 실패:', err);
+                            // 기본 데이터로 표시
+                            renderStatsModal({
+                                strategy: {
+                                    wins: <%= user.wins || 0 %>,
+                                    losses: <%= user.losses || 0 %>,
+                                    gameTypes: {
+                                        classic: { wins: 0, losses: 0 },
+                                        capture: { wins: 0, losses: 0 },
+                                        speed: { wins: 0, losses: 0 },
+                                        base: { wins: 0, losses: 0 },
+                                        hidden: { wins: 0, losses: 0 },
+                                        missile: { wins: 0, losses: 0 },
+                                        mix: { wins: 0, losses: 0 }
+                                    }
+                                },
+                                casual: {
+                                    wins: 0,
+                                    losses: 0,
+                                    gameTypes: {
+                                        dice: { wins: 0, losses: 0 },
+                                        cops: { wins: 0, losses: 0 },
+                                        omok: { wins: 0, losses: 0 },
+                                        ttak: { wins: 0, losses: 0 },
+                                        alkkagi: { wins: 0, losses: 0 },
+                                        curling: { wins: 0, losses: 0 }
+                                    }
+                                }
+                            });
+                        });
+                });
+            });
+        }
+
+        // 모달 닫기 함수 (새로 구현)
+        function closeStatsModal() {
+            console.trace('closeStatsModal called - stack trace:');
+            const modal = document.getElementById('statsModal');
+            if (modal) {
+                // 모달 닫힘 플래그 설정
+                statsModalOpen = false;
+                
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    modal.style.opacity = '0';
+                    modal.style.visibility = 'hidden';
+                }, 300);
+                document.body.style.overflow = '';
+            }
+        }
+
+        // AI봇 대결 모달
+        function showAiBattleModal() {
+            const modal = document.getElementById('aiBattleModal');
+            if (modal) {
+                // 모달 열림 플래그 설정
+                aiBattleModalOpen = true;
+                
+                modal.style.display = 'flex';
+                modal.style.visibility = 'hidden';
+                modal.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        modal.style.visibility = 'visible';
+                        modal.classList.add('show');
+                        modal.style.opacity = '1';
+                        document.body.style.overflow = 'hidden';
+                    });
+                });
+            }
+        }
+
+        function closeAiBattleModal() {
+            const modal = document.getElementById('aiBattleModal');
+            if (modal) {
+                // 모달 닫힘 플래그 설정
+                aiBattleModalOpen = false;
+                
+                modal.classList.remove('show');
+                modal.style.opacity = '0';
+                modal.style.visibility = 'hidden';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+                document.body.style.overflow = '';
+            }
+        }
+
+        // 탭 전환 함수
+        function switchStatsTab(tabName) {
+            // 모든 탭 버튼과 컨텐츠 비활성화
+            document.querySelectorAll('.stats-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.stats-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 선택한 탭 활성화
+            if (tabName === 'strategy') {
+                document.querySelector('.stats-tab:first-child').classList.add('active');
+                document.getElementById('strategyTab').classList.add('active');
+            } else if (tabName === 'casual') {
+                document.querySelector('.stats-tab:last-child').classList.add('active');
+                document.getElementById('casualTab').classList.add('active');
+            }
+        }
+
+        function renderStatsModal(data) {
+            // 모달이 열려있지 않으면 무시
+            if (!statsModalOpen) {
+                console.log('renderStatsModal: Modal is not open, ignoring');
+                return;
+            }
+            
+            try {
+                // 데이터가 없거나 형식이 잘못된 경우 기본값 사용
+                if (!data) {
+                    console.error('renderStatsModal: data is null or undefined');
+                    return;
+                }
+
+                // 전략바둑 통계
+                const strategy = data.strategy || { wins: 0, losses: 0, gameTypes: {} };
+                const strategyTotal = (strategy.wins || 0) + (strategy.losses || 0);
+                const strategyWinRate = strategyTotal > 0 ? Math.round((strategy.wins / strategyTotal) * 100) : 0;
+                
+                const strategyWinsEl = document.getElementById('strategyWins');
+                const strategyLossesEl = document.getElementById('strategyLosses');
+                const strategyWinRateEl = document.getElementById('strategyWinRate');
+                
+                if (strategyWinsEl) strategyWinsEl.textContent = strategy.wins || 0;
+                if (strategyLossesEl) strategyLossesEl.textContent = strategy.losses || 0;
+                if (strategyWinRateEl) strategyWinRateEl.textContent = strategyWinRate + '%';
+                
+                // 전략바둑 종류별 상세 정보
+                const strategyTypes = strategy.gameTypes || {};
+                const strategyElements = {
+                    'strategyClassicWins': strategyTypes.classic?.wins || 0,
+                    'strategyClassicLosses': strategyTypes.classic?.losses || 0,
+                    'strategyCaptureWins': strategyTypes.capture?.wins || 0,
+                    'strategyCaptureLosses': strategyTypes.capture?.losses || 0,
+                    'strategySpeedWins': strategyTypes.speed?.wins || 0,
+                    'strategySpeedLosses': strategyTypes.speed?.losses || 0,
+                    'strategyBaseWins': strategyTypes.base?.wins || 0,
+                    'strategyBaseLosses': strategyTypes.base?.losses || 0,
+                    'strategyHiddenWins': strategyTypes.hidden?.wins || 0,
+                    'strategyHiddenLosses': strategyTypes.hidden?.losses || 0,
+                    'strategyMissileWins': strategyTypes.missile?.wins || 0,
+                    'strategyMissileLosses': strategyTypes.missile?.losses || 0,
+                    'strategyMixWins': strategyTypes.mix?.wins || 0,
+                    'strategyMixLosses': strategyTypes.mix?.losses || 0
+                };
+                
+                Object.keys(strategyElements).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) {
+                        const value = strategyElements[key];
+                        if (key.includes('Wins')) {
+                            el.textContent = value + '승';
+                        } else {
+                            el.textContent = value + '패';
+                        }
+                    }
+                });
+                
+                // 놀이바둑 통계
+                const casual = data.casual || { wins: 0, losses: 0, gameTypes: {} };
+                const casualTotal = (casual.wins || 0) + (casual.losses || 0);
+                const casualWinRate = casualTotal > 0 ? Math.round((casual.wins / casualTotal) * 100) : 0;
+                
+                const casualWinsEl = document.getElementById('casualWins');
+                const casualLossesEl = document.getElementById('casualLosses');
+                const casualWinRateEl = document.getElementById('casualWinRate');
+                
+                if (casualWinsEl) casualWinsEl.textContent = casual.wins || 0;
+                if (casualLossesEl) casualLossesEl.textContent = casual.losses || 0;
+                if (casualWinRateEl) casualWinRateEl.textContent = casualWinRate + '%';
+                
+                // 놀이바둑 종류별 상세 정보
+                const casualTypes = casual.gameTypes || {};
+                const casualElements = {
+                    'casualDiceWins': casualTypes.dice?.wins || 0,
+                    'casualDiceLosses': casualTypes.dice?.losses || 0,
+                    'casualCopsWins': casualTypes.cops?.wins || 0,
+                    'casualCopsLosses': casualTypes.cops?.losses || 0,
+                    'casualOmokWins': casualTypes.omok?.wins || 0,
+                    'casualOmokLosses': casualTypes.omok?.losses || 0,
+                    'casualTtakWins': casualTypes.ttak?.wins || 0,
+                    'casualTtakLosses': casualTypes.ttak?.losses || 0,
+                    'casualAlkkagiWins': casualTypes.alkkagi?.wins || 0,
+                    'casualAlkkagiLosses': casualTypes.alkkagi?.losses || 0,
+                    'casualCurlingWins': casualTypes.curling?.wins || 0,
+                    'casualCurlingLosses': casualTypes.curling?.losses || 0
+                };
+                
+                Object.keys(casualElements).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) {
+                        const value = casualElements[key];
+                        if (key.includes('Wins')) {
+                            el.textContent = value + '승';
+                        } else {
+                            el.textContent = value + '패';
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('renderStatsModal error:', error);
+                // 에러가 발생해도 모달은 유지
+            }
+        }
+
+        // 모달 닫기 이벤트 핸들러 (모달이 열려있을 때만 작동)
+        let statsModalOpen = false;
+        let aiBattleModalOpen = false;
+        
+        const statsModal = document.getElementById('statsModal');
+        const aiBattleModal = document.getElementById('aiBattleModal');
+        
+        if (statsModal) {
+            // 모달 배경 클릭 시 닫기
+            let modalClickTimeout = null;
+            statsModal.addEventListener('click', function(event) {
+                // 모달이 열려있고, 모달 배경을 직접 클릭한 경우에만 닫기
+                if (statsModalOpen && event.target === statsModal) {
+                    // 모달이 방금 열렸으면 무시 (0.5초 대기)
+                    if (modalClickTimeout) {
+                        clearTimeout(modalClickTimeout);
+                    }
+                    modalClickTimeout = setTimeout(() => {
+                        closeStatsModal();
+                    }, 500);
+                }
+            });
+        }
+        
+        if (aiBattleModal) {
+            // AI봇 대결 모달 배경 클릭 시 닫기
+            aiBattleModal.addEventListener('click', function(event) {
+                if (aiBattleModalOpen && event.target === aiBattleModal) {
+                    closeAiBattleModal();
+                }
+            });
+        }
+
+        // ESC 키로 모달 닫기 (모달이 열려있을 때만)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (statsModalOpen) {
+                    closeStatsModal();
+                }
+                if (aiBattleModalOpen) {
+                    closeAiBattleModal();
+                }
+            }
         });
 
-        socket.on('ai_game_started', (data) => {
-            window.location.href = `/api/game/${data.gameId}`;
+        // AI봇 대결 설정
+        let selectedAiLevel = 1;
+        let selectedColor = 'random';
+
+        // 기본값: 1단 선택
+        document.addEventListener('DOMContentLoaded', function() {
+            // 통계 모달 닫기 버튼
+            const closeStatsModalBtn = document.getElementById('closeStatsModalBtn');
+            if (closeStatsModalBtn) {
+                closeStatsModalBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    closeStatsModal();
+                });
+            }
+            
+            const firstLevelBtn = document.querySelector('.ai-level-btn[data-level="1"]');
+            if (firstLevelBtn) {
+                firstLevelBtn.classList.add('active');
+            }
+
+            document.querySelectorAll('.ai-level-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.ai-level-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedAiLevel = parseInt(this.getAttribute('data-level'));
+                });
+            });
+
+            document.querySelectorAll('.ai-color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.ai-color-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedColor = this.getAttribute('data-color');
+                });
+            });
+
+            const startAiBattleBtn = document.getElementById('startAiBattleBtn');
+            if (startAiBattleBtn) {
+                startAiBattleBtn.addEventListener('click', function() {
+                    // AI 게임 시작
+                    const color = selectedColor === 'random' ? (Math.random() > 0.5 ? 'black' : 'white') : selectedColor;
+                    socket.emit('start_ai_game', { level: selectedAiLevel, color: color });
+                    closeAiBattleModal();
+                });
+            }
         });
+        
+        // 버튼 이벤트 리스너 추가
+        function initButtons() {
+            console.log('initButtons called');
+            const detailBtn = document.getElementById('detailBtn');
+            console.log('detailBtn:', detailBtn);
+            if (detailBtn) {
+                // 기존 리스너 제거 후 추가
+                const newDetailBtn = detailBtn.cloneNode(true);
+                detailBtn.parentNode.replaceChild(newDetailBtn, detailBtn);
+                console.log('Detail button cloned and replaced');
+                newDetailBtn.addEventListener('click', function(event) {
+                    console.log('Detail button clicked - event listener triggered');
+                    event.stopPropagation();
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    console.log('Detail button clicked');
+                    if (typeof showStatsModal === 'function') {
+                        console.log('Calling showStatsModal');
+                        showStatsModal(event);
+                    } else {
+                        console.error('showStatsModal is not defined');
+                    }
+                });
+                console.log('Event listener added to detail button');
+            } else {
+                console.error('detailBtn not found');
+            }
+            
+            const aiBattleBtn = document.getElementById('aiBattleBtn');
+            if (aiBattleBtn) {
+                // 기존 리스너 제거 후 추가
+                const newAiBattleBtn = aiBattleBtn.cloneNode(true);
+                aiBattleBtn.parentNode.replaceChild(newAiBattleBtn, aiBattleBtn);
+                newAiBattleBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    if (typeof showAiBattleModal === 'function') {
+                        showAiBattleModal();
+                    }
+                });
+            }
+        }
+        
+        // DOMContentLoaded와 즉시 실행 모두 처리
+        console.log('Setting up initButtons, readyState:', document.readyState);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOMContentLoaded fired, calling initButtons');
+                setTimeout(initButtons, 100);
+            });
+        } else {
+            console.log('Document already loaded, calling initButtons immediately');
+            setTimeout(initButtons, 100);
+        }
+        
+        // 추가 안전장치: 여러 번 시도
+        setTimeout(initButtons, 500);
+        setTimeout(initButtons, 1000);
+        
+        // 이벤트 위임 방식으로도 추가
+        document.addEventListener('click', function(event) {
+            if (event.target && (event.target.id === 'detailBtn' || event.target.classList.contains('detail-btn'))) {
+                console.log('Detail button clicked via event delegation');
+                event.stopPropagation();
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (typeof showStatsModal === 'function') {
+                    showStatsModal(event);
+                } else {
+                    console.error('showStatsModal is not defined');
+                }
+            }
+        }, true); // capture phase에서 처리
     </script>
 </body>
 </html>

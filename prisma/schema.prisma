@@ -11,16 +11,21 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  nickname  String   @unique
-  password  String
-  rating    Int      @default(1500)
-  wins      Int      @default(0)
-  losses    Int      @default(0)
-  draws     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(uuid())
+  email             String   @unique
+  nickname          String   @unique
+  password          String
+  rating            Int      @default(1500)
+  wins              Int      @default(0)
+  losses            Int      @default(0)
+  draws             Int      @default(0)
+  strategyTickets   Int      @default(10)
+  casualTickets     Int      @default(10)
+  strategyTicketMax Int      @default(10)
+  casualTicketMax   Int      @default(10)
+  lastTicketRecovery DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   gamesAsBlack Game[] @relation("BlackPlayer")
   gamesAsWhite Game[] @relation("WhitePlayer")
@@ -29,8 +34,8 @@ model User {
 
 model Game {
   id          String   @id @default(uuid())
-  blackId     String
-  whiteId     String
+  blackId     String?
+  whiteId     String?
   blackRating Int
   whiteRating Int
   result      String?  // "black_win", "white_win", "draw"

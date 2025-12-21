@@ -106,9 +106,25 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('Looking up user...');
+    
+    // 디버깅: 개발 환경에서만 모든 사용자 목록 확인
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Searching for email:', JSON.stringify(email));
+      try {
+        const allUsers = await userService.findAllUsers();
+        console.log('All users in database:', allUsers.map(u => ({ email: u.email, nickname: u.nickname })));
+      } catch (debugError) {
+        console.error('Error fetching all users for debugging:', debugError);
+      }
+    }
+    
     const user = await userService.findUserByEmail(email);
     if (!user) {
       console.log('User not found for email:', email);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Email type:', typeof email);
+        console.log('Email length:', email?.length);
+      }
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -228,6 +244,21 @@ router.get('/me', async (req, res) => {
     res.json({ user: profile });
   } catch (error) {
     console.error('Get user error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get user statistics by game type
+router.get('/stats', async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    const stats = await userService.getUserStats(req.session.userId);
+    res.json(stats);
+  } catch (error) {
+    console.error('Get user stats error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

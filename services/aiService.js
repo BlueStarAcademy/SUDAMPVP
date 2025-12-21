@@ -10,7 +10,13 @@ class AIService {
     setupQueueProcessor() {
         aiQueue.process('gnugo-move', async (job) => {
             const { gameId, level, gameState } = job.data;
-            return await this.getGnugoMove(gameId, level, gameState);
+            const aiMode = process.env.AI_MODE || 'gnugo';
+            
+            if (aiMode === 'demo') {
+                return await this.getDemoMove(gameId, level, gameState);
+            } else {
+                return await this.getGnugoMove(gameId, level, gameState);
+            }
         });
 
         aiQueue.process('katago-score', async (job) => {
@@ -75,15 +81,99 @@ class AIService {
         }
     }
 
+    // 데모 모드: 간단한 휴리스틱 기반 AI
+    async getDemoMove(gameId, level, gameState) {
+        return new Promise(async (resolve) => {
+            // 약간의 지연을 추가하여 실제 AI처럼 보이게 함
+            setTimeout(async () => {
+                try {
+                    const game = await gameService.getGame(gameId);
+                    const aiColor = game?.aiColor || 'white';
+                    
+                    // 현재 보드 상태 재구성
+                    const board = Array(19).fill(null).map(() => Array(19).fill(null));
+                    gameState.moves.forEach(move => {
+                        if (!move.isPass && move.x !== undefined && move.y !== undefined) {
+                            board[move.y][move.x] = move.color;
+                        }
+                    });
+                    
+                    // 간단한 휴리스틱: 빈 공간 중 랜덤하게 선택하되, 약간의 스마트한 선택
+                    const validMoves = [];
+                    for (let y = 0; y < 19; y++) {
+                        for (let x = 0; x < 19; x++) {
+                            if (board[y][x] === null) {
+                                // 주변에 돌이 있는 위치를 선호 (약간의 전략)
+                                let score = Math.random();
+                                for (let dy = -1; dy <= 1; dy++) {
+                                    for (let dx = -1; dx <= 1; dx++) {
+                                        if (dx === 0 && dy === 0) continue;
+                                        const ny = y + dy;
+                                        const nx = x + dx;
+                                        if (ny >= 0 && ny < 19 && nx >= 0 && nx < 19) {
+                                            if (board[ny][nx] !== null) {
+                                                score += 0.1; // 주변에 돌이 있으면 점수 증가
+                                            }
+                                        }
+                                    }
+                                }
+                                validMoves.push({ x, y, score });
+                            }
+                        }
+                    }
+                    
+                    if (validMoves.length === 0) {
+                        resolve({ isPass: true });
+                        return;
+                    }
+                    
+                    // 난이도에 따라 선택 방식 변경
+                    let selectedMove;
+                    if (level <= 3) {
+                        // 낮은 난이도: 랜덤 선택
+                        selectedMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    } else if (level <= 6) {
+                        // 중간 난이도: 점수가 높은 상위 30% 중에서 선택
+                        validMoves.sort((a, b) => b.score - a.score);
+                        const top30 = Math.max(1, Math.floor(validMoves.length * 0.3));
+                        selectedMove = validMoves[Math.floor(Math.random() * top30)];
+                    } else {
+                        // 높은 난이도: 점수가 높은 상위 10% 중에서 선택
+                        validMoves.sort((a, b) => b.score - a.score);
+                        const top10 = Math.max(1, Math.floor(validMoves.length * 0.1));
+                        selectedMove = validMoves[Math.floor(Math.random() * top10)];
+                    }
+                    
+                    resolve({ x: selectedMove.x, y: selectedMove.y });
+                } catch (error) {
+                    console.error('Demo AI move error:', error);
+                    // 에러 발생 시 랜덤 위치 선택
+                    const randomX = Math.floor(Math.random() * 19);
+                    const randomY = Math.floor(Math.random() * 19);
+                    resolve({ x: randomX, y: randomY });
+                }
+            }, 500 + Math.random() * 1000); // 0.5~1.5초 지연
+        });
+    }
+
     async getGnugoMove(gameId, level, gameState) {
         return new Promise((resolve, reject) => {
             const gnugoPath = process.env.GNUGO_PATH || 'gnugo';
-            const gnugo = spawn(gnugoPath, [
-                '--level', level.toString(),
-                '--mode', 'gtp'
-            ]);
+            
+            // Gnugo 실행 시도
+            let gnugo;
+            try {
+                gnugo = spawn(gnugoPath, [
+                    '--level', level.toString(),
+                    '--mode', 'gtp'
+                ]);
+            } catch (error) {
+                reject(new Error(`Gnugo를 실행할 수 없습니다: ${error.message}. Gnugo가 설치되어 있는지 확인해주세요.`));
+                return;
+            }
 
             let output = '';
+            let errorOutput = '';
 
             // Send game state to Gnugo
             gnugo.stdin.write('boardsize 19\n');
@@ -100,8 +190,13 @@ class AIService {
                 }
             });
 
+            // Get AI color from game
+            const game = await gameService.getGame(gameId);
+            const aiColor = game.aiColor || 'white';
+            const aiColorLetter = aiColor === 'black' ? 'B' : 'W';
+
             // Request move
-            gnugo.stdin.write('genmove W\n'); // AI plays white
+            gnugo.stdin.write(`genmove ${aiColorLetter}\n`);
             gnugo.stdin.end();
 
             gnugo.stdout.on('data', (data) => {
@@ -109,19 +204,33 @@ class AIService {
             });
 
             gnugo.stderr.on('data', (data) => {
-                console.error(`Gnugo error: ${data}`);
+                errorOutput += data.toString();
+                console.error(`Gnugo stderr: ${data}`);
             });
 
             gnugo.on('close', (code) => {
                 if (code !== 0) {
-                    reject(new Error(`Gnugo exited with code ${code}`));
+                    const errorMsg = errorOutput || `Gnugo가 종료 코드 ${code}로 종료되었습니다.`;
+                    reject(new Error(`Gnugo 오류: ${errorMsg}. Gnugo가 올바르게 설치되어 있는지 확인해주세요.`));
                     return;
                 }
 
-                // Parse output
-                const moveMatch = output.match(/^= ([A-T])(\d+)|^= pass/i);
+                // Parse output - 여러 줄에서 패턴 찾기
+                const lines = output.split('\n');
+                let moveMatch = null;
+                
+                for (const line of lines) {
+                    // GTP 형식: "= A1" 또는 "= pass"
+                    const match = line.match(/^=\s*([A-T])(\d+)|^=\s*pass/i);
+                    if (match) {
+                        moveMatch = match;
+                        break;
+                    }
+                }
+
                 if (!moveMatch) {
-                    reject(new Error('Failed to parse Gnugo output'));
+                    console.error('Gnugo output:', output);
+                    reject(new Error(`Gnugo 출력을 파싱할 수 없습니다. 출력: ${output.substring(0, 200)}`));
                     return;
                 }
 

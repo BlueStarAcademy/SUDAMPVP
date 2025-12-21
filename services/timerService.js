@@ -24,7 +24,13 @@ class TimerService {
         };
 
         const redis = getRedisClient();
-        await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timerData)); // 2 hour TTL
+        if (redis) {
+            try {
+                await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timerData)); // 2 hour TTL
+            } catch (error) {
+                console.error('Redis timer init error:', error);
+            }
+        }
 
         this.timers.set(gameId, timerData);
         return timerData;
@@ -32,10 +38,15 @@ class TimerService {
 
     async getTimer(gameId) {
         const redis = getRedisClient();
-        const cached = await redis.get(`timer:${gameId}`);
-        
-        if (cached) {
-            return JSON.parse(cached);
+        if (redis) {
+            try {
+                const cached = await redis.get(`timer:${gameId}`);
+                if (cached) {
+                    return JSON.parse(cached);
+                }
+            } catch (error) {
+                console.error('Redis timer get error:', error);
+            }
         }
 
         // Initialize if not exists
@@ -48,7 +59,13 @@ class TimerService {
         timer.lastUpdate = Date.now();
 
         const redis = getRedisClient();
-        await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+        if (redis) {
+            try {
+                await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+            } catch (error) {
+                console.error('Redis timer switch error:', error);
+            }
+        }
 
         this.timers.set(gameId, timer);
         return timer;
@@ -72,7 +89,13 @@ class TimerService {
             timer.lastUpdate = now;
 
             // Save to Redis
-            await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+            if (redis) {
+                try {
+                    await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+                } catch (error) {
+                    console.error('Redis timer save error:', error);
+                }
+            }
 
             // Emit update to game room
             const io = require('../server').io;
@@ -100,7 +123,13 @@ class TimerService {
         timer.isRunning = false;
         
         const redis = getRedisClient();
-        await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+        if (redis) {
+            try {
+                await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+            } catch (error) {
+                console.error('Redis timer pause error:', error);
+            }
+        }
         this.timers.set(gameId, timer);
     }
 
@@ -110,14 +139,26 @@ class TimerService {
         timer.lastUpdate = Date.now();
         
         const redis = getRedisClient();
-        await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+        if (redis) {
+            try {
+                await redis.setEx(`timer:${gameId}`, 7200, JSON.stringify(timer));
+            } catch (error) {
+                console.error('Redis timer resume error:', error);
+            }
+        }
         this.timers.set(gameId, timer);
     }
 
     async stopTimer(gameId) {
         this.timers.delete(gameId);
         const redis = getRedisClient();
-        await redis.del(`timer:${gameId}`);
+        if (redis) {
+            try {
+                await redis.del(`timer:${gameId}`);
+            } catch (error) {
+                console.error('Redis timer stop error:', error);
+            }
+        }
     }
 }
 

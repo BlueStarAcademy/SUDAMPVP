@@ -12,158 +12,977 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+        
+        /* 게임 모드에 따른 배경 이미지 */
+        body.game-mode-playful {
+            background: url('/images/playfulbg.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        
+        body.game-mode-strategic {
+            background: url('/images/strategicbg.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        
+        /* 배경 이미지 위에 오버레이 추가 (가독성 향상) */
+        body.game-mode-playful::before,
+        body.game-mode-strategic::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
         }
 
-        .container {
+        .game-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            grid-template-rows: auto 1fr;
+            gap: 12px;
+            padding: 20px;
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            width: 100%;
+            justify-content: center;
+            align-items: start;
+            min-height: 0;
+            overflow: hidden;
+            box-sizing: border-box;
         }
 
-        .game-room {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 20px;
-            margin-top: 20px;
+        /* 플레이어 패널 - 양쪽에 수평 배치, 바둑판 너비와 정확히 맞춤 */
+        .player-panel-container {
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 12px;
+            flex-shrink: 0;
+            height: auto;
+            min-height: 80px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            z-index: 1;
         }
 
-        .board-section {
-            background: white;
+        .player-panel {
+            flex: 1;
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            padding: 8px;
             border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 2px solid;
         }
 
-        .board-container {
+        /* 흑은 따낸 돌이 오른쪽, 백은 왼쪽 (대칭) */
+        .player-panel.black {
+            flex-direction: row;
+        }
+
+        .player-panel.white {
+            flex-direction: row-reverse;
+        }
+
+
+        .player-panel.black {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(30, 30, 30, 0.7) 100%);
+            border-color: rgba(100, 100, 100, 0.5);
+        }
+
+        .player-panel.white {
+            background: linear-gradient(135deg, rgba(240, 240, 240, 0.9) 0%, rgba(220, 220, 220, 0.9) 100%);
+            border-color: rgba(150, 150, 150, 0.5);
+        }
+
+        .player-panel.active {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+            border-color: rgba(59, 130, 246, 0.8);
+        }
+
+        /* 턴 표시 박스 (수순) */
+        .turn-indicator {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            justify-content: center;
+            width: clamp(4rem, 12vmin, 6rem);
+            height: 100%;
+            padding: 8px;
+            background: rgba(17, 24, 39, 0.9);
+            border-radius: 12px;
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            flex-shrink: 0;
         }
 
-        #goBoard {
-            border: 3px solid #8b4513;
-            background: #deb887;
-            cursor: crosshair;
+        .turn-label {
+            font-size: clamp(0.5rem, 1.5vmin, 0.7rem);
+            font-weight: 600;
+            color: rgba(156, 163, 175, 1);
+            margin-bottom: 4px;
         }
 
-        .player-info {
+        .turn-number {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(1.5rem, 6vmin, 2.5rem);
+            font-weight: 700;
+            color: #fbbf24;
+            line-height: 1;
+        }
+
+        .turn-color {
+            font-size: clamp(0.7rem, 2vmin, 0.9rem);
+            font-weight: 600;
+            color: rgba(209, 213, 219, 1);
+            margin-top: 4px;
+        }
+
+        .player-info-section {
             display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-width: 0;
+            gap: 4px;
+        }
+
+        .player-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 백 패널의 헤더는 정방향 (닉네임/레이팅이 왼쪽, 아바타가 오른쪽) */
+        .player-panel.white .player-header {
+            flex-direction: row;
             justify-content: space-between;
-            width: 100%;
-            max-width: 600px;
-            margin-bottom: 20px;
         }
 
-        .player {
-            flex: 1;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .player.black {
-            background: #333;
+        .player-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .player.white {
-            background: #f5f5f5;
-            color: #333;
-            border: 2px solid #ddd;
+        .player-details {
+            flex-grow: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
-
-        .player.active {
-            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        
+        /* 백 패널의 세부 정보는 왼쪽 정렬 (흑과 반대) */
+        .player-panel.white .player-details {
+            align-items: flex-start;
+            text-align: left;
+        }
+        
+        .player-name-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        
+        /* 백 패널의 이름 행은 왼쪽 정렬 (닉네임, 티어 순서 유지) */
+        .player-panel.white .player-name-row {
+            flex-direction: row;
+            justify-content: flex-start;
         }
 
         .player-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .player-timer {
-            font-size: 24px;
+            font-size: clamp(0.8rem, 3vmin, 1.125rem);
             font-weight: 700;
-            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .player-timer.warning {
-            color: #ff5722;
+        .player-panel.black .player-name {
+            color: white;
         }
 
-        .player-timer.danger {
-            color: #f44336;
-            animation: blink 1s infinite;
+        .player-panel.white .player-name {
+            color: black;
         }
 
-        @keyframes blink {
+        .player-level {
+            font-size: clamp(0.6rem, 2vmin, 0.75rem);
+            opacity: 0.8;
+        }
+
+        .player-panel.black .player-level {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .player-panel.white .player-level {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .timer-section {
+            margin-top: 4px;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .player-panel.white .timer-bar {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-bar-fill {
+            height: 100%;
+            background: #3b82f6;
+            transition: width 0.2s linear;
+        }
+
+        .timer-bar-fill.warning {
+            background: #f59e0b;
+        }
+
+        .timer-bar-fill.danger {
+            background: #ef4444;
+            animation: pulse-bar 1s infinite;
+        }
+
+        @keyframes pulse-bar {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.7; }
         }
 
-        .sidebar {
+        .timer-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .timer-text {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(1rem, 3.5vmin, 1.25rem);
+            font-weight: 700;
+        }
+
+        .player-panel.black .timer-text {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .player-panel.white .timer-text {
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .timer-text.warning {
+            color: #f59e0b;
+        }
+
+        .timer-text.danger {
+            color: #ef4444;
+        }
+
+        .captured-stones {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            width: clamp(4.5rem, 16vmin, 6rem);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 2px solid;
+            flex-shrink: 0;
+        }
+
+        .player-panel.black .captured-stones {
+            background: linear-gradient(135deg, rgba(30, 30, 30, 0.9) 0%, rgba(0, 0, 0, 0.9) 100%);
+            border-color: rgba(100, 100, 100, 0.6);
+        }
+
+        .player-panel.white .captured-stones {
+            background: linear-gradient(135deg, rgba(250, 250, 250, 0.95) 0%, rgba(230, 230, 230, 0.95) 100%);
+            border-color: rgba(150, 150, 150, 0.6);
+        }
+
+        .captured-label {
+            font-size: clamp(0.6rem, 2vmin, 0.75rem);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .player-panel.black .captured-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .player-panel.white .captured-label {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .captured-count {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(1rem, 5vmin, 2rem);
+            font-weight: 700;
+        }
+
+        .player-panel.black .captured-count {
+            color: white;
+        }
+
+        .player-panel.white .captured-count {
+            color: black;
+        }
+
+        /* 바둑판 섹션 */
+        .board-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            gap: 12px;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            overflow: visible;
+        }
+
+        .board-wrapper {
+            position: relative;
+            width: 100%;
+            /* 반응형: 화면 크기에 따라 조정되되, 최대 900px */
+            /* 높이와 너비 중 작은 값을 사용하여 정사각형 유지 */
+            max-width: min(calc(100vw - 400px), calc(100vh - 320px), 900px);
+            aspect-ratio: 1;
+            flex-shrink: 1;
+            min-width: 0;
+            /* 버튼 패널 공간을 확보하면서 반응형으로 작아지도록 */
+            max-height: min(calc(100vw - 400px), calc(100vh - 320px), 900px);
+        }
+        
+        /* 버튼 패널 - 바둑판 하단에 붙어서 움직임 */
+        .button-panel {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            padding: 12px;
+            background: rgba(17, 24, 39, 0.95);
+            border-radius: 12px;
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+            width: 100%;
+            max-width: min(calc(100vw - 400px), 900px);
+            box-sizing: border-box;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* 좌측: 대국 기능 버튼 그룹 */
+        .button-group-left {
+            justify-content: flex-start;
+            flex: 1;
+        }
+
+        /* 우측: 특수 기능 버튼 그룹 */
+        .button-group-right {
+            justify-content: flex-end;
+            flex: 1;
+        }
+
+        .game-btn {
+            width: 56px;
+            height: 56px;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        /* 버튼 이미지 스타일 */
+        .game-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        
+        /* 텍스트만 있는 버튼 (이미지가 없을 때) */
+        .game-btn:not(:has(img)) {
+            font-size: 20px;
+        }
+        
+        .game-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        
+        .game-btn:hover::after {
+            opacity: 1;
+        }
+
+        .game-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-pass {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-pass:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-resign {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-resign:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-special {
+            background: rgba(75, 85, 99, 0.8);
+            color: white;
+            border: 1px solid rgba(107, 114, 128, 0.5);
+        }
+
+        .btn-special:hover:not(:disabled) {
+            background: rgba(107, 114, 128, 0.9);
+            border-color: rgba(107, 114, 128, 0.8);
+        }
+
+        #goBoard {
+            width: 100%;
+            height: 100%;
+            border: 4px solid #1f2937;
+            background: #e0b484;
+            cursor: crosshair;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: block;
+            object-fit: contain;
+        }
+
+        .ai-thinking {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+            color: white;
+            display: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+            animation: pulse 2s infinite;
+            z-index: 10;
+        }
+
+        .ai-thinking.active {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* 좌측 컨텐츠 영역 (바둑판, 버튼패널) */
+        .left-content {
+            grid-column: 1;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        /* 바둑판 섹션 */
+        .board-section-wrapper {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        /* 사이드바 */
+        .sidebar {
+            grid-column: 2;
+            grid-row: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(17, 24, 39, 0.8);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            align-self: stretch;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .settings-button {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(75, 85, 99, 0.6);
+            border: 1px solid rgba(107, 114, 128, 0.5);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: rgba(209, 213, 219, 1);
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .settings-button:hover {
+            background: rgba(107, 114, 128, 0.8);
+            border-color: rgba(107, 114, 128, 0.8);
+            transform: rotate(90deg);
+        }
+
+        .settings-button svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
         }
 
         .info-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: rgba(31, 41, 55, 0.8);
+            border-radius: 8px;
+            padding: 12px;
+            flex-shrink: 0;
+            border: 1px solid rgba(75, 85, 99, 0.5);
         }
 
         .panel-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .move-list {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 10px;
-        }
-
-        .move-item {
-            padding: 8px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #fbbf24;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.7);
             display: flex;
+            align-items: center;
             justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .panel-title-with-settings {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 8px;
         }
 
-        .move-item:last-child {
-            border-bottom: none;
+        .panel-title-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .move-number {
+        .panel-title-text::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .game-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap-x: 12px;
+            gap-y: 4px;
+            font-size: 12px;
+        }
+
+        .game-info-label {
             font-weight: 600;
-            color: #666;
+            color: rgba(156, 163, 175, 1);
+        }
+
+        .game-info-value {
+            color: rgba(209, 213, 219, 1);
+            white-space: nowrap;
+        }
+
+        .user-list {
+            max-height: 150px;
+            overflow-y: auto;
+            space-y: 4px;
+        }
+
+        .user-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .user-list::-webkit-scrollbar-track {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 10px;
+        }
+
+        .user-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            background: rgba(17, 24, 39, 0.5);
+        }
+
+        .user-item:hover {
+            background: rgba(31, 41, 55, 0.7);
+        }
+
+        .user-avatar-small {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .user-avatar-small img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .edit-profile-btn {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            background: rgba(59, 130, 246, 0.9);
+            border: 1px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        
+        .user-item:hover .edit-profile-btn {
+            opacity: 1;
+        }
+        
+        .edit-profile-btn:hover {
+            background: rgba(37, 99, 235, 1);
+            transform: scale(1.1);
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(209, 213, 219, 1);
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: rgba(156, 163, 175, 1);
+            flex-shrink: 0;
+        }
+
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background: rgba(31, 41, 55, 0.8);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid rgba(75, 85, 99, 0.5);
+        }
+
+        .chat-tabs {
+            display: flex;
+            background: rgba(17, 24, 39, 0.7);
+            padding: 4px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+
+        .chat-tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: rgba(156, 163, 175, 1);
+        }
+
+        .chat-tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            space-y: 4px;
+            margin-bottom: 12px;
+            background: rgba(17, 24, 39, 0.4);
+            padding: 8px;
+            border-radius: 6px;
+            min-height: 0;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(31, 41, 55, 0.5);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .chat-message-system {
+            color: #fbbf24;
+        }
+
+        .chat-message-user {
+            color: rgba(209, 213, 219, 1);
+        }
+
+        .chat-message-user .username {
+            font-weight: 600;
+            color: rgba(156, 163, 175, 1);
+            cursor: pointer;
+        }
+
+        .chat-message-user .username:hover {
+            text-decoration: underline;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(75, 85, 99, 0.6);
+            border-radius: 6px;
+            color: rgba(209, 213, 219, 1);
+            font-size: 12px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .chat-send-btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-send-btn:hover {
+            background: #2563eb;
+        }
+
+        .chat-send-btn:disabled {
+            background: rgba(75, 85, 99, 0.5);
+            cursor: not-allowed;
         }
 
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-top: 12px;
+        }
+
+        .leave-button {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(75, 85, 99, 0.8);
+            color: white;
+        }
+
+        .leave-button:enabled {
+            background: #3b82f6;
+        }
+
+        .leave-button:enabled:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .leave-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pause-button {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f59e0b;
+            color: white;
+        }
+
+        .pause-button:hover {
+            background: #d97706;
+            transform: translateY(-2px);
         }
 
         .btn {
             padding: 12px 20px;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -180,104 +999,456 @@
         }
 
         .btn-secondary {
-            background: #f5f5f5;
-            color: #333;
+            background: rgba(75, 85, 99, 0.8);
+            color: white;
         }
 
         .btn-secondary:hover {
-            background: #e0e0e0;
+            background: rgba(107, 114, 128, 0.8);
         }
 
         .btn-danger {
-            background: #f44336;
+            background: #ef4444;
             color: white;
         }
 
         .btn-danger:hover {
-            background: #d32f2f;
+            background: #dc2626;
         }
 
-        .game-status {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-weight: 600;
+        /* 반응형 디자인 - 모든 컨텐츠가 같은 비율로 줄어들도록 */
+        @media (max-width: 1400px) {
+            .game-container {
+                grid-template-columns: minmax(0, 900px) minmax(0, 280px);
+                max-width: 100%;
+                padding: clamp(8px, 2vw, 20px);
+                gap: clamp(6px, 1.5vw, 12px);
+                box-sizing: border-box;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            
+            .player-panel-container {
+                max-width: 100%;
+                gap: clamp(6px, 1.5vw, 12px);
+                box-sizing: border-box;
+            }
+            
+            .board-wrapper {
+                max-width: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                max-height: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                box-sizing: border-box;
+            }
+            
+            .button-panel {
+                max-width: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                padding: clamp(10px, 2vw, 16px);
+                gap: clamp(12px, 2vw, 24px);
+                box-sizing: border-box;
+            }
+            
+            .button-group {
+                gap: clamp(8px, 1.5vw, 12px);
+            }
+            
+            .button-group-left {
+                justify-content: flex-start;
+                flex: 1;
+            }
+            
+            .button-group-right {
+                justify-content: flex-end;
+                flex: 1;
+            }
+            
+            .game-btn {
+                width: clamp(48px, 10vw, 56px);
+                height: clamp(48px, 10vw, 56px);
+                font-size: clamp(16px, 3vw, 20px);
+            }
+            
+            .sidebar {
+                padding: clamp(8px, 1.5vw, 12px);
+                gap: clamp(6px, 1vw, 8px);
+                box-sizing: border-box;
+                overflow-x: hidden;
+            }
+            
+            .info-panel {
+                padding: clamp(8px, 1.5vw, 12px);
+                box-sizing: border-box;
+            }
         }
 
-        .game-status.waiting {
-            background: #fff3e0;
-            color: #f57c00;
+        @media (max-width: 1200px) {
+            .game-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+                padding: clamp(8px, 2vw, 16px);
+                gap: clamp(6px, 1.5vw, 10px);
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+            
+            .player-panel-container {
+                grid-column: 1;
+                grid-row: 1;
+                max-width: 100%;
+                gap: clamp(6px, 1.5vw, 12px);
+                box-sizing: border-box;
+            }
+            
+            .left-content {
+                grid-column: 1;
+                grid-row: 2;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            .board-wrapper {
+                max-width: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                max-height: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                box-sizing: border-box;
+            }
+            
+            .button-panel {
+                max-width: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                padding: clamp(8px, 1.5vw, 12px);
+                gap: clamp(12px, 2vw, 20px);
+                box-sizing: border-box;
+            }
+            
+            .button-group-left {
+                justify-content: flex-start;
+                flex: 1;
+            }
+            
+            .button-group-right {
+                justify-content: flex-end;
+                flex: 1;
+            }
+            
+            .sidebar {
+                grid-column: 1;
+                grid-row: 3;
+                padding: clamp(8px, 1.5vw, 12px);
+                gap: clamp(6px, 1vw, 8px);
+                box-sizing: border-box;
+                min-height: 0;
+            }
         }
 
-        .game-status.playing {
-            background: #e8f5e9;
-            color: #388e3c;
+        @media (max-width: 968px) {
+            .game-container {
+                padding: clamp(6px, 1.5vw, 12px);
+                gap: clamp(4px, 1vw, 8px);
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+
+            .sidebar {
+                grid-column: 1;
+                grid-row: 1;
+                order: -1;
+                padding: clamp(8px, 1.5vw, 12px);
+                gap: clamp(6px, 1vw, 8px);
+                box-sizing: border-box;
+                min-height: 0;
+            }
+
+            .player-panel-container {
+                flex-direction: column;
+                gap: clamp(4px, 1vw, 8px);
+                box-sizing: border-box;
+            }
+
+            .board-section-wrapper {
+                max-width: 100%;
+            }
+            
+            .board-wrapper {
+                max-width: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                max-height: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                box-sizing: border-box;
+            }
+            
+            .button-panel {
+                max-width: min(calc(100vw - 380px), calc(100vh - 320px), 900px);
+                padding: clamp(8px, 1.5vw, 12px);
+                gap: clamp(12px, 2vw, 20px);
+                box-sizing: border-box;
+                flex-direction: row;
+            }
+            
+            .button-group {
+                gap: clamp(8px, 1.5vw, 12px);
+            }
+            
+            .button-group-left {
+                justify-content: flex-start;
+                flex: 1;
+            }
+            
+            .button-group-right {
+                justify-content: flex-end;
+                flex: 1;
+            }
+            
+            .game-btn {
+                width: clamp(48px, 12vw, 56px);
+                height: clamp(48px, 12vw, 56px);
+                font-size: clamp(14px, 3vw, 18px);
+                flex-shrink: 0;
+            }
         }
 
-        .game-status.finished {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
+        @media (max-width: 640px) {
+            .game-container {
+                padding: clamp(4px, 1vw, 8px);
+                gap: clamp(3px, 0.8vw, 6px);
+            }
 
-        .ai-thinking {
-            padding: 10px;
-            background: #f0f0f0;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-            display: none;
-        }
+            .player-panel {
+                padding: clamp(4px, 1vw, 6px);
+                gap: clamp(4px, 1vw, 6px);
+            }
 
-        .ai-thinking.active {
-            display: block;
+            .player-avatar {
+                width: clamp(28px, 7vw, 32px);
+                height: clamp(28px, 7vw, 32px);
+                font-size: clamp(12px, 3vw, 14px);
+            }
+
+            .captured-stones {
+                width: clamp(2.5rem, 12vw, 3rem);
+                padding: clamp(3px, 0.8vw, 4px);
+            }
+            
+            .turn-indicator {
+                width: clamp(3rem, 10vw, 5rem);
+                padding: clamp(4px, 1vw, 6px);
+            }
+            
+            .board-section-wrapper {
+                max-width: 100%;
+            }
+            
+            .board-wrapper {
+                max-width: min(calc(100vw - 50px), calc(100vh - 320px), 900px);
+                max-height: min(calc(100vw - 50px), calc(100vh - 320px), 900px);
+            }
+            
+            .button-panel {
+                max-width: min(calc(100vw - 50px), calc(100vh - 320px), 900px);
+                flex-direction: row;
+                gap: clamp(12px, 2vw, 16px);
+                padding: clamp(8px, 2vw, 12px);
+            }
+            
+            .button-group {
+                width: 100%;
+                justify-content: center;
+                gap: clamp(6px, 1.5vw, 10px);
+                flex-wrap: wrap;
+            }
+            
+            .button-group-left,
+            .button-group-right {
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .game-btn {
+                width: clamp(44px, 11vw, 52px);
+                height: clamp(44px, 11vw, 52px);
+                flex-shrink: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <%- include('partials/header', { user: user }) %>
+        <%- include('partials/header', { user: user }) %>
 
-    <div class="container">
-        <div class="game-room">
-            <div class="board-section">
-                <div class="board-container">
-                    <div class="player-info">
-                        <div class="player black" id="blackPlayer">
-                            <div class="player-name" id="blackName"><%= blackPlayer ? blackPlayer.nickname : '흑' %></div>
-                            <div style="font-size: 12px; opacity: 0.8;"><%= blackPlayer ? `레이팅: ${blackPlayer.rating}` : '' %></div>
-                            <div class="player-timer" id="blackTimer">30:00</div>
-                        </div>
-                        <div class="player white" id="whitePlayer">
-                            <div class="player-name" id="whiteName"><%= whitePlayer ? whitePlayer.nickname : '백' %></div>
-                            <div style="font-size: 12px; opacity: 0.8;"><%= whitePlayer ? `레이팅: ${whitePlayer.rating}` : '' %></div>
-                            <div class="player-timer" id="whiteTimer">30:00</div>
+    <div class="game-container">
+        <!-- 플레이어 패널 - 양쪽에 수평 배치, 바둑판 너비에 맞춤 -->
+        <div class="player-panel-container">
+            <!-- 흑 패널 (따낸 돌이 오른쪽) -->
+            <div class="player-panel black" id="blackPlayer">
+                <div class="player-info-section">
+                        <div class="player-header">
+                            <div class="player-avatar" id="blackAvatar" data-avatar="<%= blackPlayer && blackPlayer.avatar ? blackPlayer.avatar : '1' %>" data-user-id="<%= blackPlayer ? blackPlayer.id : '' %>">
+                                <% if (blackPlayer && blackPlayer.avatar) { %>
+                                <img src="/images/profile<%= blackPlayer.avatar %>.webp" alt="<%= blackPlayer.nickname %>" onerror="this.style.display='none'; this.parentElement.textContent='<%= blackPlayer.nickname.charAt(0).toUpperCase() %>';">
+                                <% } else { %>
+                                <%= blackPlayer ? blackPlayer.nickname.charAt(0).toUpperCase() : '흑' %>
+                                <% } %>
+                            </div>
+                        <div class="player-details">
+                            <div class="player-name-row">
+                                <div class="player-name" id="blackName"><%= blackPlayer ? blackPlayer.nickname : '흑' %></div>
+                                <% if (blackPlayer && blackPlayer.rating) { %>
+                                <%- getTierIcon(blackPlayer.rating, 'normal') %>
+                                <% } %>
+                            </div>
+                            <div class="player-level" id="blackRating">레이팅: <%= blackPlayer ? blackPlayer.rating : '1500' %></div>
                         </div>
                     </div>
-
-                    <canvas id="goBoard" width="600" height="600"></canvas>
-
-                    <div class="ai-thinking" id="aiThinking">AI가 생각 중...</div>
+                    <div class="timer-section">
+                        <div class="timer-bar">
+                            <div class="timer-bar-fill" id="blackTimerBar" style="width: 100%"></div>
+                        </div>
+                        <div class="timer-display">
+                            <span class="timer-text" id="blackTimer">30:00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="captured-stones">
+                    <div class="captured-label">따낸 돌</div>
+                    <div class="captured-count" id="blackCaptured">0</div>
                 </div>
             </div>
 
-            <div class="sidebar">
-                <div class="info-panel">
-                    <div class="panel-title">게임 정보</div>
-                    <div class="game-status" id="gameStatus">대기 중</div>
-                    <div class="action-buttons">
-                        <button class="btn btn-primary" id="passBtn">한 수 넘기기</button>
-                        <button class="btn btn-secondary" id="scoreBtn">계가</button>
-                        <button class="btn btn-danger" id="resignBtn">기권</button>
+            <!-- 턴 표시 박스 (수순) -->
+            <div class="turn-indicator" id="turnIndicator">
+                <div class="turn-label">수순</div>
+                <div class="turn-number" id="turnNumber">0</div>
+                <div class="turn-color" id="turnColor">-</div>
+            </div>
+
+            <!-- 백 패널 (따낸 돌이 왼쪽) -->
+            <div class="player-panel white" id="whitePlayer">
+                <div class="captured-stones">
+                    <div class="captured-label">따낸 돌</div>
+                    <div class="captured-count" id="whiteCaptured">0</div>
+                </div>
+                <div class="player-info-section">
+                    <div class="player-header">
+                        <div class="player-details">
+                            <div class="player-name-row">
+                                <div class="player-name" id="whiteName"><%= whitePlayer ? whitePlayer.nickname : '백' %></div>
+                                <% 
+                                if (whitePlayer && whitePlayer.rating) {
+                                    const tier = getTierFromRating(whitePlayer.rating);
+                                %>
+                                <img src="/images/tire<%= tier %>.webp" alt="티어<%= tier %>" class="tier-icon" onerror="this.style.display='none';">
+                                <% } %>
+                            </div>
+                            <div class="player-level" id="whiteRating">레이팅: <%= whitePlayer ? whitePlayer.rating : '1500' %></div>
+                        </div>
+                        <div class="player-avatar" id="whiteAvatar" data-avatar="<%= whitePlayer && whitePlayer.avatar ? whitePlayer.avatar : '1' %>" data-user-id="<%= whitePlayer ? whitePlayer.id : '' %>">
+                            <% if (whitePlayer && whitePlayer.avatar) { %>
+                            <img src="/images/profile<%= whitePlayer.avatar %>.webp" alt="<%= whitePlayer.nickname %>" onerror="this.style.display='none'; this.parentElement.textContent='<%= whitePlayer.nickname.charAt(0).toUpperCase() %>';">
+                            <% } else { %>
+                            <%= whitePlayer ? whitePlayer.nickname.charAt(0).toUpperCase() : '백' %>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="timer-section">
+                        <div class="timer-bar">
+                            <div class="timer-bar-fill" id="whiteTimerBar" style="width: 100%"></div>
+                        </div>
+                        <div class="timer-display">
+                            <span class="timer-text" id="whiteTimer">30:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 좌측 컨텐츠 영역 -->
+        <div class="left-content">
+            <!-- 바둑판 섹션 -->
+            <div class="board-section-wrapper">
+                <div class="board-section">
+                    <div class="board-wrapper">
+                        <canvas id="goBoard" width="900" height="900"></canvas>
+                        <div class="ai-thinking" id="aiThinking">AI가 생각 중...</div>
+                    </div>
+                    
+                    <!-- 버튼 패널 - 바둑판 하단에 붙어서 움직임 -->
+                    <div class="button-panel">
+                        <!-- 좌측: 대국 기능 버튼 (패스, 기권) -->
+                        <div class="button-group button-group-left">
+                            <button class="game-btn btn-pass" id="passBtn" data-tooltip="통과" title="통과">
+                                <img src="/images/pass.webp" alt="통과" onerror="this.style.display='none'; this.parentElement.innerHTML='⏭️';">
+                            </button>
+                            <button class="game-btn btn-resign" id="resignBtn" data-tooltip="기권" title="기권">
+                                <img src="/images/giveup.webp" alt="기권" onerror="this.style.display='none'; this.parentElement.innerHTML='🏳️';">
+                            </button>
+                        </div>
+                        
+                        <!-- 우측: 특수 기능 버튼 (형세판단, 힌트 등) -->
+                        <div class="button-group button-group-right" id="specialButtons">
+                            <!-- 버튼들은 게임 모드에 따라 동적으로 표시됨 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 우측 사이드바 -->
+        <div class="sidebar">
+            <!-- 게임 정보 패널 -->
+            <div class="info-panel">
+                <div class="panel-title">
+                    <div class="panel-title-with-settings">
+                        <div class="panel-title-text">대국 정보</div>
+                        <button class="settings-button" id="settingsBtn" title="설정">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.4-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1c0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                    <div class="game-info-grid">
+                        <div class="game-info-label">게임 모드:</div>
+                        <div class="game-info-value" id="gameMode">일반</div>
+                        <div class="game-info-label">판 크기:</div>
+                        <div class="game-info-value">19x19</div>
+                        <div class="game-info-label">제한시간:</div>
+                        <div class="game-info-value">30분</div>
+                        <div class="game-info-label">상태:</div>
+                        <div class="game-info-value" id="gameStatus">대기 중</div>
                     </div>
                 </div>
 
+                <!-- 유저 목록 패널 -->
                 <div class="info-panel">
-                    <div class="panel-title">수순</div>
-                    <div class="move-list" id="moveList">
-                        <!-- 수순이 여기에 표시됩니다 -->
+                    <div class="panel-title">
+                        <div class="panel-title-text">유저 목록</div>
+                    </div>
+                    <div class="user-list" id="userList">
+                        <div class="user-item">
+                            <div class="user-avatar-small"><%= blackPlayer ? blackPlayer.nickname.charAt(0).toUpperCase() : '흑' %></div>
+                            <div class="user-name"><%= blackPlayer ? blackPlayer.nickname : '흑' %></div>
+                            <div class="user-role">흑</div>
+                        </div>
+                        <div class="user-item">
+                            <div class="user-avatar-small"><%= whitePlayer ? whitePlayer.nickname.charAt(0).toUpperCase() : '백' %></div>
+                            <div class="user-name"><%= whitePlayer ? whitePlayer.nickname : '백' %></div>
+                            <div class="user-role">백</div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- 채팅 패널 -->
+                <div class="chat-panel">
+                    <div class="chat-tabs">
+                        <div class="chat-tab active" data-tab="game">대국실</div>
+                        <div class="chat-tab" data-tab="global">전체채팅</div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-message chat-message-system">대국실에 오신 것을 환영합니다!</div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="메시지 입력..." maxlength="30">
+                        <button class="chat-send-btn" id="chatSendBtn">전송</button>
+                    </div>
+                </div>
+
+                <!-- 나가기/일시정지 버튼 -->
+                <button class="leave-button" id="leaveBtn" disabled>나가기</button>
+                <button class="pause-button" id="pauseBtn" style="display: none;">일시정지</button>
             </div>
         </div>
     </div>
@@ -294,6 +1465,15 @@
             id: '<%= user.id %>',
             nickname: '<%= user.nickname %>'
         };
+        const isAiGame = <%= game.isAiGame || false %>;
+        let gameEnded = false;
+        let isPaused = false;
+        
+        // 초기 게임 모드에 따른 배경 이미지 설정
+        <% if (game && game.mode) { %>
+        const initialGameMode = '<%= game.mode %>';
+        updateBackgroundImage(initialGameMode);
+        <% } %>
 
         // Initialize game
         window.game = new GoGame('goBoard', socket, currentUser, gameId);
@@ -304,47 +1484,433 @@
             whitePlayer: 'whitePlayer'
         });
 
+        // 타이머 바 업데이트 함수
+        function updateTimerBar(color, timeLeft, totalTime) {
+            const barId = color === 'black' ? 'blackTimerBar' : 'whiteTimerBar';
+            const timerId = color === 'black' ? 'blackTimer' : 'whiteTimer';
+            const bar = document.getElementById(barId);
+            const timer = document.getElementById(timerId);
+            
+            if (bar && timer) {
+                const percent = (timeLeft / totalTime) * 100;
+                bar.style.width = Math.max(0, Math.min(100, percent)) + '%';
+                
+                // 경고 상태 설정
+                if (timeLeft < 60) {
+                    bar.classList.add('danger');
+                    timer.classList.add('danger');
+                } else if (timeLeft < 300) {
+                    bar.classList.add('warning');
+                    timer.classList.add('warning');
+                } else {
+                    bar.classList.remove('warning', 'danger');
+                    timer.classList.remove('warning', 'danger');
+                }
+            }
+        }
+
+        // 턴 표시 업데이트
+        function updateTurnIndicator(moveNumber, currentColor) {
+            const turnNumberEl = document.getElementById('turnNumber');
+            const turnColorEl = document.getElementById('turnColor');
+            if (turnNumberEl) turnNumberEl.textContent = moveNumber || 0;
+            if (turnColorEl) turnColorEl.textContent = currentColor === 'black' ? '흑' : (currentColor === 'white' ? '백' : '-');
+        }
+
+        // 특수 기능 버튼 표시 (게임 모드에 따라)
+        function updateSpecialButtons(gameMode) {
+            const specialButtons = document.getElementById('specialButtons');
+            if (!specialButtons) return;
+            
+            specialButtons.innerHTML = '';
+            
+            // 기본 버튼들 (일반 게임)
+            const buttons = [
+                { id: 'scoreBtn', text: '형세판단', mode: 'all' },
+                { id: 'hintBtn', text: '힌트', mode: 'all' },
+            ];
+            
+            // 특수 모드별 버튼
+            if (gameMode === 'hidden' || gameMode === 'mix') {
+                buttons.push({ id: 'hiddenBtn', text: '히든', mode: 'hidden' });
+                buttons.push({ id: 'scanBtn', text: '스캔', mode: 'hidden' });
+            }
+            if (gameMode === 'missile' || gameMode === 'mix') {
+                buttons.push({ id: 'missileBtn', text: '미사일', mode: 'missile' });
+            }
+            
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.className = 'game-btn btn-special';
+                button.id = btn.id;
+                button.setAttribute('data-tooltip', btn.text);
+                button.title = btn.text;
+                
+                // 이미지 파일명 매핑
+                const imageMap = {
+                    'scoreBtn': 'see.webp',
+                    'hintBtn': 'hint.webp',
+                    'hiddenBtn': 'hidden.webp',
+                    'scanBtn': 'scan.webp',
+                    'missileBtn': 'missile.webp'
+                };
+                
+                const imgFileName = imageMap[btn.id];
+                if (imgFileName) {
+                    const img = document.createElement('img');
+                    img.src = `/images/${imgFileName}`;
+                    img.alt = btn.text;
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        button.textContent = btn.text;
+                    };
+                    button.appendChild(img);
+                } else {
+                    // 이미지가 없으면 텍스트로 표시
+                    button.textContent = btn.text;
+                }
+                
+                button.addEventListener('click', () => {
+                    handleSpecialButton(btn.id);
+                });
+                specialButtons.appendChild(button);
+            });
+        }
+
+        function handleSpecialButton(buttonId) {
+            switch(buttonId) {
+                case 'scoreBtn':
+                    socket.emit('request_score');
+                    break;
+                case 'hintBtn':
+                    socket.emit('request_hint');
+                    break;
+                case 'hiddenBtn':
+                    socket.emit('use_hidden');
+                    break;
+                case 'scanBtn':
+                    socket.emit('use_scan');
+                    break;
+                case 'missileBtn':
+                    socket.emit('use_missile');
+                    break;
+            }
+        }
+
+        // 나가기/일시정지 버튼 업데이트
+        function updateLeaveButton() {
+            const leaveBtn = document.getElementById('leaveBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            
+            if (isAiGame && !gameEnded) {
+                // AI 게임 중: 일시정지 버튼 표시
+                leaveBtn.style.display = 'none';
+                pauseBtn.style.display = 'block';
+            } else {
+                // 일반 게임 또는 게임 종료: 나가기 버튼 표시
+                leaveBtn.style.display = 'block';
+                pauseBtn.style.display = 'none';
+                
+                // 게임 종료 시에만 활성화
+                leaveBtn.disabled = !gameEnded;
+            }
+        }
+
+        // 게임 모드에 따른 배경 이미지 설정
+        function updateBackgroundImage(gameMode) {
+            const body = document.body;
+            body.classList.remove('game-mode-playful', 'game-mode-strategic');
+            
+            if (gameMode === 'playful' || gameMode === 'casual') {
+                body.classList.add('game-mode-playful');
+            } else if (gameMode === 'strategic') {
+                body.classList.add('game-mode-strategic');
+            }
+        }
+        
+        // 아바타 선택 모달 열기
+        function openAvatarSelector() {
+            let avatarHTML = '<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; max-height: 400px; overflow-y: auto; padding: 10px;">';
+            
+            for (let i = 1; i <= 35; i++) {
+                avatarHTML += `
+                    <button class="avatar-select-btn" data-avatar="${i}" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; overflow: hidden; background: transparent; transition: all 0.2s;">
+                        <img src="/images/profile${i}.webp" alt="Profile ${i}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.textContent='${i}'; this.parentElement.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.parentElement.style.color='white'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center'; this.parentElement.style.fontSize='20px'; this.parentElement.style.fontWeight='bold';">
+                    </button>
+                `;
+            }
+            
+            avatarHTML += '</div>';
+            
+            Modal.open('avatarSelector', avatarHTML, {
+                title: '프로필 아바타 선택',
+                width: '500px'
+            });
+            
+            // 아바타 선택 버튼 이벤트 리스너 추가
+            setTimeout(() => {
+                document.querySelectorAll('.avatar-select-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const avatarNum = btn.dataset.avatar;
+                        socket.emit('update_avatar', { avatar: parseInt(avatarNum) });
+                        Modal.close('avatarSelector');
+                    });
+                    
+                    btn.addEventListener('mouseenter', () => {
+                        btn.style.borderColor = '#3b82f6';
+                        btn.style.transform = 'scale(1.1)';
+                    });
+                    
+                    btn.addEventListener('mouseleave', () => {
+                        btn.style.borderColor = 'transparent';
+                        btn.style.transform = 'scale(1)';
+                    });
+                });
+            }, 100);
+        }
+        
+        // 티어 계산 함수 (레이팅에 따라)
+        function getTierFromRating(rating) {
+            if (rating < 1000) return 1; // 새싹
+            if (rating < 1200) return 2; // 루키
+            if (rating < 1400) return 3; // 브론즈
+            if (rating < 1600) return 4; // 실버
+            if (rating < 1800) return 5; // 골드
+            if (rating < 2000) return 6; // 플래티넘
+            if (rating < 2200) return 7; // 다이아
+            if (rating < 2400) return 8; // 마스터
+            return 9; // 챌린저
+        }
+        
+        // 티어 이미지 업데이트
+        function updateTierIcon(element, rating, size = 'normal') {
+            const tier = getTierFromRating(rating);
+            const className = size === 'small' ? 'tier-icon-small' : 'tier-icon';
+            const existingIcon = element.querySelector(`.${className}`);
+            if (existingIcon) {
+                existingIcon.src = `/images/tire${tier}.webp`;
+            } else {
+                const icon = document.createElement('img');
+                icon.src = `/images/tire${tier}.webp`;
+                icon.alt = `티어${tier}`;
+                icon.className = className;
+                icon.onerror = function() { this.style.display = 'none'; };
+                element.appendChild(icon);
+            }
+        }
+        
+        // 아바타 업데이트
+        function updateAvatar(userId, avatarNumber) {
+            // 플레이어 패널 아바타 업데이트
+            const blackAvatar = document.getElementById('blackAvatar');
+            const whiteAvatar = document.getElementById('whiteAvatar');
+            
+            if (blackAvatar && blackAvatar.dataset.userId === userId) {
+                blackAvatar.dataset.avatar = avatarNumber;
+                const img = blackAvatar.querySelector('img');
+                if (img) {
+                    img.src = `/images/profile${avatarNumber}.webp`;
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        blackAvatar.textContent = userId.charAt(0).toUpperCase();
+                    };
+                } else {
+                    blackAvatar.innerHTML = `<img src="/images/profile${avatarNumber}.webp" alt="Avatar" onerror="this.style.display='none'; this.parentElement.textContent='${userId.charAt(0).toUpperCase()}';" style="width: 100%; height: 100%; object-fit: cover;">`;
+                }
+            }
+            
+            if (whiteAvatar && whiteAvatar.dataset.userId === userId) {
+                whiteAvatar.dataset.avatar = avatarNumber;
+                const img = whiteAvatar.querySelector('img');
+                if (img) {
+                    img.src = `/images/profile${avatarNumber}.webp`;
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        whiteAvatar.textContent = userId.charAt(0).toUpperCase();
+                    };
+                } else {
+                    whiteAvatar.innerHTML = `<img src="/images/profile${avatarNumber}.webp" alt="Avatar" onerror="this.style.display='none'; this.parentElement.textContent='${userId.charAt(0).toUpperCase()}';" style="width: 100%; height: 100%; object-fit: cover;">`;
+                }
+            }
+            
+            // 유저 목록 아바타 업데이트
+            const userItems = document.querySelectorAll('.user-item');
+            userItems.forEach(item => {
+                if (item.dataset.userId === userId) {
+                    const avatarEl = item.querySelector('.user-avatar-small');
+                    if (avatarEl) {
+                        avatarEl.dataset.avatar = avatarNumber;
+                        const existingEditBtn = avatarEl.querySelector('.edit-profile-btn');
+                        const img = avatarEl.querySelector('img');
+                        if (img) {
+                            img.src = `/images/profile${avatarNumber}.webp`;
+                            img.onerror = function() {
+                                this.style.display = 'none';
+                                avatarEl.textContent = userId.charAt(0).toUpperCase();
+                                if (existingEditBtn) {
+                                    avatarEl.appendChild(existingEditBtn);
+                                }
+                            };
+                        } else {
+                            avatarEl.innerHTML = `<img src="/images/profile${avatarNumber}.webp" alt="Avatar" onerror="this.style.display='none'; this.parentElement.textContent='${userId.charAt(0).toUpperCase()}';" style="width: 100%; height: 100%; object-fit: cover;">`;
+                            if (existingEditBtn) {
+                                avatarEl.appendChild(existingEditBtn);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
         // Game events
         socket.on('game_state', (data) => {
             window.game.loadState(data);
             if (data.timers) {
                 window.timer.updateTimers(data.timers);
+                if (data.timers.blackTime !== undefined) {
+                    updateTimerBar('black', data.timers.blackTime, 30 * 60);
+                }
+                if (data.timers.whiteTime !== undefined) {
+                    updateTimerBar('white', data.timers.whiteTime, 30 * 60);
+                }
             }
             
             // Update player names if needed
             if (data.game) {
+                // 내 턴인지 확인
+                const currentColor = data.currentColor || 'black';
+                let isMyTurn = false;
+                
+                if (data.game.isAiGame) {
+                    // AI 게임인 경우: AI가 아닌 플레이어의 턴일 때만 true
+                    const aiColor = data.game.aiColor || 'white';
+                    if (currentColor === 'black' && aiColor !== 'black' && data.game.blackId === currentUser.id) {
+                        isMyTurn = true;
+                    } else if (currentColor === 'white' && aiColor !== 'white' && data.game.whiteId === currentUser.id) {
+                        isMyTurn = true;
+                    }
+                } else {
+                    // 일반 게임인 경우
+                    isMyTurn = (currentColor === 'black' && data.game.blackId === currentUser.id) ||
+                               (currentColor === 'white' && data.game.whiteId === currentUser.id);
+                }
+                
+                window.game.isMyTurn = isMyTurn;
+                
                 if (data.game.blackId === currentUser.id) {
                     document.getElementById('blackPlayer').classList.add('active');
+                    document.getElementById('whitePlayer').classList.remove('active');
                 }
                 if (data.game.whiteId === currentUser.id) {
                     document.getElementById('whitePlayer').classList.add('active');
+                    document.getElementById('blackPlayer').classList.remove('active');
+                }
+                
+                // 티어 아이콘 업데이트
+                if (data.game.blackRating !== undefined) {
+                    const blackNameRow = document.querySelector('#blackName')?.parentElement;
+                    if (blackNameRow) {
+                        updateTierIcon(blackNameRow, data.game.blackRating, 'normal');
+                    }
+                }
+                if (data.game.whiteRating !== undefined) {
+                    const whiteNameRow = document.querySelector('#whiteName')?.parentElement;
+                    if (whiteNameRow) {
+                        updateTierIcon(whiteNameRow, data.game.whiteRating, 'normal');
+                    }
+                }
+                
+                // 게임 모드에 따른 배경 이미지 업데이트
+                if (data.game.mode) {
+                    updateBackgroundImage(data.game.mode);
+                    document.getElementById('gameMode').textContent = data.game.mode === 'playful' || data.game.mode === 'casual' ? '놀이바둑' : (data.game.mode === 'strategic' ? '전략바둑' : '일반');
                 }
             }
             
             // Update game status
             if (data.game && !data.game.endedAt) {
                 document.getElementById('gameStatus').textContent = '게임 중';
-                document.getElementById('gameStatus').className = 'game-status playing';
+                gameEnded = false;
+            } else {
+                gameEnded = true;
+            }
+            
+            // 턴 표시 업데이트
+            updateTurnIndicator(data.moveNumber || 0, data.currentColor || 'black');
+            
+            // 포획 돌 수 업데이트
+            if (data.capturedBlack !== undefined) {
+                document.getElementById('blackCaptured').textContent = data.capturedBlack || 0;
+            }
+            if (data.capturedWhite !== undefined) {
+                document.getElementById('whiteCaptured').textContent = data.capturedWhite || 0;
+            }
+            
+            // 게임 모드에 따른 특수 버튼 업데이트 (게임 모드 정보가 있으면)
+            if (data.game && data.game.mode) {
+                updateSpecialButtons(data.game.mode);
+            }
+            
+            // 나가기 버튼 업데이트
+            updateLeaveButton();
+        });
+        
+        // 아바타 업데이트 이벤트
+        socket.on('avatar_updated', (data) => {
+            if (data.userId && data.avatar) {
+                updateAvatar(data.userId, data.avatar);
             }
         });
 
         socket.on('move_made', (data) => {
             window.game.makeMove(data.move);
-            updateMoveList(data.move);
+            // 내 턴인지 업데이트
+            const isMyTurn = (data.move.color === 'black' && window.game.currentColor === 'white' && data.game && data.game.whiteId === currentUser.id) ||
+                            (data.move.color === 'white' && window.game.currentColor === 'black' && data.game && data.game.blackId === currentUser.id);
+            window.game.isMyTurn = isMyTurn;
+            updateTurnIndicator(data.move.moveNumber || window.game.moveNumber, data.move.color === 'black' ? 'white' : 'black');
+            addChatMessage(data.move.color === 'black' ? '흑' : '백', `${String.fromCharCode(65 + data.move.x)}${data.move.y + 1}`);
         });
 
         socket.on('ai_move', (data) => {
             document.getElementById('aiThinking').classList.remove('active');
             window.game.makeMove(data.move);
-            updateMoveList(data.move);
+            
+            // AI 이동 후 내 턴인지 업데이트
+            const nextColor = data.move.color === 'black' ? 'white' : 'black';
+            let isMyTurn = false;
+            
+            if (data.game && data.game.isAiGame) {
+                const aiColor = data.game.aiColor || 'white';
+                if (nextColor === 'black' && aiColor !== 'black' && data.game.blackId === currentUser.id) {
+                    isMyTurn = true;
+                } else if (nextColor === 'white' && aiColor !== 'white' && data.game.whiteId === currentUser.id) {
+                    isMyTurn = true;
+                }
+            }
+            
+            window.game.isMyTurn = isMyTurn;
+            updateTurnIndicator(data.move.moveNumber || window.game.moveNumber, nextColor);
+            addChatMessage('AI', `${String.fromCharCode(65 + data.move.x)}${data.move.y + 1}`);
         });
 
         socket.on('ai_thinking', () => {
             document.getElementById('aiThinking').classList.add('active');
         });
 
+        socket.on('ai_error', (data) => {
+            document.getElementById('aiThinking').classList.remove('active');
+            alert(`AI 오류: ${data.error || '알 수 없는 오류가 발생했습니다.'}`);
+        });
+
         socket.on('timer_update', (data) => {
             window.timer.updateTimers(data);
+            if (data.blackTime !== undefined) {
+                updateTimerBar('black', data.blackTime, 30 * 60);
+            }
+            if (data.whiteTime !== undefined) {
+                updateTimerBar('white', data.whiteTime, 30 * 60);
+            }
         });
 
         socket.on('timer_expired', (data) => {
@@ -353,7 +1919,8 @@
 
         socket.on('game_ended', (data) => {
             document.getElementById('gameStatus').textContent = `게임 종료: ${data.result}`;
-            document.getElementById('gameStatus').className = 'game-status finished';
+            gameEnded = true;
+            updateLeaveButton();
         });
 
         socket.on('score_result', (data) => {
@@ -365,13 +1932,50 @@
             `);
         });
 
+        // 채팅 기능
+        let activeChatTab = 'game';
+        document.querySelectorAll('.chat-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                activeChatTab = tab.dataset.tab;
+            });
+        });
+
+        function addChatMessage(username, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message chat-message-user';
+            messageDiv.innerHTML = `<span class="username">${username}:</span> ${message}`;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        document.getElementById('chatSendBtn').addEventListener('click', () => {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (message) {
+                socket.emit('chat_message', {
+                    channel: activeChatTab === 'game' ? gameId : 'global',
+                    text: message
+                });
+                input.value = '';
+            }
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('chatSendBtn').click();
+            }
+        });
+
+        socket.on('chat_message', (data) => {
+            addChatMessage(data.user || '시스템', data.text || data.message);
+        });
+
         // Button handlers
         document.getElementById('passBtn').addEventListener('click', () => {
             socket.emit('make_move', { move: { isPass: true } });
-        });
-
-        document.getElementById('scoreBtn').addEventListener('click', () => {
-            socket.emit('request_score');
         });
 
         document.getElementById('resignBtn').addEventListener('click', () => {
@@ -380,21 +1984,57 @@
             }
         });
 
-        function updateMoveList(move) {
-            const moveList = document.getElementById('moveList');
-            const moveItem = document.createElement('div');
-            moveItem.className = 'move-item';
-            moveItem.innerHTML = `
-                <span class="move-number">${move.moveNumber}</span>
-                <span>${move.color === 'black' ? '흑' : '백'}: ${move.isPass ? '한 수 넘김' : `${String.fromCharCode(65 + move.x)}${move.y + 1}`}</span>
-            `;
-            moveList.appendChild(moveItem);
-            moveList.scrollTop = moveList.scrollHeight;
+        // 나가기 버튼
+        document.getElementById('leaveBtn').addEventListener('click', () => {
+            if (gameEnded) {
+                window.location.href = '/waiting-room';
+            }
+        });
+
+        // 일시정지 버튼
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (!isPaused) {
+                socket.emit('pause_game', { gameId });
+                document.getElementById('pauseBtn').textContent = '재개';
+                isPaused = true;
+            } else {
+                socket.emit('resume_game', { gameId });
+                document.getElementById('pauseBtn').textContent = '일시정지';
+                isPaused = false;
+            }
+        });
+
+        socket.on('game_paused', () => {
+            isPaused = true;
+            document.getElementById('pauseBtn').textContent = '재개';
+        });
+
+        socket.on('game_resumed', () => {
+            isPaused = false;
+            document.getElementById('pauseBtn').textContent = '일시정지';
+        });
+
+        // 설정 버튼 클릭 이벤트
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            // 설정 모달 열기 (나중에 구현)
+            alert('설정 기능은 준비 중입니다.');
+        });
+
+        // 시간 포맷팅 함수 (밀리초를 MM:SS 형식으로)
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
+
+
+        // 초기 설정
+        updateSpecialButtons('standard'); // 기본 모드로 시작, 게임 상태 받으면 업데이트
+        updateLeaveButton();
 
         // Request initial game state
         socket.emit('get_game_state');
     </script>
 </body>
 </html>
-

@@ -49,6 +49,22 @@ npm run dev
 - Node.js 18+
 - PostgreSQL
 - Redis
-- Gnugo (시스템에 설치 필요)
-- Katago (시스템에 설치 필요)
+- Gnugo (시스템에 설치 필요, 데모 모드에서는 선택사항)
+- Katago (시스템에 설치 필요, 선택사항)
+
+## AI 모드 설정
+
+환경 변수 `AI_MODE`로 AI 엔진을 선택할 수 있습니다:
+
+- `demo`: 데모 모드 (그누고 없이 동작, 간단한 휴리스틱 기반 AI)
+- `gnugo`: 그누고 사용 (기본값, 그누고 설치 필요)
+
+로컬 개발 시 `.env` 파일에 다음을 추가:
+```bash
+AI_MODE=demo  # 데모 모드 사용
+# 또는
+AI_MODE=gnugo  # 그누고 사용 (기본값)
+```
+
+배포 시에는 `AI_MODE=gnugo`로 설정하여 그누고를 사용하세요.
 

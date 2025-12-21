@@ -33,6 +33,8 @@ REDIS_PASSWORD=
 SESSION_SECRET=local-dev-secret-key-change-in-production
 
 # AI Engines (로컬 개발 시 선택사항)
+# AI_MODE: 'demo' (데모 모드, 그누고 없이 동작) 또는 'gnugo' (그누고 사용, 기본값)
+AI_MODE=demo
 GNUGO_PATH=gnugo
 KATAGO_PATH=katago
 "@
@@ -65,9 +67,10 @@ if ($LASTEXITCODE -eq 0) {
     exit 1
 }
 
-# 5. 데이터베이스 마이그레이션
+# 5. 데이터베이스 마이그레이션 (비대화형)
 Write-Host "5. 데이터베이스 마이그레이션 중..." -ForegroundColor Yellow
-npm run prisma:migrate
+# prisma db push는 마이그레이션 파일 없이 스키마를 직접 적용 (로컬 개발용)
+npx prisma db push --accept-data-loss
 if ($LASTEXITCODE -eq 0) {
     Write-Host "   ✓ 데이터베이스 마이그레이션 완료" -ForegroundColor Green
 } else {

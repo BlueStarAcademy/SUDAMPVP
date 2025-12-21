@@ -13,9 +13,25 @@ router.get('/:gameId', requireAuth, async (req, res) => {
             return res.status(404).send('Game not found');
         }
 
-        // Check if user is part of this game
-        if (game.blackId !== req.session.userId && game.whiteId !== req.session.userId && game.whiteId !== 'ai') {
-            return res.status(403).send('Access denied');
+        // Check if user is part of this game (player) or can spectate
+        const isPlayer = game.blackId === req.session.userId || game.whiteId === req.session.userId;
+        const isAiGame = game.isAiGame || game.whiteId === null || game.blackId === null;
+        
+        // Allow access if player, or if game allows spectators (non-AI games)
+        if (!isPlayer && !isAiGame) {
+            // For now, allow spectating - you can restrict this later
+            // return res.status(403).send('Access denied');
+        }
+
+        // Update user status via waitingRoomSocket
+        if (global.waitingRoomSocket) {
+            if (isPlayer) {
+                // Player - set to in-game
+                await global.waitingRoomSocket.setUserInGame(req.session.userId);
+            } else {
+                // Spectator - set to spectating
+                await global.waitingRoomSocket.setUserSpectating(req.session.userId);
+            }
         }
 
         const userService = require('../services/userService');
@@ -25,16 +41,16 @@ router.get('/:gameId', requireAuth, async (req, res) => {
         let blackPlayer = null;
         let whitePlayer = null;
         
-        if (game.blackId !== 'ai') {
+        if (game.blackId !== null) {
             blackPlayer = await userService.getUserProfile(game.blackId);
         } else {
-            blackPlayer = { nickname: 'AI', rating: game.blackRating };
+            blackPlayer = { nickname: `AI (${game.aiLevel || 1}단)`, rating: game.blackRating };
         }
         
-        if (game.whiteId !== 'ai') {
+        if (game.whiteId !== null) {
             whitePlayer = await userService.getUserProfile(game.whiteId);
         } else {
-            whitePlayer = { nickname: `AI (${game.aiLevel}단)`, rating: game.whiteRating };
+            whitePlayer = { nickname: `AI (${game.aiLevel || 1}단)`, rating: game.whiteRating };
         }
 
         res.render('gameRoom', {
