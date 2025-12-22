@@ -77,8 +77,30 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', './views');
 
+// Content Security Policy - 개발 환경에서는 좀 더 느슨하게 설정
+// Chrome DevTools 경고를 방지하기 위해 connect-src에 localhost 허용
+app.use((req, res, next) => {
+    // 개발 환경에서만 CSP 헤더 추가 (프로덕션에서는 더 엄격하게 설정 가능)
+    if (process.env.NODE_ENV === 'development') {
+        res.setHeader(
+            'Content-Security-Policy',
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: blob:; " +
+            "font-src 'self' data:; " +
+            "connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https://localhost:*; " +
+            "frame-ancestors 'none';"
+        );
+    }
+    next();
+});
+
 // Ignore favicon requests (404 방지)
 app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// Handle .well-known requests (Chrome DevTools, etc.)
+app.get('/.well-known/*', (req, res) => res.status(404).end());
 
 // Routes
 app.get('/', (req, res) => {

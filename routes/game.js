@@ -62,6 +62,12 @@ router.get('/:gameId', requireAuth, async (req, res) => {
         });
     } catch (error) {
         console.error('Get game error:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            gameId: req.params.gameId,
+            userId: req.session?.userId
+        });
         res.status(500).send('Internal server error');
     }
 });

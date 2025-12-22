@@ -260,30 +260,21 @@ class RankingService {
             throw new Error('Not enough tickets');
         }
 
-        // Create game
-        const game = await gameService.createGame(userId1, userId2, rating1, rating2);
+        // Create game (Default to CLASSIC for ranked matching)
+        const game = await gameService.createGame(userId1, userId2, rating1, rating2, {
+            matchType: 'RANKED',
+            mode: 'CLASSIC'
+        });
 
         // Update user statuses to in-game
         if (global.waitingRoomSocket) {
             await global.waitingRoomSocket.setUserInGame(userId1);
             await global.waitingRoomSocket.setUserInGame(userId2);
-        } else {
-            // Fallback to direct Redis update
-            const redis = getRedisClient();
-            if (redis) {
-                try {
-                    await redis.setEx(`user:status:${userId1}`, 3600, 'in-game');
-                    await redis.setEx(`user:status:${userId2}`, 3600, 'in-game');
-                } catch (error) {
-                    console.error('Error updating user status:', error);
-                }
-            }
         }
 
         // Notify users via Socket.io
         const { io } = require('../server');
         if (io) {
-            // Emit to main namespace - clients will handle it
             io.emit('match_found', { 
                 gameId: game.id,
                 userIds: [userId1, userId2]
@@ -295,73 +286,89 @@ class RankingService {
 
     async updateRatings(gameId, result) {
         const game = await gameService.getGame(gameId);
-        if (!game || game.isAiGame) return;
+        if (!game) return;
 
-        const blackUser = await userService.findUserById(game.blackId);
-        const whiteUser = await userService.findUserById(game.whiteId);
+        const isRanked = game.matchType === 'RANKED';
+        const blackUser = game.blackId ? await userService.findUserById(game.blackId) : null;
+        const whiteUser = game.whiteId ? await userService.findUserById(game.whiteId) : null;
 
-        if (!blackUser || !whiteUser) return;
+        const rewards = {
+            black: { gold: 0, ratingChange: 0 },
+            white: { gold: 0, ratingChange: 0 }
+        };
 
-        const blackRating = blackUser.rating;
-        const whiteRating = whiteUser.rating;
+        // 1. Calculate Ratings (only for ranked)
+        if (isRanked && blackUser && whiteUser && !game.isAiGame) {
+            const blackRating = blackUser.rating;
+            const whiteRating = whiteUser.rating;
 
-        // Calculate expected scores
-        const expectedBlack = 1 / (1 + Math.pow(10, (whiteRating - blackRating) / 400));
-        const expectedWhite = 1 - expectedBlack;
+            const expectedBlack = 1 / (1 + Math.pow(10, (whiteRating - blackRating) / 400));
+            const expectedWhite = 1 - expectedBlack;
 
-        // Determine actual scores
-        let actualBlack, actualWhite;
-        if (result === 'black_win') {
-            actualBlack = 1;
-            actualWhite = 0;
-        } else if (result === 'white_win') {
-            actualBlack = 0;
-            actualWhite = 1;
-        } else {
-            actualBlack = 0.5;
-            actualWhite = 0.5;
+            let actualBlack, actualWhite;
+            if (result === 'black_win') {
+                actualBlack = 1;
+                actualWhite = 0;
+            } else if (result === 'white_win') {
+                actualBlack = 0;
+                actualWhite = 1;
+            } else {
+                actualBlack = 0.5;
+                actualWhite = 0.5;
+            }
+
+            const blackK = blackUser.wins + blackUser.losses < 30 ? 32 : 24;
+            const whiteK = whiteUser.wins + whiteUser.losses < 30 ? 32 : 24;
+
+            rewards.black.ratingChange = Math.round(blackK * (actualBlack - expectedBlack));
+            rewards.white.ratingChange = Math.round(whiteK * (actualWhite - expectedWhite));
+
+            await userService.updateRating(game.blackId, blackRating + rewards.black.ratingChange);
+            await userService.updateRating(game.whiteId, whiteRating + rewards.white.ratingChange);
         }
 
-        // Calculate new ratings (K-factor = 32 for new players, 24 for others)
-        const blackK = blackUser.wins + blackUser.losses < 30 ? 32 : 24;
-        const whiteK = whiteUser.wins + whiteUser.losses < 30 ? 32 : 24;
+        // 2. Gold Rewards
+        const WIN_GOLD = isRanked ? 100 : 50;
+        const LOSE_GOLD = isRanked ? 20 : 10;
+        const DRAW_GOLD = isRanked ? 40 : 20;
 
-        const newBlackRating = Math.round(blackRating + blackK * (actualBlack - expectedBlack));
-        const newWhiteRating = Math.round(whiteRating + whiteK * (actualWhite - expectedWhite));
-
-        // Update ratings
-        await userService.updateRating(game.blackId, newBlackRating);
-        await userService.updateRating(game.whiteId, newWhiteRating);
-
-        // Update win/loss records
         if (result === 'black_win') {
-            await prisma.user.update({
-                where: { id: game.blackId },
-                data: { wins: { increment: 1 } }
-            });
-            await prisma.user.update({
-                where: { id: game.whiteId },
-                data: { losses: { increment: 1 } }
-            });
+            rewards.black.gold = WIN_GOLD;
+            rewards.white.gold = LOSE_GOLD;
         } else if (result === 'white_win') {
-            await prisma.user.update({
-                where: { id: game.whiteId },
-                data: { wins: { increment: 1 } }
-            });
-            await prisma.user.update({
-                where: { id: game.blackId },
-                data: { losses: { increment: 1 } }
-            });
+            rewards.black.gold = LOSE_GOLD;
+            rewards.white.gold = WIN_GOLD;
         } else {
+            rewards.black.gold = DRAW_GOLD;
+            rewards.white.gold = DRAW_GOLD;
+        }
+
+        // Apply gold and win/loss records
+        if (blackUser) {
             await prisma.user.update({
                 where: { id: game.blackId },
-                data: { draws: { increment: 1 } }
-            });
-            await prisma.user.update({
-                where: { id: game.whiteId },
-                data: { draws: { increment: 1 } }
+                data: {
+                    gold: { increment: rewards.black.gold },
+                    wins: result === 'black_win' ? { increment: 1 } : undefined,
+                    losses: result === 'white_win' ? { increment: 1 } : undefined,
+                    draws: result === 'draw' ? { increment: 1 } : undefined
+                }
             });
         }
+
+        if (whiteUser) {
+            await prisma.user.update({
+                where: { id: game.whiteId },
+                data: {
+                    gold: { increment: rewards.white.gold },
+                    wins: result === 'white_win' ? { increment: 1 } : undefined,
+                    losses: result === 'black_win' ? { increment: 1 } : undefined,
+                    draws: result === 'draw' ? { increment: 1 } : undefined
+                }
+            });
+        }
+
+        return rewards;
     }
 }
 

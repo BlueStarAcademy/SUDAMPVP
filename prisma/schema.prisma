@@ -19,6 +19,7 @@ model User {
   wins              Int      @default(0)
   losses            Int      @default(0)
   draws             Int      @default(0)
+  gold              Int      @default(1000)
   strategyTickets   Int      @default(10)
   casualTickets     Int      @default(10)
   strategyTicketMax Int      @default(10)
@@ -38,6 +39,11 @@ model Game {
   whiteId     String?
   blackRating Int
   whiteRating Int
+  matchType   String   @default("RANKED") // "RANKED", "FRIENDLY"
+  mode        String   @default("CLASSIC") // CLASSIC, CAPTURE, etc.
+  komi        Float    @default(6.5)
+  capturedBlack Int    @default(0)
+  capturedWhite Int    @default(0)
   result      String?  // "black_win", "white_win", "draw"
   sgfData     String?  // SGF format game data
   isAiGame    Boolean  @default(false)

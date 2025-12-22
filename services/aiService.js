@@ -21,8 +21,49 @@ class AIService {
 
         aiQueue.process('katago-score', async (job) => {
             const { gameId, gameState } = job.data;
-            return await this.getKatagoScore(gameId, gameState);
+            const aiMode = process.env.AI_MODE || 'gnugo';
+            
+            if (aiMode === 'demo') {
+                return await this.getDemoScore(gameId, gameState);
+            } else {
+                try {
+                    return await this.getKatagoScore(gameId, gameState);
+                } catch (error) {
+                    console.error('Katago scoring failed, using demo fallback:', error);
+                    return await this.getDemoScore(gameId, gameState);
+                }
+            }
         });
+    }
+
+    async getDemoScore(gameId, gameState) {
+        // Very simple territory estimation for demo
+        let blackPoints = 0;
+        let whitePoints = 0;
+        
+        const board = Array(19).fill(null).map(() => Array(19).fill(null));
+        gameState.moves.forEach(move => {
+            if (!move.isPass && move.x !== undefined && move.y !== undefined) {
+                board[move.y][move.x] = move.color;
+            }
+        });
+
+        // Basic count: stones on board + captured
+        for (let y = 0; y < 19; y++) {
+            for (let x = 0; x < 19; x++) {
+                if (board[y][x] === 'black') blackPoints++;
+                else if (board[y][x] === 'white') whitePoints++;
+            }
+        }
+
+        blackPoints += gameState.capturedBlack || 0;
+        whitePoints += (gameState.capturedWhite || 0) + 6.5; // Komi
+
+        return {
+            blackScore: blackPoints,
+            whiteScore: whitePoints,
+            winner: blackPoints > whitePoints ? 'black' : 'white'
+        };
     }
 
     async getAiMove(gameId, level) {

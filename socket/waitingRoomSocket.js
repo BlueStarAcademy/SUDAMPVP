@@ -230,7 +230,91 @@ class WaitingRoomSocket {
 
         // Handle AI game
         socket.on('start_ai_game', async (data) => {
-            await this.startAiGame(userId, socket, data.level, data.color);
+            await this.startAiGame(userId, socket, data.level, data.color, {
+                mode: data.mode,
+                komi: data.komi
+            });
+        });
+
+        // Handle PVP Game Request
+        socket.on('send_game_request', async (data) => {
+            try {
+                const { targetUserId, mode, komi, message } = data;
+                const targetSocketId = this.onlineUsers.get(targetUserId);
+                
+                if (!targetSocketId) {
+                    return socket.emit('game_request_error', { error: '유저가 오프라인 상태입니다.' });
+                }
+
+                const senderProfile = await userService.getUserProfile(userId);
+                
+                this.io.to(targetSocketId).emit('game_request_received', {
+                    fromUserId: userId,
+                    fromNickname: senderProfile.nickname,
+                    mode,
+                    komi,
+                    message
+                });
+            } catch (error) {
+                console.error('Send game request error:', error);
+                socket.emit('game_request_error', { error: '대국 신청 중 오류가 발생했습니다.' });
+            }
+        });
+
+        socket.on('accept_game_request', async (data) => {
+            try {
+                const { fromUserId, mode, komi } = data;
+                const fromSocketId = this.onlineUsers.get(fromUserId);
+
+                if (!fromSocketId) {
+                    return socket.emit('game_request_error', { error: '상대방이 오프라인 상태입니다.' });
+                }
+
+                // Check tickets for both
+                const ticketService = require('../services/ticketService');
+                const roomType = this.userRoomType.get(userId) || 'strategy';
+                const ticketType = roomType === 'casual' ? 'casual' : 'strategy';
+
+                const hasTicket1 = await ticketService.consumeTicket(userId, ticketType);
+                const hasTicket2 = await ticketService.consumeTicket(fromUserId, ticketType);
+
+                if (!hasTicket1 || !hasTicket2) {
+                    // Refund if one failed
+                    if (hasTicket1) {
+                        await prisma.user.update({ where: { id: userId }, data: { [ticketType === 'strategy' ? 'strategyTickets' : 'casualTickets']: { increment: 1 } } });
+                    }
+                    if (hasTicket2) {
+                        await prisma.user.update({ where: { id: fromUserId }, data: { [ticketType === 'strategy' ? 'strategyTickets' : 'casualTickets']: { increment: 1 } } });
+                    }
+                    return socket.emit('game_request_error', { error: '이용권이 부족합니다.' });
+                }
+
+                const gameService = require('../services/gameService');
+                // Friendly match (matchType: FRIENDLY)
+                const game = await gameService.createGame(fromUserId, userId, 0, 0, {
+                    matchType: 'FRIENDLY',
+                    mode: mode,
+                    komi: komi
+                });
+
+                await this.setUserInGame(userId);
+                await this.setUserInGame(fromUserId);
+
+                const gameData = { gameId: game.id };
+                socket.emit('game_started', gameData);
+                this.io.to(fromSocketId).emit('game_started', gameData);
+            } catch (error) {
+                console.error('Accept game request error:', error);
+                socket.emit('game_request_error', { error: '대국 수락 중 오류가 발생했습니다.' });
+            }
+        });
+
+        socket.on('reject_game_request', (data) => {
+            const { fromUserId } = data;
+            const fromSocketId = this.onlineUsers.get(fromUserId);
+            if (fromSocketId) {
+                this.io.to(fromSocketId).emit('game_request_rejected', { message: '상대방이 대국 신청을 거절했습니다.' });
+            }
         });
 
 
@@ -564,26 +648,13 @@ class WaitingRoomSocket {
         await rankingService.removeFromMatchingQueue(userId);
     }
 
-    async startAiGame(userId, socket, level, color) {
+    async startAiGame(userId, socket, level, color, options = {}) {
         try {
-            // AI 게임은 이용권 소모하지 않음 (요청사항에 따라 변경 가능)
-            // 필요시 아래 주석을 해제하여 이용권 소모
-            /*
-            const ticketService = require('../services/ticketService');
-            const roomType = this.userRoomType.get(userId) || 'strategy';
-            const ticketType = roomType === 'casual' ? 'casual' : 'strategy';
-            
-            const hasTicket = await ticketService.consumeTicket(userId, ticketType);
-            if (!hasTicket) {
-                socket.emit('ai_game_error', { 
-                    error: '이용권이 부족합니다. 30분마다 이용권이 회복됩니다.' 
-                });
-                return;
-            }
-            */
-
             const gameService = require('../services/gameService');
-            const game = await gameService.createAiGame(userId, level, color);
+            const game = await gameService.createAiGame(userId, level, color, {
+                mode: options.mode || 'CLASSIC',
+                komi: options.komi || 6.5
+            });
             
             await this.updateUserStatus(userId, 'in-game');
             this.publishUserStatusChanged(userId, 'in-game');

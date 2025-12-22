@@ -69,24 +69,37 @@ class GameSocket {
         // Make move
         socket.on('make_move', async (data) => {
             try {
-                const move = await gameService.makeMove(gameId, userId, data.move);
-                if (move) {
+                const moveResult = await gameService.makeMove(gameId, userId, data.move);
+                if (moveResult) {
                     // Broadcast to all in room
-                    this.io.to(`game-${gameId}`).emit('move_made', { move });
+                    this.io.to(`game-${gameId}`).emit('move_made', { move: moveResult });
                     
+                    if (moveResult.isGameOver) {
+                        const { result, score, rewards } = await gameService.endGame(gameId, await gameService.getGameState(gameId));
+                        this.io.to(`game-${gameId}`).emit('game_ended', { 
+                            result, 
+                            score, 
+                            rewards: {
+                                black: rewards.black,
+                                white: rewards.white
+                            }
+                        });
+                        return;
+                    }
+
                     // Update timer
                     timerService.switchTurn(gameId);
                     
                     // Check if AI turn
                     const game = await gameService.getGame(gameId);
-                    if (game.isAiGame && game.aiColor !== move.color) {
-                        // Request AI move (AI plays after user)
+                    if (game.isAiGame && game.aiColor !== moveResult.color) {
                         const aiService = require('../services/aiService');
                         this.io.to(`game-${gameId}`).emit('ai_thinking');
                         aiService.getAiMove(gameId, game.aiLevel);
                     }
                 }
             } catch (error) {
+                console.error('Make move error:', error);
                 socket.emit('move_error', { error: error.message });
             }
         });
@@ -100,8 +113,13 @@ class GameSocket {
 
         // Resign
         socket.on('resign', async () => {
-            const result = await gameService.resign(gameId, userId);
-            this.io.to(`game-${gameId}`).emit('game_ended', { result });
+            const { result, rewards } = await gameService.resign(gameId, userId);
+            const game = await gameService.getGame(gameId);
+            
+            this.io.to(`game-${gameId}`).emit('game_ended', { result, rewards: {
+                black: rewards.black,
+                white: rewards.white
+            }});
         });
 
         // Time sync
@@ -111,8 +129,41 @@ class GameSocket {
 
         // Timer expired
         socket.on('timer_expired', async (data) => {
-            const result = await gameService.handleTimeExpired(gameId, data.color);
-            this.io.to(`game-${gameId}`).emit('game_ended', { result });
+            const { result, rewards } = await gameService.handleTimeExpired(gameId, data.color);
+            this.io.to(`game-${gameId}`).emit('game_ended', { result, rewards: {
+                black: rewards.black,
+                white: rewards.white
+            }});
+        });
+
+        // Handle game room chat messages
+        socket.on('game_chat_message', async (data) => {
+            try {
+                if (!data || !data.message || typeof data.message !== 'string') {
+                    socket.emit('chat_error', { error: 'Invalid message format' });
+                    return;
+                }
+
+                const message = data.message.trim();
+                if (message.length === 0 || message.length > 200) {
+                    socket.emit('chat_error', { error: 'Message must be between 1 and 200 characters' });
+                    return;
+                }
+
+                // Get user profile
+                const profile = await userService.getUserProfile(userId);
+                const nickname = profile ? profile.nickname : 'Unknown';
+
+                // Broadcast to all users in this game room only
+                this.io.to(`game-${gameId}`).emit('game_chat_message', {
+                    user: nickname,
+                    message: message,
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error('Error handling game chat message:', error);
+                socket.emit('chat_error', { error: 'Failed to send message' });
+            }
         });
 
         // Disconnect

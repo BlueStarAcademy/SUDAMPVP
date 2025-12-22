@@ -19,66 +19,82 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #1a1a2e; /* 기본 배경색 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
+            width: 100vw;
+            overflow: hidden;
             position: relative;
         }
         
         /* 게임 모드에 따른 배경 이미지 */
         body.game-mode-playful {
-            background: url('/images/playfulbg.webp');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+            background-image: url('/images/playfulbg.webp') !important;
         }
         
         body.game-mode-strategic {
-            background: url('/images/strategicbg.webp');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
+            background-image: url('/images/strategicbg.webp') !important;
         }
         
         /* 배경 이미지 위에 오버레이 추가 (가독성 향상) */
-        body.game-mode-playful::before,
-        body.game-mode-strategic::before {
-            content: '';
+        .stadium-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* 배경 이미지가 다른 요소들 뒤에 보이도록 z-index 조정 */
+        .game-container,
+        .sidebar {
+            position: relative;
+            z-index: 1;
         }
 
         .game-container {
             flex: 1;
             display: grid;
             grid-template-columns: 1fr 320px;
-            grid-template-rows: auto 1fr;
-            gap: 12px;
-            padding: 20px;
+            grid-template-rows: 1fr;
+            gap: 20px;
+            padding: 30px;
             max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-            justify-content: center;
-            align-items: start;
+            margin: auto;
+            width: 95%;
+            aspect-ratio: 16 / 9;
+            max-height: calc(100vh - 100px);
             min-height: 0;
             overflow: hidden;
             box-sizing: border-box;
+            position: relative;
+            /* 배경이 선명하게 보이도록 블러 제거 및 투명도 조정 */
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            z-index: 1;
+            transition: grid-template-columns 0.3s ease;
         }
 
+        /* 사이드바가 접혔을 때의 레이아웃 */
+        .game-container.sidebar-collapsed {
+            grid-template-columns: 1fr 0px;
+            gap: 0;
+        }
+        
         /* 플레이어 패널 - 양쪽에 수평 배치, 바둑판 너비와 정확히 맞춤 */
         .player-panel-container {
-            grid-column: 1;
-            grid-row: 1;
             display: flex;
             justify-content: center;
             align-items: stretch;
@@ -87,9 +103,9 @@
             height: auto;
             min-height: 80px;
             width: 100%;
-            max-width: 100%;
+            max-width: min(calc(100vw - 400px), 900px);
             box-sizing: border-box;
-            z-index: 1;
+            margin-bottom: 5px;
         }
 
         .player-panel {
@@ -199,6 +215,13 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: 2px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .player-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .player-details {
@@ -217,7 +240,7 @@
         
         .player-name-row {
             display: flex;
-            align-items: baseline;
+            align-items: center;
             gap: 8px;
         }
         
@@ -241,6 +264,20 @@
 
         .player-panel.white .player-name {
             color: black;
+        }
+
+        .tier-icon {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .tier-icon-small {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            flex-shrink: 0;
         }
 
         .player-level {
@@ -380,27 +417,59 @@
             align-items: center;
             justify-content: center;
             background: transparent;
-            gap: 12px;
+            gap: 0;
             width: 100%;
             flex: 1;
             min-height: 0;
-            overflow: visible;
+            overflow: hidden;
+            margin-bottom: 0;
         }
 
         .board-wrapper {
             position: relative;
             width: 100%;
             /* 반응형: 화면 크기에 따라 조정되되, 최대 900px */
-            /* 높이와 너비 중 작은 값을 사용하여 정사각형 유지 */
-            max-width: min(calc(100vw - 400px), calc(100vh - 320px), 900px);
+            max-width: min(calc(100vw - 450px), calc(100vh - 420px), 800px);
             aspect-ratio: 1;
             flex-shrink: 1;
             min-width: 0;
-            /* 버튼 패널 공간을 확보하면서 반응형으로 작아지도록 */
-            max-height: min(calc(100vw - 400px), calc(100vh - 320px), 900px);
+            margin: 0 auto;
         }
         
-        /* 버튼 패널 - 바둑판 하단에 붙어서 움직임 */
+        /* 전광판 - 바둑판과 버튼 패널 사이 */
+        .game-notice-board {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 0;
+            margin: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            flex-shrink: 0;
+            width: 100%;
+            max-width: min(calc(100vw - 450px), 800px); /* 바둑판 너비와 맞춤 */
+            box-sizing: border-box;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 버튼 패널 - 화면 하단에 고정 */
         .button-panel {
             display: flex;
             flex-direction: row;
@@ -409,15 +478,16 @@
             gap: 24px;
             padding: 12px;
             background: rgba(17, 24, 39, 0.95);
-            border-radius: 12px;
+            border-radius: 0 0 12px 12px; /* 하단 모서리만 둥글게 */
             border: 1px solid rgba(75, 85, 99, 0.5);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             flex-shrink: 0;
             width: 100%;
-            max-width: min(calc(100vw - 400px), 900px);
+            max-width: min(calc(100vw - 450px), 800px); /* 바둑판 너비와 맞춤 */
             box-sizing: border-box;
+            margin: 0;
         }
-
+        
         .button-group {
             display: flex;
             flex-direction: row;
@@ -564,18 +634,20 @@
             50% { opacity: 0.8; }
         }
 
-        /* 좌측 컨텐츠 영역 (바둑판, 버튼패널) */
+        /* 좌측 컨텐츠 영역 (플레이어 패널, 바둑판, 버튼패널) */
         .left-content {
             grid-column: 1;
-            grid-row: 2;
+            grid-row: 1 / -1;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px; /* 요소들 사이 간격 */
             align-items: center;
+            justify-content: flex-start;
             width: 100%;
+            height: 100%;
             min-height: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
+            position: relative;
         }
         
         /* 바둑판 섹션 */
@@ -587,7 +659,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            overflow: visible;
+            overflow: hidden;
+            position: relative;
+            padding-bottom: 0;
+            align-self: stretch;
         }
 
         /* 사이드바 */
@@ -602,9 +677,64 @@
             padding: 12px;
             border: 1px solid rgba(75, 85, 99, 0.5);
             align-self: stretch;
+            height: 100%;
             min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
+            transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+            position: relative;
+        }
+
+        /* 사이드바가 접혔을 때 */
+        .sidebar-collapsed .sidebar {
+            transform: translateX(340px);
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+        }
+
+        /* 사이드바 토글 버튼 */
+        .sidebar-toggle-btn {
+            position: absolute;
+            right: 330px; /* 사이드바 바로 왼쪽 */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 60px;
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+
+        .sidebar-collapsed .sidebar-toggle-btn {
+            right: 10px;
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            border-radius: 8px;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+
+        .sidebar-collapsed .toggle-icon {
+            transform: rotate(180deg);
         }
 
         .settings-button {
@@ -887,10 +1017,36 @@
             display: flex;
             gap: 8px;
             flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .emoji-btn {
+            padding: 8px 12px;
+            background: #667eea;
+            border: 2px solid #5568d3;
+            color: white;
+            border-radius: 6px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            border: none;
+        }
+
+        .emoji-btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            position: relative;
+            min-width: 0;
         }
 
         .chat-input {
-            flex: 1;
+            width: 100%;
             padding: 8px 12px;
             background: rgba(17, 24, 39, 0.8);
             border: 1px solid rgba(75, 85, 99, 0.6);
@@ -923,6 +1079,144 @@
         .chat-send-btn:disabled {
             background: rgba(75, 85, 99, 0.5);
             cursor: not-allowed;
+        }
+
+        /* 이모지 팝업 */
+        .emoji-popup {
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            width: 350px;
+            max-height: 0;
+            height: 280px;
+            z-index: 10001;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease;
+            border: 1px solid #e0e0e0;
+            box-sizing: border-box;
+        }
+        
+        .chat-input-container {
+            position: relative;
+            overflow: visible;
+        }
+
+        .emoji-popup.show {
+            display: flex;
+            max-height: 280px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .emoji-popup-header {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f9f9f9;
+            flex-shrink: 0;
+        }
+
+        .emoji-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .emoji-tab:hover {
+            background: #f0f0f0;
+        }
+
+        .emoji-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .emoji-popup-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .emoji-section {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            min-height: 0;
+        }
+
+        .emoji-section.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            height: fit-content;
+            /* 5열 3행 (15개) - aspect-ratio: 1이므로 그리드 열 너비에 따라 높이 결정, 여유있게 설정 */
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .emoji-item {
+            font-size: 24px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+            user-select: none;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            box-sizing: border-box;
+        }
+
+        .emoji-item:hover {
+            background: #f0f0f0;
+        }
+
+        .quick-message-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .quick-message-btn {
+            padding: 10px 15px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .quick-message-btn:hover {
+            background: #e8e8e8;
+            border-color: #667eea;
         }
 
         .action-buttons {
@@ -1264,14 +1558,164 @@
                 flex-shrink: 0;
             }
         }
+        /* 대국 결과 모달 스타일 */
+        .result-modal-content {
+            width: 500px !important;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+            border: 2px solid #667eea !important;
+            color: white !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            border-radius: 20px !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .result-header {
+            padding: 30px;
+            text-align: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .result-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: white;
+        }
+
+        .result-winner {
+            font-size: 20px;
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        .result-body {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .result-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .result-stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .reward-section {
+            margin-top: 10px;
+            padding: 20px;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .reward-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .reward-icon {
+            font-size: 24px;
+        }
+
+        .reward-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .result-actions {
+            padding: 0 30px 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .result-actions .btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-home {
+            background: #4b5563;
+            color: white;
+        }
+
+        .btn-home:hover {
+            background: #374151;
+        }
+
+        .btn-retry {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-retry:hover {
+            background: #5a67d8;
+        }
+
+        .win-text { color: #4ade80 !important; }
+        .lose-text { color: #f87171 !important; }
+        .draw-text { color: #94a3b8 !important; }
     </style>
 </head>
-<body>
-        <%- include('partials/header', { user: user }) %>
+<body<%
+// 게임 모드에 따라 배경 클래스 추가 (기본값: strategic)
+let modeClass = 'game-mode-strategic'; // 기본값
+if (game && game.mode) {
+    if (game.mode === 'playful' || game.mode === 'casual') {
+        modeClass = 'game-mode-playful';
+    } else if (game.mode === 'strategic') {
+        modeClass = 'game-mode-strategic';
+    }
+}
+%> class="<%= modeClass %>">
+    <%- include('partials/header', { user: user }) %>
+    <div class="stadium-overlay"></div>
 
     <div class="game-container">
-        <!-- 플레이어 패널 - 양쪽에 수평 배치, 바둑판 너비에 맞춤 -->
-        <div class="player-panel-container">
+        <!-- 사이드바 토글 버튼 -->
+        <button id="sidebarToggle" class="sidebar-toggle-btn" title="사이드바 접기/펼치기">
+            <span class="toggle-icon">▶</span>
+        </button>
+
+        <!-- 좌측 컨텐츠 영역 -->
+        <div class="left-content">
+            <!-- 플레이어 패널 - 양쪽에 수평 배치, 바둑판 너비에 맞춤 -->
+            <div class="player-panel-container">
             <!-- 흑 패널 (따낸 돌이 오른쪽) -->
             <div class="player-panel black" id="blackPlayer">
                 <div class="player-info-section">
@@ -1286,8 +1730,20 @@
                         <div class="player-details">
                             <div class="player-name-row">
                                 <div class="player-name" id="blackName"><%= blackPlayer ? blackPlayer.nickname : '흑' %></div>
-                                <% if (blackPlayer && blackPlayer.rating) { %>
-                                <%- getTierIcon(blackPlayer.rating, 'normal') %>
+                                <% 
+                                if (blackPlayer && blackPlayer.rating) {
+                                    const rating = blackPlayer.rating;
+                                    let tier = 1;
+                                    if (rating >= 2400) tier = 9;
+                                    else if (rating >= 2200) tier = 8;
+                                    else if (rating >= 2000) tier = 7;
+                                    else if (rating >= 1800) tier = 6;
+                                    else if (rating >= 1600) tier = 5;
+                                    else if (rating >= 1400) tier = 4;
+                                    else if (rating >= 1200) tier = 3;
+                                    else if (rating >= 1000) tier = 2;
+                                %>
+                                <img src="/images/tire<%= tier %>.webp" alt="티어<%= tier %>" class="tier-icon" onerror="this.style.display='none';">
                                 <% } %>
                             </div>
                             <div class="player-level" id="blackRating">레이팅: <%= blackPlayer ? blackPlayer.rating : '1500' %></div>
@@ -1328,7 +1784,16 @@
                                 <div class="player-name" id="whiteName"><%= whitePlayer ? whitePlayer.nickname : '백' %></div>
                                 <% 
                                 if (whitePlayer && whitePlayer.rating) {
-                                    const tier = getTierFromRating(whitePlayer.rating);
+                                    const rating = whitePlayer.rating;
+                                    let tier = 1;
+                                    if (rating >= 2400) tier = 9;
+                                    else if (rating >= 2200) tier = 8;
+                                    else if (rating >= 2000) tier = 7;
+                                    else if (rating >= 1800) tier = 6;
+                                    else if (rating >= 1600) tier = 5;
+                                    else if (rating >= 1400) tier = 4;
+                                    else if (rating >= 1200) tier = 3;
+                                    else if (rating >= 1000) tier = 2;
                                 %>
                                 <img src="/images/tire<%= tier %>.webp" alt="티어<%= tier %>" class="tier-icon" onerror="this.style.display='none';">
                                 <% } %>
@@ -1354,15 +1819,17 @@
                 </div>
             </div>
         </div>
-
-        <!-- 좌측 컨텐츠 영역 -->
-        <div class="left-content">
             <!-- 바둑판 섹션 -->
             <div class="board-section-wrapper">
                 <div class="board-section">
                     <div class="board-wrapper">
                         <canvas id="goBoard" width="900" height="900"></canvas>
                         <div class="ai-thinking" id="aiThinking">AI가 생각 중...</div>
+                    </div>
+                    
+                    <!-- 전광판 - 게임 상태 안내 -->
+                    <div class="game-notice-board" id="gameNoticeBoard">
+                        게임이 시작되었습니다.
                     </div>
                     
                     <!-- 버튼 패널 - 바둑판 하단에 붙어서 움직임 -->
@@ -1441,8 +1908,49 @@
                         <div class="chat-message chat-message-system">대국실에 오신 것을 환영합니다!</div>
                     </div>
                     <div class="chat-input-container">
-                        <input type="text" class="chat-input" id="chatInput" placeholder="메시지 입력..." maxlength="30">
+                        <button class="emoji-btn" id="emojiBtn" title="이모지 및 퀵 메시지">😊</button>
+                        <div class="chat-input-wrapper">
+                            <input type="text" class="chat-input" id="chatInput" placeholder="메시지 입력..." maxlength="200">
+                        </div>
                         <button class="chat-send-btn" id="chatSendBtn">전송</button>
+                        <!-- 이모지 및 퀵 메시지 팝업 -->
+                        <div class="emoji-popup" id="emojiPopup">
+                            <div class="emoji-popup-header">
+                                <button class="emoji-tab active" data-tab="emoji">이모지</button>
+                                <button class="emoji-tab" data-tab="quick">퀵 메시지</button>
+                            </div>
+                            <div class="emoji-popup-content">
+                                <div class="emoji-section active" id="emojiSection">
+                                    <div class="emoji-grid">
+                                        <span class="emoji-item">😊</span><span class="emoji-item">😄</span><span class="emoji-item">😁</span><span class="emoji-item">😆</span><span class="emoji-item">😅</span>
+                                        <span class="emoji-item">🤣</span><span class="emoji-item">🙂</span><span class="emoji-item">🙃</span><span class="emoji-item">😉</span><span class="emoji-item">😌</span>
+                                        <span class="emoji-item">😍</span><span class="emoji-item">🥰</span><span class="emoji-item">😘</span><span class="emoji-item">😗</span><span class="emoji-item">😙</span>
+                                        <span class="emoji-item">😚</span><span class="emoji-item">😋</span><span class="emoji-item">😛</span><span class="emoji-item">😝</span><span class="emoji-item">😜</span>
+                                        <span class="emoji-item">🤪</span><span class="emoji-item">🤨</span><span class="emoji-item">🧐</span><span class="emoji-item">🤓</span><span class="emoji-item">😎</span>
+                                        <span class="emoji-item">🤩</span><span class="emoji-item">🥳</span><span class="emoji-item">😏</span><span class="emoji-item">😒</span><span class="emoji-item">😞</span>
+                                        <span class="emoji-item">😔</span><span class="emoji-item">😟</span><span class="emoji-item">😕</span><span class="emoji-item">🙁</span><span class="emoji-item">☹️</span>
+                                        <span class="emoji-item">😣</span><span class="emoji-item">😖</span><span class="emoji-item">😫</span><span class="emoji-item">😩</span><span class="emoji-item">🥺</span>
+                                        <span class="emoji-item">😢</span><span class="emoji-item">😭</span><span class="emoji-item">😤</span><span class="emoji-item">😠</span><span class="emoji-item">😡</span>
+                                        <span class="emoji-item">🤬</span><span class="emoji-item">🤯</span><span class="emoji-item">😳</span><span class="emoji-item">🥵</span><span class="emoji-item">🥶</span>
+                                        <span class="emoji-item">😱</span><span class="emoji-item">😨</span><span class="emoji-item">😰</span><span class="emoji-item">😥</span><span class="emoji-item">😓</span>
+                                        <span class="emoji-item">🤗</span><span class="emoji-item">🤔</span><span class="emoji-item">🤭</span><span class="emoji-item">🤫</span><span class="emoji-item">🤥</span>
+                                        <span class="emoji-item">😶</span><span class="emoji-item">😐</span><span class="emoji-item">😑</span><span class="emoji-item">😬</span><span class="emoji-item">🙄</span>
+                                        <span class="emoji-item">😯</span><span class="emoji-item">😦</span><span class="emoji-item">😧</span><span class="emoji-item">😮</span><span class="emoji-item">😲</span>
+                                        <span class="emoji-item">👍</span><span class="emoji-item">👎</span><span class="emoji-item">👌</span><span class="emoji-item">✌️</span><span class="emoji-item">🤞</span>
+                                    </div>
+                                </div>
+                                <div class="emoji-section" id="quickSection">
+                                    <div class="quick-message-list">
+                                        <button class="quick-message-btn">안녕하세요!</button>
+                                        <button class="quick-message-btn">좋은 수네요!</button>
+                                        <button class="quick-message-btn">고수시네요!</button>
+                                        <button class="quick-message-btn">잘하시네요!</button>
+                                        <button class="quick-message-btn">좋은 게임이었습니다!</button>
+                                        <button class="quick-message-btn">다음에 또 하죠!</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1451,7 +1959,6 @@
                 <button class="pause-button" id="pauseBtn" style="display: none;">일시정지</button>
             </div>
         </div>
-    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/modal.js"></script>
@@ -1470,13 +1977,38 @@
         let isPaused = false;
         
         // 초기 게임 모드에 따른 배경 이미지 설정
-        <% if (game && game.mode) { %>
-        const initialGameMode = '<%= game.mode %>';
+        const initialGameMode = '<%= (game && game.mode) ? game.mode : "strategic" %>';
+        
+        function updateBackgroundImage(mode) {
+            const body = document.body;
+            if (mode === 'playful' || mode === 'casual') {
+                body.classList.remove('game-mode-strategic');
+                body.classList.add('game-mode-playful');
+            } else {
+                body.classList.remove('game-mode-playful');
+                body.classList.add('game-mode-strategic');
+            }
+        }
+
+        // 페이지 로드 시 즉시 배경 이미지 적용
         updateBackgroundImage(initialGameMode);
-        <% } %>
 
         // Initialize game
         window.game = new GoGame('goBoard', socket, currentUser, gameId);
+
+        // 사이드바 토글 기능
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const gameContainer = document.querySelector('.game-container');
+        
+        sidebarToggle?.addEventListener('click', () => {
+            gameContainer.classList.toggle('sidebar-collapsed');
+            // 바둑판 크기 재계산 (레이아웃 변경 대응)
+            setTimeout(() => {
+                if (window.game && typeof window.game.resize === 'function') {
+                    window.game.resize();
+                }
+            }, 300);
+        });
         window.timer = new GameTimer(socket, {
             blackTimer: 'blackTimer',
             whiteTimer: 'whiteTimer',
@@ -1616,18 +2148,6 @@
             }
         }
 
-        // 게임 모드에 따른 배경 이미지 설정
-        function updateBackgroundImage(gameMode) {
-            const body = document.body;
-            body.classList.remove('game-mode-playful', 'game-mode-strategic');
-            
-            if (gameMode === 'playful' || gameMode === 'casual') {
-                body.classList.add('game-mode-playful');
-            } else if (gameMode === 'strategic') {
-                body.classList.add('game-mode-strategic');
-            }
-        }
-        
         // 아바타 선택 모달 열기
         function openAvatarSelector() {
             let avatarHTML = '<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; max-height: 400px; overflow-y: auto; padding: 10px;">';
@@ -1762,6 +2282,14 @@
             });
         }
         
+        // 전광판 업데이트 함수
+        function updateGameNotice(message) {
+            const noticeBoard = document.getElementById('gameNoticeBoard');
+            if (noticeBoard) {
+                noticeBoard.textContent = message;
+            }
+        }
+
         // Game events
         socket.on('game_state', (data) => {
             window.game.loadState(data);
@@ -1796,6 +2324,13 @@
                 }
                 
                 window.game.isMyTurn = isMyTurn;
+                
+                // 전광판 업데이트 - 현재 턴 표시
+                if (!data.game.endedAt) {
+                    const turnText = currentColor === 'black' ? '흑' : '백';
+                    const myTurnText = isMyTurn ? ' (내 차례)' : ' (상대 차례)';
+                    updateGameNotice(`${turnText}의 차례입니다.${myTurnText}`);
+                }
                 
                 if (data.game.blackId === currentUser.id) {
                     document.getElementById('blackPlayer').classList.add('active');
@@ -1833,6 +2368,9 @@
                 gameEnded = false;
             } else {
                 gameEnded = true;
+                if (data.game && data.game.endedAt) {
+                    updateGameNotice('게임이 종료되었습니다.');
+                }
             }
             
             // 턴 표시 업데이트
@@ -1869,7 +2407,18 @@
                             (data.move.color === 'white' && window.game.currentColor === 'black' && data.game && data.game.blackId === currentUser.id);
             window.game.isMyTurn = isMyTurn;
             updateTurnIndicator(data.move.moveNumber || window.game.moveNumber, data.move.color === 'black' ? 'white' : 'black');
-            addChatMessage(data.move.color === 'black' ? '흑' : '백', `${String.fromCharCode(65 + data.move.x)}${data.move.y + 1}`);
+            
+            // 통과 여부 확인
+            if (data.move.isPass) {
+                const passColor = data.move.color === 'black' ? '흑' : '백';
+                updateGameNotice(`${passColor}이(가) 통과했습니다.`);
+            } else {
+                const nextColor = data.move.color === 'black' ? '백' : '흑';
+                const myTurnText = isMyTurn ? ' (내 차례)' : ' (상대 차례)';
+                updateGameNotice(`${nextColor}의 차례입니다.${myTurnText}`);
+            }
+            
+            addChatMessage(data.move.color === 'black' ? '흑' : '백', data.move.isPass ? '통과' : `${String.fromCharCode(65 + data.move.x)}${data.move.y + 1}`);
         });
 
         socket.on('ai_move', (data) => {
@@ -1890,8 +2439,18 @@
             }
             
             window.game.isMyTurn = isMyTurn;
+            
+            // AI 통과 확인
+            if (data.move.isPass) {
+                updateGameNotice('AI가 통과했습니다.');
+            } else {
+                const turnText = nextColor === 'black' ? '흑' : '백';
+                const myTurnText = isMyTurn ? ' (내 차례)' : ' (AI 차례)';
+                updateGameNotice(`${turnText}의 차례입니다.${myTurnText}`);
+            }
+            
             updateTurnIndicator(data.move.moveNumber || window.game.moveNumber, nextColor);
-            addChatMessage('AI', `${String.fromCharCode(65 + data.move.x)}${data.move.y + 1}`);
+            addChatMessage('AI', data.move.isPass ? '통과' : `${String.fromCharCode(65 + data.move.x)}${data.move.y + 1}`);
         });
 
         socket.on('ai_thinking', () => {
@@ -1918,10 +2477,72 @@
         });
 
         socket.on('game_ended', (data) => {
-            document.getElementById('gameStatus').textContent = `게임 종료: ${data.result}`;
             gameEnded = true;
+            document.getElementById('gameStatus').textContent = `대국 종료`;
+            updateGameNotice('대국이 종료되었습니다.');
             updateLeaveButton();
+            
+            // Extract current user rewards
+            const isBlack = currentUser.id === window.game.blackId;
+            const myRewards = isBlack ? data.rewards?.black : data.rewards?.white;
+            
+            showResultModal({
+                ...data,
+                rewards: myRewards
+            });
         });
+
+        function showResultModal(data) {
+            const isWinner = (data.result === 'black_win' && currentUser.id === window.game.blackId) || 
+                             (data.result === 'white_win' && currentUser.id === window.game.whiteId);
+            const isDraw = data.result === 'draw';
+            
+            let resultTitle = isWinner ? '승리!' : '패배';
+            if (isDraw) resultTitle = '무승부';
+            
+            const titleClass = isWinner ? 'win-text' : (isDraw ? 'draw-text' : 'lose-text');
+            const winnerText = data.result === 'black_win' ? '흑 승리' : (data.result === 'white_win' ? '백 승리' : '무승부');
+
+            const modalHtml = `
+                <div class="result-modal-content">
+                    <div class="result-header">
+                        <div class="result-title ${titleClass}">${resultTitle}</div>
+                        <div class="result-winner">${winnerText}</div>
+                    </div>
+                    <div class="result-body">
+                        <div class="result-stats-grid">
+                            <div class="result-stat-item">
+                                <div class="stat-label">흑 점수</div>
+                                <div class="stat-value">${data.score?.blackScore || 0}</div>
+                            </div>
+                            <div class="result-stat-item">
+                                <div class="stat-label">백 점수 (덤 포함)</div>
+                                <div class="stat-value">${data.score?.whiteScore || 6.5}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="reward-section">
+                            <div class="reward-item">
+                                <div class="reward-icon">💰</div>
+                                <div class="reward-label">골드 획득</div>
+                                <div class="reward-value">+${data.rewards?.gold || 0}</div>
+                            </div>
+                            <div class="reward-item">
+                                <div class="reward-icon">⭐</div>
+                                <div class="reward-label">레이팅 변화</div>
+                                <div class="reward-value">${data.rewards?.ratingChange >= 0 ? '+' : ''}${data.rewards?.ratingChange || 0}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-actions">
+                        <button class="btn btn-home" onclick="window.location.href='/waiting-room'">나가기</button>
+                        <button class="btn btn-retry" onclick="window.location.reload()">다시하기</button>
+                    </div>
+                </div>
+            `;
+
+            Modal.open('gameResult', modalHtml);
+        }
 
         socket.on('score_result', (data) => {
             Modal.open('scoreResult', `
@@ -1934,6 +2555,10 @@
 
         // 채팅 기능
         let activeChatTab = 'game';
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+
         document.querySelectorAll('.chat-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
@@ -1942,36 +2567,245 @@
             });
         });
 
-        function addChatMessage(username, message) {
-            const chatMessages = document.getElementById('chatMessages');
+        function addChatMessage(username, message, isSystem = false) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message chat-message-user';
-            messageDiv.innerHTML = `<span class="username">${username}:</span> ${message}`;
+            if (isSystem) {
+                messageDiv.className = 'chat-message chat-message-system';
+                messageDiv.textContent = message;
+            } else {
+                messageDiv.className = 'chat-message chat-message-user';
+                messageDiv.innerHTML = `<span class="username">${escapeHtml(username)}:</span> ${escapeHtml(message)}`;
+            }
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        document.getElementById('chatSendBtn').addEventListener('click', () => {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            if (message) {
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            if (activeChatTab === 'game') {
+                // 대국실 채팅 - 게임 룸 내에서만
+                socket.emit('game_chat_message', { message: message });
+            } else {
+                // 전체채팅 - 대기실 채팅과 동일
                 socket.emit('chat_message', {
-                    channel: activeChatTab === 'game' ? gameId : 'global',
-                    text: message
+                    user: currentUser.nickname,
+                    message: message,
+                    timestamp: Date.now()
                 });
-                input.value = '';
             }
-        });
+            chatInput.value = '';
+        }
 
-        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+        chatSendBtn.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                document.getElementById('chatSendBtn').click();
+                sendChatMessage();
             }
         });
 
-        socket.on('chat_message', (data) => {
-            addChatMessage(data.user || '시스템', data.text || data.message);
+        // 대국실 채팅 메시지 수신
+        socket.on('game_chat_message', (data) => {
+            if (data && data.user && data.message) {
+                // 대국실 탭일 때만 표시
+                if (activeChatTab === 'game') {
+                    addChatMessage(data.user, data.message);
+                }
+            }
         });
+
+        // 전체채팅 메시지 수신 (대기실과 동일)
+        socket.on('chat_message', (data) => {
+            if (activeChatTab === 'global' && data && data.user && data.message) {
+                addChatMessage(data.user, data.message);
+            }
+        });
+
+        socket.on('chat_error', (data) => {
+            if (data && data.error) {
+                alert('채팅 오류: ' + data.error);
+            }
+        });
+
+        // 이모지 버튼 클릭 핸들러
+        const emojiBtn = document.getElementById('emojiBtn');
+        const emojiPopup = document.getElementById('emojiPopup');
+
+        if (emojiBtn && emojiPopup) {
+            function updatePopupPosition() {
+                if (emojiPopup.classList.contains('show') || emojiPopup.style.display === 'flex') {
+                    const btnRect = emojiBtn.getBoundingClientRect();
+                    const popupHeight = 280;
+                    const popupWidth = 350;
+                    
+                    // 버튼 위에 팝업 배치 (버튼의 top 위치에서 팝업 높이 + 간격만큼 위로)
+                    emojiPopup.style.position = 'fixed';
+                    emojiPopup.style.bottom = `${window.innerHeight - btnRect.top + 10}px`;
+                    emojiPopup.style.left = `${btnRect.left}px`;
+                    
+                    // 화면 오른쪽으로 넘어가지 않도록 조정
+                    if (btnRect.left + popupWidth > window.innerWidth) {
+                        emojiPopup.style.left = `${window.innerWidth - popupWidth - 10}px`;
+                    }
+                    
+                    // 화면 왼쪽으로 넘어가지 않도록 조정
+                    if (btnRect.left < 0) {
+                        emojiPopup.style.left = '10px';
+                    }
+                }
+            }
+
+            emojiBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                if (emojiPopup.classList.contains('show')) {
+                    // 닫기 애니메이션
+                    emojiPopup.classList.remove('show');
+                    setTimeout(() => {
+                        emojiPopup.style.display = 'none';
+                    }, 300);
+                } else {
+                    // 열기 애니메이션
+                    emojiPopup.style.display = 'flex';
+                    updatePopupPosition();
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            emojiPopup.classList.add('show');
+                            updatePopupPosition();
+                        });
+                    });
+                }
+            });
+
+            // 창 크기 변경 시 위치 업데이트
+            let popupResizeTimeout;
+            window.addEventListener('resize', () => {
+                if (emojiPopup.classList.contains('show')) {
+                    clearTimeout(popupResizeTimeout);
+                    popupResizeTimeout = setTimeout(() => {
+                        updatePopupPosition();
+                    }, 50);
+                }
+            });
+
+            // 스크롤 시 위치 업데이트
+            let popupScrollTimeout;
+            window.addEventListener('scroll', () => {
+                if (emojiPopup.classList.contains('show')) {
+                    clearTimeout(popupScrollTimeout);
+                    popupScrollTimeout = setTimeout(() => {
+                        updatePopupPosition();
+                    }, 10);
+                }
+            }, true);
+
+            // 주기적으로 위치 업데이트
+            let positionUpdateInterval;
+            function startPositionUpdate() {
+                if (positionUpdateInterval) {
+                    clearInterval(positionUpdateInterval);
+                }
+                positionUpdateInterval = setInterval(() => {
+                    if (emojiPopup.classList.contains('show')) {
+                        updatePopupPosition();
+                    } else {
+                        clearInterval(positionUpdateInterval);
+                        positionUpdateInterval = null;
+                    }
+                }, 100);
+            }
+
+            // 팝업이 열릴 때 위치 업데이트 시작
+            const originalAddClass = emojiPopup.classList.add.bind(emojiPopup.classList);
+            emojiPopup.classList.add = function(...args) {
+                originalAddClass(...args);
+                if (args.includes('show')) {
+                    startPositionUpdate();
+                }
+            };
+
+            // 팝업이 닫힐 때 위치 업데이트 중지
+            const originalRemoveClass = emojiPopup.classList.remove.bind(emojiPopup.classList);
+            emojiPopup.classList.remove = function(...args) {
+                originalRemoveClass(...args);
+                if (args.includes('show') && positionUpdateInterval) {
+                    clearInterval(positionUpdateInterval);
+                    positionUpdateInterval = null;
+                }
+            };
+
+            // 팝업 외부 클릭 시 닫기
+            document.addEventListener('click', (e) => {
+                if (emojiPopup && !emojiPopup.contains(e.target) && e.target !== emojiBtn && !emojiBtn.contains(e.target)) {
+                    if (emojiPopup.classList.contains('show')) {
+                        emojiPopup.classList.remove('show');
+                        setTimeout(() => {
+                            emojiPopup.style.display = 'none';
+                        }, 300);
+                    }
+                }
+            });
+
+            // 탭 전환
+            const emojiTabs = document.querySelectorAll('.emoji-tab');
+            emojiTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // 모든 탭 비활성화
+                    emojiTabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.emoji-section').forEach(s => s.classList.remove('active'));
+                    
+                    // 선택한 탭 활성화
+                    tab.classList.add('active');
+                    if (tabName === 'emoji') {
+                        const emojiSection = document.getElementById('emojiSection');
+                        if (emojiSection) emojiSection.classList.add('active');
+                    } else if (tabName === 'quick') {
+                        const quickSection = document.getElementById('quickSection');
+                        if (quickSection) quickSection.classList.add('active');
+                    }
+                });
+            });
+
+            // 이모지 클릭 (이벤트 위임 사용)
+            emojiPopup.addEventListener('click', (e) => {
+                const emojiItem = e.target.closest('.emoji-item');
+                if (emojiItem) {
+                    e.stopPropagation();
+                    if (chatInput.disabled) return;
+                    const emoji = emojiItem.textContent.trim();
+                    chatInput.value += emoji;
+                    chatInput.focus();
+                    emojiPopup.classList.remove('show');
+                    setTimeout(() => {
+                        emojiPopup.style.display = 'none';
+                    }, 300);
+                }
+
+                // 퀵 메시지 클릭
+                const quickBtn = e.target.closest('.quick-message-btn');
+                if (quickBtn) {
+                    e.stopPropagation();
+                    if (chatInput.disabled) return;
+                    const message = quickBtn.textContent;
+                    chatInput.value = message;
+                    chatInput.focus();
+                    emojiPopup.classList.remove('show');
+                    setTimeout(() => {
+                        emojiPopup.style.display = 'none';
+                    }, 300);
+                }
+            });
+        }
 
         // Button handlers
         document.getElementById('passBtn').addEventListener('click', () => {
@@ -1980,6 +2814,7 @@
 
         document.getElementById('resignBtn').addEventListener('click', () => {
             if (confirm('정말 기권하시겠습니까?')) {
+                updateGameNotice('기권했습니다. 게임이 곧 종료됩니다.');
                 socket.emit('resign');
             }
         });
