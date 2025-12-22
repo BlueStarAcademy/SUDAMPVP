@@ -343,8 +343,8 @@ class RankingService {
             rewards.white.gold = DRAW_GOLD;
         }
 
-        // Apply gold and win/loss records
-        if (blackUser) {
+        // Apply gold and win/loss records (AI 게임은 전적에 포함하지 않음)
+        if (blackUser && !game.isAiGame) {
             await prisma.user.update({
                 where: { id: game.blackId },
                 data: {
@@ -354,9 +354,17 @@ class RankingService {
                     draws: result === 'draw' ? { increment: 1 } : undefined
                 }
             });
+        } else if (blackUser && game.isAiGame) {
+            // AI 게임은 골드만 지급, 전적은 업데이트하지 않음
+            await prisma.user.update({
+                where: { id: game.blackId },
+                data: {
+                    gold: { increment: rewards.black.gold }
+                }
+            });
         }
 
-        if (whiteUser) {
+        if (whiteUser && !game.isAiGame) {
             await prisma.user.update({
                 where: { id: game.whiteId },
                 data: {
@@ -364,6 +372,14 @@ class RankingService {
                     wins: result === 'white_win' ? { increment: 1 } : undefined,
                     losses: result === 'black_win' ? { increment: 1 } : undefined,
                     draws: result === 'draw' ? { increment: 1 } : undefined
+                }
+            });
+        } else if (whiteUser && game.isAiGame) {
+            // AI 게임은 골드만 지급, 전적은 업데이트하지 않음
+            await prisma.user.update({
+                where: { id: game.whiteId },
+                data: {
+                    gold: { increment: rewards.white.gold }
                 }
             });
         }

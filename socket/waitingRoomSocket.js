@@ -144,6 +144,55 @@ class WaitingRoomSocket {
             }
         });
 
+        // Get user game statistics by mode
+        socket.on('get_user_game_stats', async (data) => {
+            try {
+                const { userId, mode } = data;
+                if (!userId || !mode) {
+                    socket.emit('user_game_stats', { error: 'Invalid parameters' });
+                    return;
+                }
+
+                const prisma = require('../config/database');
+                
+                // 해당 모드의 게임만 필터링
+                const games = await prisma.game.findMany({
+                    where: {
+                        OR: [
+                            { blackId: userId },
+                            { whiteId: userId }
+                        ],
+                        mode: mode,
+                        result: { not: null },
+                        isAiGame: false
+                    }
+                });
+
+                // 승/패 계산
+                const wins = games.filter(game => {
+                    if (game.blackId === userId) return game.result === 'black_win';
+                    if (game.whiteId === userId) return game.result === 'white_win';
+                    return false;
+                }).length;
+
+                const losses = games.filter(game => {
+                    if (game.blackId === userId) return game.result === 'white_win';
+                    if (game.whiteId === userId) return game.result === 'black_win';
+                    return false;
+                }).length;
+
+                socket.emit('user_game_stats', {
+                    userId: userId,
+                    mode: mode,
+                    wins: wins,
+                    losses: losses
+                });
+            } catch (error) {
+                console.error('Error getting user game stats:', error);
+                socket.emit('user_game_stats', { error: 'Failed to get stats' });
+            }
+        });
+
         // Handle chat messages
         socket.on('chat_message', async (data) => {
             try {
