@@ -9,13 +9,26 @@ class AIService {
 
     setupQueueProcessor() {
         aiQueue.process('gnugo-move', async (job) => {
-            const { gameId, level, gameState } = job.data;
-            const aiMode = process.env.AI_MODE || 'gnugo';
+            const { gameId, level, gameState, isCasualMode } = job.data;
+            
+            // 놀이바둑일 때는 우리가 만든 AI봇 사용 (그누고 사용 안 함)
+            if (isCasualMode) {
+                return await this.getCasualAiMove(gameId, level, gameState);
+            }
+            
+            // 기본값을 'demo'로 변경하여 테스트 용이하게 (Gnugo 연결이 어려운 경우)
+            const aiMode = process.env.AI_MODE || 'demo';
             
             if (aiMode === 'demo') {
                 return await this.getDemoMove(gameId, level, gameState);
             } else {
-                return await this.getGnugoMove(gameId, level, gameState);
+                // Gnugo를 사용하려고 시도하지만, 실패하면 데모 모드로 폴백
+                try {
+                    return await this.getGnugoMove(gameId, level, gameState);
+                } catch (error) {
+                    console.warn('Gnugo failed, falling back to demo mode:', error.message);
+                    return await this.getDemoMove(gameId, level, gameState);
+                }
             }
         });
 
@@ -70,12 +83,20 @@ class AIService {
         try {
             const game = await gameService.getGame(gameId);
             const gameState = await gameService.getGameState(gameId);
+            
+            // 놀이바둑 모드 확인
+            const casualModes = ['DICE', 'COPS', 'OMOK', 'TTAK', 'ALKKAGI', 'CURLING'];
+            const isCasualMode = casualModes.includes(game.mode) || gameState.isCasualMode;
+            
+            // 놀이바둑일 때는 단일 AI봇 사용 (level은 null이거나 기본값 사용)
+            const finalLevel = isCasualMode ? (level || 5) : level;
 
             // Add to queue
             const job = await aiQueue.add('gnugo-move', {
                 gameId,
-                level,
+                level: finalLevel,
                 gameState,
+                isCasualMode: isCasualMode,
             }, {
                 priority: 1,
                 timeout: 30000, // 30 second timeout
@@ -122,10 +143,13 @@ class AIService {
         }
     }
 
-    // 데모 모드: 간단한 휴리스틱 기반 AI
+    // 데모 모드: 간단한 휴리스틱 기반 AI (테스트용 - 시간 소모 및 초읽기 테스트 가능)
     async getDemoMove(gameId, level, gameState) {
         return new Promise(async (resolve) => {
-            // 약간의 지연을 추가하여 실제 AI처럼 보이게 함
+            // 테스트를 위해 더 긴 지연 시간 설정 (1~5초)
+            // 초읽기 모드 테스트를 위해 시간이 소모되도록 함
+            const delay = 1000 + Math.random() * 4000; // 1~5초 지연
+            
             setTimeout(async () => {
                 try {
                     const game = await gameService.getGame(gameId);
@@ -133,11 +157,21 @@ class AIService {
                     
                     // 현재 보드 상태 재구성
                     const board = Array(19).fill(null).map(() => Array(19).fill(null));
-                    gameState.moves.forEach(move => {
-                        if (!move.isPass && move.x !== undefined && move.y !== undefined) {
-                            board[move.y][move.x] = move.color;
+                    if (gameState.stones) {
+                        // gameState.stones가 있으면 직접 사용
+                        for (let y = 0; y < 19; y++) {
+                            for (let x = 0; x < 19; x++) {
+                                board[y][x] = gameState.stones[y][x] || null;
+                            }
                         }
-                    });
+                    } else {
+                        // moves에서 재구성
+                        gameState.moves.forEach(move => {
+                            if (!move.isPass && move.x !== undefined && move.y !== undefined) {
+                                board[move.y][move.x] = move.color;
+                            }
+                        });
+                    }
                     
                     // 간단한 휴리스틱: 빈 공간 중 랜덤하게 선택하되, 약간의 스마트한 선택
                     const validMoves = [];
@@ -171,7 +205,7 @@ class AIService {
                     // 난이도에 따라 선택 방식 변경
                     let selectedMove;
                     if (level <= 3) {
-                        // 낮은 난이도: 랜덤 선택
+                        // 낮은 난이도: 완전 랜덤 선택 (테스트용)
                         selectedMove = validMoves[Math.floor(Math.random() * validMoves.length)];
                     } else if (level <= 6) {
                         // 중간 난이도: 점수가 높은 상위 30% 중에서 선택
@@ -193,8 +227,94 @@ class AIService {
                     const randomY = Math.floor(Math.random() * 19);
                     resolve({ x: randomX, y: randomY });
                 }
-            }, 500 + Math.random() * 1000); // 0.5~1.5초 지연
+            }, delay);
         });
+    }
+
+    // 놀이바둑 전용 AI (그누고 사용 안 함)
+    async getCasualAiMove(gameId, level, gameState) {
+        return new Promise(async (resolve) => {
+            // 테스트를 위해 더 긴 지연 시간 설정 (1~5초)
+            // 초읽기 모드 테스트를 위해 시간이 소모되도록 함
+            const delay = 1000 + Math.random() * 4000; // 1~5초 지연
+            
+            setTimeout(async () => {
+                try {
+                    const game = await gameService.getGame(gameId);
+                    const aiColor = game?.aiColor || 'white';
+                    const gameMode = game?.mode || 'DICE';
+                    
+                    // 현재 보드 상태 재구성
+                    const board = Array(19).fill(null).map(() => Array(19).fill(null));
+                    if (gameState.stones) {
+                        // gameState.stones가 있으면 직접 사용
+                        for (let y = 0; y < 19; y++) {
+                            for (let x = 0; x < 19; x++) {
+                                board[y][x] = gameState.stones[y][x] || null;
+                            }
+                        }
+                    } else {
+                        // moves에서 재구성
+                        gameState.moves.forEach(move => {
+                            if (!move.isPass && move.x !== undefined && move.y !== undefined) {
+                                board[move.y][move.x] = move.color;
+                            }
+                        });
+                    }
+                    
+                    // 게임 모드별로 다른 AI 로직 적용
+                    let move;
+                    switch(gameMode) {
+                        case 'DICE': // 주사위바둑
+                        case 'COPS': // 경찰과도둑
+                        case 'OMOK': // 오목
+                        case 'TTAK': // 따목
+                        case 'ALKKAGI': // 알까기
+                        case 'CURLING': // 바둑컬링
+                        default:
+                            // 기본적으로 데모 AI와 유사한 로직 사용
+                            // 추후 각 게임 모드별로 특화된 AI 로직 추가 가능
+                            move = await this.getCasualDefaultMove(board, aiColor);
+                            break;
+                    }
+                    
+                    if (!move) {
+                        resolve({ isPass: true });
+                        return;
+                    }
+                    
+                    resolve(move);
+                } catch (error) {
+                    console.error('Casual AI move error:', error);
+                    // 에러 발생 시 랜덤 위치 선택
+                    const randomX = Math.floor(Math.random() * 19);
+                    const randomY = Math.floor(Math.random() * 19);
+                    resolve({ x: randomX, y: randomY });
+                }
+            }, delay);
+        });
+    }
+
+    // 놀이바둑 기본 AI 로직 (테스트용 - 간단한 랜덤 선택)
+    async getCasualDefaultMove(board, aiColor) {
+        const validMoves = [];
+        for (let y = 0; y < 19; y++) {
+            for (let x = 0; x < 19; x++) {
+                if (board[y][x] === null) {
+                    // 테스트를 위해 간단하게 모든 빈 위치를 수집
+                    validMoves.push({ x, y });
+                }
+            }
+        }
+        
+        if (validMoves.length === 0) {
+            return null;
+        }
+        
+        // 테스트용: 완전 랜덤 선택 (어떤 위치든 선택 가능)
+        const selectedMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+        
+        return { x: selectedMove.x, y: selectedMove.y };
     }
 
     async getGnugoMove(gameId, level, gameState) {

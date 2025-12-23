@@ -184,12 +184,8 @@ class GoGame {
             ctx.stroke();
         }
 
-        // Draw star points
-        const starPoints = [
-            [3, 3], [3, 9], [3, 15],
-            [9, 3], [9, 9], [9, 15],
-            [15, 3], [15, 9], [15, 15]
-        ];
+        // Draw star points (boardSize에 따라 동적으로 계산)
+        const starPoints = this.getStarPoints(size);
 
         ctx.fillStyle = '#000';
         starPoints.forEach(([x, y]) => {
@@ -246,6 +242,33 @@ class GoGame {
         ctx.stroke();
     }
 
+    getStarPoints(boardSize) {
+        // 19줄: 3-3, 3-9, 3-15, 9-3, 9-9, 9-15, 15-3, 15-9, 15-15
+        // 13줄: 3-3, 3-9, 3-9, 6-3, 6-6, 6-9, 9-3, 9-6, 9-9
+        // 9줄: 2-2, 2-6, 6-2, 6-6, 4-4 (중앙)
+        
+        if (boardSize === 19) {
+            return [
+                [3, 3], [3, 9], [3, 15],
+                [9, 3], [9, 9], [9, 15],
+                [15, 3], [15, 9], [15, 15]
+            ];
+        } else if (boardSize === 13) {
+            return [
+                [3, 3], [3, 9],
+                [6, 6],
+                [9, 3], [9, 9]
+            ];
+        } else if (boardSize === 9) {
+            return [
+                [2, 2], [2, 6],
+                [4, 4],
+                [6, 2], [6, 6]
+            ];
+        }
+        return [];
+    }
+
     isValidMove(x, y) {
         // Check bounds
         if (x < 0 || x >= this.boardSize || y < 0 || y >= this.boardSize) {
@@ -289,6 +312,15 @@ class GoGame {
     }
 
     loadState(state) {
+        // boardSize 업데이트 (게임 상태에서 받아옴)
+        if (state.boardSize && state.boardSize !== this.boardSize) {
+            this.boardSize = state.boardSize;
+            // boardSize가 변경되면 stones 배열 재생성
+            if (!state.stones || state.stones.length !== this.boardSize) {
+                this.stones = Array(this.boardSize).fill(null).map(() => Array(this.boardSize).fill(null));
+            }
+        }
+        
         this.stones = state.stones || this.stones;
         this.currentColor = state.currentColor || 'black';
         this.moveNumber = state.moveNumber || 0;

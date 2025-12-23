@@ -43,6 +43,7 @@ class RankingService {
         this.userRoomTypes.set(userId, roomType);
 
         // Add to Redis Sorted Set (sorted by rating)
+        const matchingStartTime = Date.now();
         if (redis) {
             try {
                 await redis.zAdd('matching:queue', {
@@ -51,6 +52,8 @@ class RankingService {
                 });
                 // Store room type in Redis
                 await redis.setEx(`matching:roomtype:${userId}`, 300, roomType);
+                // Store matching start time for progressive matching
+                await redis.setEx(`matching:starttime:${userId}`, 300, matchingStartTime.toString());
             } catch (error) {
                 console.error('Redis queue add error:', error);
             }
@@ -65,6 +68,7 @@ class RankingService {
             try {
                 await redis.zRem('matching:queue', userId.toString());
                 await redis.del(`matching:roomtype:${userId}`);
+                await redis.del(`matching:starttime:${userId}`);
             } catch (error) {
                 console.error('Redis queue remove error:', error);
             }
@@ -189,9 +193,46 @@ class RankingService {
                 const userId2 = queue[j].value;
                 const rating2 = queue[j].score;
 
-                // Check if rating difference is acceptable
+                // Check if rating difference is acceptable (점진적 확장 방식)
                 const ratingDiff = Math.abs(rating1 - rating2);
-                const maxDiff = 200; // Start with ±200 range
+                
+                // 매칭 시작 시간 가져오기
+                let maxDiff = 200; // 초기 범위
+                const redis = getRedisClient();
+                
+                if (redis) {
+                    try {
+                        const startTime1 = await redis.get(`matching:starttime:${userId1}`);
+                        const startTime2 = await redis.get(`matching:starttime:${userId2}`);
+                        
+                        if (startTime1 && startTime2) {
+                            const waitTime1 = (Date.now() - parseInt(startTime1)) / 1000; // 초 단위
+                            const waitTime2 = (Date.now() - parseInt(startTime2)) / 1000;
+                            const maxWaitTime = Math.max(waitTime1, waitTime2);
+                            
+                            // 대기 시간에 따라 허용 범위 확장 (최대 10초 대기 시 ±500까지 확장)
+                            if (maxWaitTime >= 10) {
+                                maxDiff = 500;
+                            } else if (maxWaitTime >= 7) {
+                                maxDiff = 400;
+                            } else if (maxWaitTime >= 5) {
+                                maxDiff = 300;
+                            } else if (maxWaitTime >= 3) {
+                                maxDiff = 250;
+                            }
+                        }
+                    } catch (error) {
+                        // Ignore error, use default
+                    }
+                }
+                
+                // 레이팅이 높을수록 더 넓은 범위 허용
+                const avgRating = (rating1 + rating2) / 2;
+                if (avgRating >= 2000) {
+                    maxDiff = Math.max(maxDiff, 300); // 고수는 더 넓은 범위
+                } else if (avgRating >= 1500) {
+                    maxDiff = Math.max(maxDiff, 250); // 중수는 중간 범위
+                }
 
                 if (ratingDiff <= maxDiff) {
                     // Match found! Get room type for both users
@@ -282,6 +323,35 @@ class RankingService {
         }
 
         return game;
+    }
+
+    // 티어 계산 함수 (참고 저장소 기준)
+    getTierFromRating(rating) {
+        if (rating < 1300) return 1; // 새싹
+        if (rating < 1400) return 2; // 루키
+        if (rating < 1500) return 3; // 브론즈
+        if (rating < 1700) return 4; // 실버
+        if (rating < 2000) return 5; // 골드
+        if (rating < 2400) return 6; // 플래티넘
+        if (rating < 3000) return 7; // 다이아
+        if (rating < 3500) return 8; // 마스터
+        return 9; // 챌린저
+    }
+
+    getTierName(rating) {
+        const tier = this.getTierFromRating(rating);
+        const tierNames = {
+            1: '새싹',
+            2: '루키',
+            3: '브론즈',
+            4: '실버',
+            5: '골드',
+            6: '플래티넘',
+            7: '다이아',
+            8: '마스터',
+            9: '챌린저'
+        };
+        return tierNames[tier] || '새싹';
     }
 
     async updateRatings(gameId, result) {

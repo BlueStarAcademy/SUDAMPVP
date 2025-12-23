@@ -1019,8 +1019,12 @@
 
         /* 대국 신청/AI 설정 통합 모달 스타일 */
         .request-modal-content {
-            width: 900px;
-            max-width: 95vw;
+            width: 1100px !important;
+            max-width: 1100px !important;
+            min-width: 1100px !important;
+            height: 750px !important;
+            max-height: 750px !important;
+            min-height: 750px !important;
             padding: 0;
             overflow: hidden;
             border-radius: 16px;
@@ -1028,29 +1032,31 @@
 
         .request-modal-body {
             display: flex;
-            min-height: 600px;
-            max-height: 80vh;
+            height: 700px !important;
+            min-height: 700px !important;
+            max-height: 700px !important;
+            overflow: hidden;
         }
 
         .request-sidebar {
-            width: 240px;
+            width: 200px;
             background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
             border-right: 2px solid #e2e8f0;
-            padding: 25px 20px;
+            padding: 20px 15px;
             overflow-y: auto;
             flex-shrink: 0;
         }
 
         .request-right-panel {
-            width: 280px;
+            width: 240px;
             background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
             border-left: 2px solid #e2e8f0;
-            padding: 25px 20px;
+            padding: 20px 15px;
             overflow-y: auto;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
         }
 
         .request-category-title {
@@ -1102,29 +1108,89 @@
 
         .request-main {
             flex: 1;
-            padding: 35px 40px;
-            overflow-y: auto;
+            padding: 20px 25px;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 28px;
+            gap: 12px;
             background: white;
+        }
+
+        .request-top-section {
+            display: flex;
+            gap: 0;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .request-description-box {
+            flex: 1;
+            padding: 10px 12px;
+            border-right: 2px solid #e2e8f0;
+        }
+
+        .request-profile-box {
+            width: 260px;
+            padding: 10px 12px;
+            background: white;
+        }
+
+        .request-main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            overflow: hidden;
+            padding-right: 0;
+        }
+
+        .request-main-content.single-column {
+            grid-template-columns: 1fr;
+        }
+
+        .request-settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 8px;
+        }
+
+        #komiSettingItem {
+            grid-column: span 1;
+        }
+
+        .time-settings-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .request-left-column,
+        .request-right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .target-user-info {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             background: white;
-            padding: 25px;
-            border-radius: 14px;
+            padding: 18px;
+            border-radius: 12px;
             border: 2px solid #e2e8f0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .user-avatar-small {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -1132,7 +1198,7 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 32px;
+            font-size: 24px;
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
             flex-shrink: 0;
         }
@@ -1143,22 +1209,22 @@
         }
 
         .target-nickname {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             color: #1e293b;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .target-rating {
-            font-size: 18px;
+            font-size: 14px;
             color: #667eea;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .target-game-stats {
             width: 100%;
-            padding-top: 20px;
+            padding-top: 12px;
             border-top: 2px solid #e2e8f0;
         }
 
@@ -1238,6 +1304,49 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
+        }
+
+        /* 설정 행 스타일 */
+        .settings-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-item label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* 게임 설명 스타일 */
+        .game-description {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .description-text {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .description-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 15px;
         }
 
         .ai-level-btn, .ai-color-btn {
@@ -1649,46 +1758,145 @@
                     <div id="requestModeList" class="request-mode-list"></div>
                 </div>
                 <div class="request-main">
-                    <div class="ai-only-section" id="aiLevelSection">
-                        <label class="ai-battle-label">AI 난이도 선택</label>
-                        <div class="ai-level-buttons">
-                            <button class="ai-level-btn active" data-level="1">1단</button>
-                            <button class="ai-level-btn" data-level="2">2단</button>
-                            <button class="ai-level-btn" data-level="3">3단</button>
-                            <button class="ai-level-btn" data-level="4">4단</button>
-                            <button class="ai-level-btn" data-level="5">5단</button>
-                            <button class="ai-level-btn" data-level="6">6단</button>
-                            <button class="ai-level-btn" data-level="7">7단</button>
-                            <button class="ai-level-btn" data-level="8">8단</button>
-                            <button class="ai-level-btn" data-level="9">9단</button>
+                    <!-- 상단 섹션: 게임 설명 + 상대방 프로필 (통합 박스) -->
+                    <div class="request-top-section">
+                        <!-- 좌측: 게임 설명 -->
+                        <div class="request-description-box" id="gameDescriptionSection">
+                            <div class="game-description" id="gameDescription">
+                                <p class="description-text" style="font-size: 12px; line-height: 1.4; color: #475569; margin: 0;">게임 모드를 선택하면 설명이 표시됩니다.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 우측: 상대방 프로필 (PVP일 때만 표시) -->
+                        <div class="request-profile-box" id="requestProfileBox" style="display: none;">
+                            <div id="targetUserInfoInline" class="target-user-info-inline" style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="user-avatar-small" id="targetUserAvatarInline" style="width: 40px; height: 40px; font-size: 18px; flex-shrink: 0;">?</div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div id="targetUserNicknameInline" class="target-nickname" style="font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">상대방</div>
+                                        <div id="targetUserRatingInline" class="target-rating" style="font-size: 12px; color: #667eea; font-weight: 600;">레이팅: -</div>
+                                    </div>
+                                </div>
+                                <div class="target-game-stats" style="padding-top: 8px; border-top: 2px solid #e2e8f0;">
+                                    <div class="target-game-stats-title" id="targetGameStatsTitleInline" style="font-size: 10px; margin-bottom: 6px; color: #64748b; font-weight: 600;">클래식바둑 전적</div>
+                                    <div class="target-game-stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;">
+                                        <div class="target-stat-item" style="text-align: center; padding: 6px 4px; background: #f8fafc; border-radius: 4px;">
+                                            <div class="target-stat-value" id="targetGameWinsInline" style="font-size: 14px; font-weight: 700; color: #667eea;">0</div>
+                                            <div class="target-stat-label" style="font-size: 9px; color: #64748b; margin-top: 2px;">승</div>
+                                        </div>
+                                        <div class="target-stat-item" style="text-align: center; padding: 6px 4px; background: #f8fafc; border-radius: 4px;">
+                                            <div class="target-stat-value" id="targetGameLossesInline" style="font-size: 14px; font-weight: 700; color: #ef4444;">0</div>
+                                            <div class="target-stat-label" style="font-size: 9px; color: #64748b; margin-top: 2px;">패</div>
+                                        </div>
+                                        <div class="target-stat-item" style="text-align: center; padding: 6px 4px; background: #f8fafc; border-radius: 4px;">
+                                            <div class="target-stat-value" id="targetGameWinRateInline" style="font-size: 14px; font-weight: 700; color: #10b981;">0%</div>
+                                            <div class="target-stat-label" style="font-size: 9px; color: #64748b; margin-top: 2px;">승률</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="request-section">
-                        <label class="ai-battle-label">내 색상 선택</label>
-                        <div class="ai-color-buttons">
-                            <button class="ai-color-btn active" data-color="black">흑 (선수)</button>
-                            <button class="ai-color-btn" data-color="white">백 (후수)</button>
-                            <button class="ai-color-btn" data-color="random">랜덤</button>
+                    
+                    <!-- 설정 영역 -->
+                    <div class="request-main-content" id="requestMainContent">
+                        <!-- AI봇 대결 설정 (전략바둑에만 표시) -->
+                        <div class="ai-only-section" id="aiLevelSection" style="display: none;">
+                            <div class="request-settings-grid">
+                                <div class="setting-item">
+                                    <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">AI 난이도</label>
+                                    <select id="aiLevelSelect" class="form-select" style="padding: 10px 14px; font-size: 13px;">
+                                        <option value="1">1단</option>
+                                        <option value="2">2단</option>
+                                        <option value="3" selected>3단</option>
+                                        <option value="4">4단</option>
+                                        <option value="5">5단</option>
+                                        <option value="6">6단</option>
+                                        <option value="7">7단</option>
+                                        <option value="8">8단</option>
+                                        <option value="9">9단</option>
+                                    </select>
+                                </div>
+                                <div class="setting-item">
+                                    <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">내 색상</label>
+                                    <select id="colorSelect" class="form-select" style="padding: 10px 14px; font-size: 13px;">
+                                        <option value="black">흑 (선수)</option>
+                                        <option value="white">백 (후수)</option>
+                                        <option value="random">랜덤</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 시간 설정 (기본) -->
+                        <div class="time-settings-row" id="timeSettingsRow" style="display: none;">
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">제한시간</label>
+                                <select id="timeLimitSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    <option value="5">5분</option>
+                                    <option value="10" selected>10분</option>
+                                    <option value="15">15분</option>
+                                    <option value="20">20분</option>
+                                    <option value="30">30분</option>
+                                    <option value="60">60분</option>
+                                </select>
+                            </div>
+                            <div class="setting-item" id="timeIncrementItem" style="display: none;">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">추가시간 (피셔)</label>
+                                <select id="timeIncrementSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    <option value="5" selected>5초</option>
+                                    <option value="10">10초</option>
+                                    <option value="15">15초</option>
+                                    <option value="20">20초</option>
+                                </select>
+                            </div>
+                            <div class="setting-item" id="byoyomiItem" style="display: none;">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">초읽기 시간</label>
+                                <select id="byoyomiSecondsSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    <option value="10">10초</option>
+                                    <option value="20">20초</option>
+                                    <option value="30" selected>30초</option>
+                                    <option value="60">60초</option>
+                                </select>
+                            </div>
+                            <div class="setting-item" id="byoyomiPeriodsItem" style="display: none;">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">초읽기 횟수</label>
+                                <select id="byoyomiPeriodsSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    <option value="3">3회</option>
+                                    <option value="5" selected>5회</option>
+                                    <option value="10">10회</option>
+                                    <option value="20">20회</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- 일반 설정 -->
+                        <div class="request-settings-grid" id="basicSettingsGrid">
+                            <div class="setting-item" id="boardSizeItem">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">바둑판 크기</label>
+                                <select id="boardSizeSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    <option value="19" selected>19줄</option>
+                                    <option value="13">13줄</option>
+                                    <option value="9">9줄</option>
+                                </select>
+                            </div>
+                            <div class="setting-item" id="komiSettingItem" style="display: none;">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">덤(Komi)</label>
+                                <select id="komiSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    <option value="6.5" selected>6.5집 (한국/일본식)</option>
+                                    <option value="7.5">7.5집 (중국식)</option>
+                                    <option value="0.5">0.5집 (호선)</option>
+                                </select>
+                            </div>
+                            <div class="setting-item mode-specific-settings" id="modeSpecificSettings" style="display: none;">
+                                <!-- 게임 모드별 특정 설정이 여기에 동적으로 추가됩니다 -->
+                            </div>
                         </div>
                     </div>
-                    <div class="request-section" id="komiSection">
-                        <label class="ai-battle-label">덤(Komi)</label>
-                        <select id="komiSelect" class="form-select">
-                            <option value="6.5">6.5집 (한국/일본식)</option>
-                            <option value="7.5">7.5집 (중국식)</option>
-                            <option value="0.5">0.5집 (호선)</option>
-                        </select>
-                    </div>
-                    <div class="request-section mode-specific-settings" id="modeSpecificSettings" style="display: none;">
-                        <!-- 게임 모드별 특정 설정이 여기에 동적으로 추가됩니다 -->
-                    </div>
-                    <div class="request-section pvp-only-section" id="messageSection">
-                        <label class="ai-battle-label">대국 신청 메시지</label>
-                        <textarea id="requestMessage" class="form-textarea" placeholder="상대방에게 보낼 메시지를 입력하세요..."></textarea>
-                    </div>
-                    <div class="ai-battle-actions">
-                        <button class="btn btn-primary" id="confirmRequestBtn">신청하기</button>
-                        <button class="btn btn-secondary" onclick="closeGameRequestModal()">취소</button>
+                    
+                    <div class="ai-battle-actions" style="margin-top: 12px; padding-top: 12px; border-top: 2px solid #e2e8f0; flex-shrink: 0;">
+                        <button class="btn btn-primary" id="confirmRequestBtn" style="padding: 10px 24px; font-size: 14px;">신청하기</button>
+                        <button class="btn btn-secondary" onclick="closeGameRequestModal()" style="padding: 10px 24px; font-size: 14px;">취소</button>
                     </div>
                 </div>
                 <div class="request-right-panel" id="requestRightPanel" style="display: none;">
@@ -1698,19 +1906,19 @@
                             <div id="targetUserNickname" class="target-nickname">상대방</div>
                             <div id="targetUserRating" class="target-rating">레이팅: -</div>
                             <div class="target-game-stats">
-                                <div class="target-game-stats-title" id="targetGameStatsTitle">클래식바둑 전적</div>
-                                <div class="target-game-stats-grid">
-                                    <div class="target-stat-item">
-                                        <div class="target-stat-value" id="targetGameWins">0</div>
-                                        <div class="target-stat-label">승</div>
+                                <div class="target-game-stats-title" id="targetGameStatsTitle" style="font-size: 12px; margin-bottom: 10px;">클래식바둑 전적</div>
+                                <div class="target-game-stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                                    <div class="target-stat-item" style="text-align: center;">
+                                        <div class="target-stat-value" id="targetGameWins" style="font-size: 18px; font-weight: 700; color: #667eea;">0</div>
+                                        <div class="target-stat-label" style="font-size: 11px; color: #64748b; margin-top: 4px;">승</div>
                                     </div>
-                                    <div class="target-stat-item">
-                                        <div class="target-stat-value" id="targetGameLosses">0</div>
-                                        <div class="target-stat-label">패</div>
+                                    <div class="target-stat-item" style="text-align: center;">
+                                        <div class="target-stat-value" id="targetGameLosses" style="font-size: 18px; font-weight: 700; color: #ef4444;">0</div>
+                                        <div class="target-stat-label" style="font-size: 11px; color: #64748b; margin-top: 4px;">패</div>
                                     </div>
-                                    <div class="target-stat-item">
-                                        <div class="target-stat-value" id="targetGameWinRate">0%</div>
-                                        <div class="target-stat-label">승률</div>
+                                    <div class="target-stat-item" style="text-align: center;">
+                                        <div class="target-stat-value" id="targetGameWinRate" style="font-size: 18px; font-weight: 700; color: #10b981;">0%</div>
+                                        <div class="target-stat-label" style="font-size: 11px; color: #64748b; margin-top: 4px;">승률</div>
                                     </div>
                                 </div>
                             </div>
@@ -1888,10 +2096,10 @@
         ];
 
         const CASUAL_MODES = [
-            { id: 'DICE', name: '바둑주사위' },
-            { id: 'COPS', name: '포졸바둑' },
+            { id: 'DICE', name: '주사위바둑' },
+            { id: 'COPS', name: '경찰과도둑' },
             { id: 'OMOK', name: '오목' },
-            { id: 'TTAK', name: '바둑딱지' },
+            { id: 'TTAK', name: '따목' },
             { id: 'ALKKAGI', name: '알까기' },
             { id: 'CURLING', name: '바둑컬링' }
         ];
@@ -1911,7 +2119,6 @@
                 const titleEl = document.getElementById('requestModalTitle');
                 const targetInfoEl = document.getElementById('targetUserInfo');
                 const aiSection = document.getElementById('aiLevelSection');
-                const messageSection = document.getElementById('messageSection');
                 const categoryTitle = document.getElementById('requestCategoryTitle');
                 const modeList = document.getElementById('requestModeList');
 
@@ -1942,12 +2149,13 @@
                     updateTargetUserStats(selectedMode);
                     
                     if (aiSection) aiSection.style.display = 'none';
-                    if (messageSection) messageSection.style.display = 'flex';
                 } else {
                     // AI 대결 모드일 때는 우측 패널 숨김
                     if (rightPanel) rightPanel.style.display = 'none';
-                    if (aiSection) aiSection.style.display = 'block';
-                    if (messageSection) messageSection.style.display = 'none';
+                    // 전략바둑일 때만 AI 난이도 설정 표시
+                    if (aiSection) {
+                        aiSection.style.display = currentRoomType === 'strategy' ? 'block' : 'none';
+                    }
                 }
 
                 const modes = currentRoomType === 'strategy' ? STRATEGY_MODES : CASUAL_MODES;
@@ -1960,11 +2168,8 @@
                     </button>
                 `).join('');
 
-                // 초기 모드 설정 업데이트
-                updateModeSpecificSettings(selectedMode);
-                if (targetUser) {
-                    updateTargetUserStats(selectedMode);
-                }
+                // 초기 모드 설정 업데이트 (selectRequestMode를 호출하여 모든 설정을 일관되게 업데이트)
+                selectRequestMode(selectedMode);
 
                 console.log('Applying modal styles...');
                 // 모든 가능한 방법으로 모달 표시
@@ -2007,6 +2212,135 @@
             
             // 게임 모드별 설정 업데이트
             updateModeSpecificSettings(modeId);
+            
+            // 게임 설명 업데이트
+            updateGameDescription(modeId);
+            
+            // 시간 설정 표시/숨김 업데이트
+            const timeSettingsRow = document.getElementById('timeSettingsRow');
+            const timeIncrementItem = document.getElementById('timeIncrementItem');
+            const byoyomiItem = document.getElementById('byoyomiItem');
+            const byoyomiPeriodsItem = document.getElementById('byoyomiPeriodsItem');
+            
+            if (modeId === 'SPEED') {
+                // 스피드바둑: 제한시간 + 추가시간 (피셔)
+                if (timeSettingsRow) timeSettingsRow.style.display = 'grid';
+                if (timeSettingsRow) timeSettingsRow.style.gridTemplateColumns = '1fr 1fr';
+                if (timeIncrementItem) timeIncrementItem.style.display = 'block';
+                if (byoyomiItem) byoyomiItem.style.display = 'none';
+                if (byoyomiPeriodsItem) byoyomiPeriodsItem.style.display = 'none';
+            } else if (modeId === 'CAPTURE') {
+                // 캡처바둑: 제한시간 + 초읽기 시간 + 초읽기 횟수
+                if (timeSettingsRow) timeSettingsRow.style.display = 'grid';
+                if (timeSettingsRow) timeSettingsRow.style.gridTemplateColumns = '1fr 1fr 1fr';
+                if (timeIncrementItem) timeIncrementItem.style.display = 'none';
+                if (byoyomiItem) byoyomiItem.style.display = 'block';
+                if (byoyomiPeriodsItem) byoyomiPeriodsItem.style.display = 'block';
+            } else if (modeId !== 'MIX') {
+                // 일반 모드: 제한시간 + 초읽기 시간 + 초읽기 횟수
+                if (timeSettingsRow) timeSettingsRow.style.display = 'grid';
+                if (timeSettingsRow) timeSettingsRow.style.gridTemplateColumns = '1fr 1fr 1fr';
+                if (timeIncrementItem) timeIncrementItem.style.display = 'none';
+                if (byoyomiItem) byoyomiItem.style.display = 'block';
+                if (byoyomiPeriodsItem) byoyomiPeriodsItem.style.display = 'block';
+            } else {
+                // 믹스룰은 시간 설정 숨김 (믹스룰은 자체 시간 설정 사용)
+                if (timeSettingsRow) timeSettingsRow.style.display = 'none';
+            }
+            
+            // 덤 설정 표시/숨김 업데이트
+            setTimeout(() => {
+                if (modeId === 'MIX') {
+                    // 믹스룰 바둑일 때
+                    updateMixKomiVisibility();
+                } else if (modeId === 'CAPTURE' || modeId === 'BASE') {
+                    // 따내기바둑, 베이스바둑일 때는 덤 설정 숨김
+                    const komiItem = document.getElementById('komiSettingItem');
+                    if (komiItem) komiItem.style.display = 'none';
+                } else {
+                    // 다른 모드일 때는 덤 설정 표시
+                    const komiItem = document.getElementById('komiSettingItem');
+                    if (komiItem) komiItem.style.display = 'block';
+                }
+            }, 100);
+        }
+
+        // 게임 설명 업데이트
+        function updateGameDescription(modeId) {
+            const descriptionEl = document.getElementById('gameDescription');
+            if (!descriptionEl) return;
+            
+            const descriptions = {
+                'CLASSIC': {
+                    title: '클래식바둑',
+                    text: '전통적인 바둑 규칙으로 진행됩니다. 집 계산을 통해 승패를 결정합니다. 덤(Komi)이 적용됩니다.'
+                },
+                'CAPTURE': {
+                    title: '따내기바둑',
+                    text: '상대의 돌을 목표 개수만큼 따내면 승리합니다. 입찰을 통해 흑(선수)을 결정하고 목표 개수를 설정합니다.'
+                },
+                'SPEED': {
+                    title: '스피드바둑',
+                    text: '피셔 방식 시간제로 진행됩니다. 돌을 둘 때마다 추가 시간이 부여되며, 남은 시간으로 보너스 점수를 획득할 수 있습니다.'
+                },
+                'BASE': {
+                    title: '베이스바둑',
+                    text: '게임 시작 전 베이스돌을 배치합니다. 베이스돌 공개 후 흑백과 덤을 입찰하여 결정합니다. 상대 베이스돌을 따내면 보너스 점수를 획득합니다.'
+                },
+                'HIDDEN': {
+                    title: '히든바둑',
+                    text: '상대에게 보이지 않는 히든 착수를 할 수 있습니다. 스캔으로 상대의 히든돌을 탐지할 수 있으며, 히든돌을 따내면 보너스 점수를 획득합니다.'
+                },
+                'MISSILE': {
+                    title: '미사일바둑',
+                    text: '자신의 돌을 상하좌우 직선으로 이동시킬 수 있습니다.'
+                },
+                'MIX': {
+                    title: '믹스바둑',
+                    text: '여러 규칙을 조합한 모드입니다.'
+                },
+                'DICE': {
+                    title: '주사위바둑',
+                    text: '3라운드로 진행됩니다. 각 라운드마다 주사위를 굴려 흑돌을 배치하고, 백돌을 따냅니다. 따낸 백돌 개수로 점수를 계산합니다.'
+                },
+                'COPS': {
+                    title: '경찰과도둑',
+                    text: '도둑(흑)과 경찰(백) 역할을 2라운드에 걸쳐 번갈아 합니다. 도둑은 살아남은 돌당 1점, 경찰은 잡은 돌당 1점을 획득합니다.'
+                },
+                'OMOK': {
+                    title: '오목',
+                    text: '5개를 연속으로 배치하면 승리합니다. 3-3 금지, 장목(6개 이상) 금지 규칙이 적용될 수 있습니다.'
+                },
+                'TTAK': {
+                    title: '따목',
+                    text: '오목을 달성하거나 목표 개수를 따내면 승리합니다. 상대 돌 2개가 나란히 놓인 경우 양쪽을 막아 따낼 수 있습니다.'
+                },
+                'ALKKAGI': {
+                    title: '알까기',
+                    text: '정해진 구역에 돌을 배치하고, 파워 게이지로 돌을 튕겨 상대 돌을 제거합니다. 라운드제로 진행됩니다.'
+                },
+                'CURLING': {
+                    title: '바둑컬링',
+                    text: '3라운드로 진행됩니다. 각 라운드마다 정해진 개수의 돌을 던집니다. 하우스 점수와 넉아웃 점수로 승패를 결정합니다.'
+                }
+            };
+            
+            const desc = descriptions[modeId] || { title: '게임', text: '게임 설명이 없습니다.' };
+            descriptionEl.innerHTML = `
+                <div class="description-title">${desc.title}</div>
+                <p class="description-text">${desc.text}</p>
+            `;
+            
+            // 상단 우측 프로필 박스 레이아웃 조정 (PVP일 때만)
+            const profileBox = document.getElementById('requestProfileBox');
+            const topSection = document.querySelector('.request-top-section');
+            if (profileBox && topSection) {
+                if (profileBox.style.display !== 'none') {
+                    topSection.style.gridTemplateColumns = '1fr 280px';
+                } else {
+                    topSection.style.gridTemplateColumns = '1fr';
+                }
+            }
         }
 
         function updateTargetUserStats(modeId) {
@@ -2049,38 +2383,173 @@
             let settingsHTML = '';
             
             switch(modeId) {
-                case 'SPEED':
+                case 'CAPTURE':
+                    // 캡처바둑은 시간 설정 행에 표시
+                    const timeSettingsRow = document.getElementById('timeSettingsRow');
+                    const timeIncrementItem = document.getElementById('timeIncrementItem');
+                    const byoyomiItem = document.getElementById('byoyomiItem');
+                    const byoyomiPeriodsItem = document.getElementById('byoyomiPeriodsItem');
+                    if (timeSettingsRow) timeSettingsRow.style.display = 'grid';
+                    if (timeSettingsRow) timeSettingsRow.style.gridTemplateColumns = '1fr 1fr 1fr';
+                    if (timeIncrementItem) timeIncrementItem.style.display = 'none';
+                    if (byoyomiItem) byoyomiItem.style.display = 'block';
+                    if (byoyomiPeriodsItem) byoyomiPeriodsItem.style.display = 'block';
+                    
                     settingsHTML = `
-                        <label class="ai-battle-label">시간 제한</label>
-                        <select id="timeLimitSelect" class="form-select">
-                            <option value="300">5분 (빠른 대국)</option>
-                            <option value="600">10분 (표준)</option>
-                            <option value="900">15분 (여유)</option>
-                        </select>
+                        <div class="setting-item">
+                            <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">목표 개수</label>
+                            <select id="captureTargetSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                ${Array.from({length: 10}, (_, i) => {
+                                    const value = 5 + (i * 5);
+                                    return `<option value="${value}" ${value === 20 ? 'selected' : ''}>${value}개</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
                     `;
-                    settingsContainer.style.display = 'flex';
+                    settingsContainer.style.display = 'block';
+                    break;
+                case 'SPEED':
+                    // 스피드바둑은 시간 설정 행에 표시
+                    const timeSettingsRowSpeed = document.getElementById('timeSettingsRow');
+                    const timeIncrementItemSpeed = document.getElementById('timeIncrementItem');
+                    const byoyomiItemSpeed = document.getElementById('byoyomiItem');
+                    const byoyomiPeriodsItemSpeed = document.getElementById('byoyomiPeriodsItem');
+                    if (timeSettingsRowSpeed) timeSettingsRowSpeed.style.display = 'grid';
+                    if (timeSettingsRowSpeed) timeSettingsRowSpeed.style.gridTemplateColumns = '1fr 1fr';
+                    if (timeIncrementItemSpeed) timeIncrementItemSpeed.style.display = 'block';
+                    if (byoyomiItemSpeed) byoyomiItemSpeed.style.display = 'none';
+                    if (byoyomiPeriodsItemSpeed) byoyomiPeriodsItemSpeed.style.display = 'none';
+                    settingsContainer.style.display = 'none';
                     break;
                 case 'BASE':
                     settingsHTML = `
-                        <label class="ai-battle-label">베이스 개수</label>
-                        <select id="baseCountSelect" class="form-select">
-                            <option value="3">3개</option>
-                            <option value="5">5개</option>
-                            <option value="7">7개</option>
-                        </select>
+                        <div class="setting-item">
+                            <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">베이스 개수</label>
+                            <select id="baseCountSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                ${Array.from({length: 8}, (_, i) => {
+                                    const value = 3 + i;
+                                    return `<option value="${value}" ${value === 4 ? 'selected' : ''}>${value}개</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
                     `;
-                    settingsContainer.style.display = 'flex';
+                    settingsContainer.style.display = 'block';
                     break;
                 case 'HIDDEN':
                     settingsHTML = `
-                        <label class="ai-battle-label">히든 돌 개수</label>
-                        <select id="hiddenCountSelect" class="form-select">
-                            <option value="5">5개</option>
-                            <option value="10">10개</option>
-                            <option value="15">15개</option>
-                        </select>
+                        <div class="setting-item">
+                            <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">히든 돌 개수</label>
+                            <select id="hiddenCountSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                ${Array.from({length: 5}, (_, i) => {
+                                    const value = 1 + i;
+                                    return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}개</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">스캔 횟수</label>
+                            <select id="scanCountSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                ${Array.from({length: 10}, (_, i) => {
+                                    const value = 1 + i;
+                                    return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}회</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
                     `;
-                    settingsContainer.style.display = 'flex';
+                    settingsContainer.style.display = 'block';
+                    break;
+                case 'MISSILE':
+                    settingsHTML = `
+                        <div class="setting-item">
+                            <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">미사일 이동 횟수</label>
+                            <select id="missileMoveLimitSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                ${Array.from({length: 20}, (_, i) => {
+                                    const value = 1 + i;
+                                    return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}회</option>`;
+                                }).join('')}
+                            </select>
+                        </div>
+                    `;
+                    settingsContainer.style.display = 'block';
+                    break;
+                    case 'MIX':
+                        settingsHTML = `
+                        <div class="setting-item" style="width: 100%; margin-bottom: 12px;">
+                            <label class="ai-battle-label" style="margin-bottom: 10px; display: block; font-size: 12px;">규칙 선택 (2개 이상 선택)</label>
+                            <div class="mix-rules-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                                <label class="mix-rule-checkbox" style="display: flex; align-items: center; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white;">
+                                    <input type="checkbox" id="mixRuleCapture" value="CAPTURE" style="margin-right: 6px; width: 16px; height: 16px; cursor: pointer;">
+                                    <span style="font-weight: 500; color: #1e293b; font-size: 12px;">따내기바둑</span>
+                                </label>
+                                <label class="mix-rule-checkbox" style="display: flex; align-items: center; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white;">
+                                    <input type="checkbox" id="mixRuleSpeed" value="SPEED" style="margin-right: 6px; width: 16px; height: 16px; cursor: pointer;">
+                                    <span style="font-weight: 500; color: #1e293b; font-size: 12px;">스피드바둑</span>
+                                </label>
+                                <label class="mix-rule-checkbox" style="display: flex; align-items: center; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white;">
+                                    <input type="checkbox" id="mixRuleBase" value="BASE" style="margin-right: 6px; width: 16px; height: 16px; cursor: pointer;">
+                                    <span style="font-weight: 500; color: #1e293b; font-size: 12px;">베이스바둑</span>
+                                </label>
+                                <label class="mix-rule-checkbox" style="display: flex; align-items: center; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white;">
+                                    <input type="checkbox" id="mixRuleHidden" value="HIDDEN" style="margin-right: 6px; width: 16px; height: 16px; cursor: pointer;">
+                                    <span style="font-weight: 500; color: #1e293b; font-size: 12px;">히든바둑</span>
+                                </label>
+                                <label class="mix-rule-checkbox" style="display: flex; align-items: center; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white;">
+                                    <input type="checkbox" id="mixRuleMissile" value="MISSILE" style="margin-right: 6px; width: 16px; height: 16px; cursor: pointer;">
+                                    <span style="font-weight: 500; color: #1e293b; font-size: 12px;">미사일바둑</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="mixRuleSettings" style="width: 100%; margin-top: 12px; display: none;">
+                            <!-- 선택된 규칙별 설정이 여기에 동적으로 추가됩니다 -->
+                        </div>
+                    `;
+                    settingsContainer.style.display = 'block';
+                    
+                    // 믹스룰 체크박스 이벤트 리스너 추가
+                    setTimeout(() => {
+                        document.querySelectorAll('.mix-rule-checkbox input[type="checkbox"]').forEach(checkbox => {
+                            checkbox.addEventListener('change', function() {
+                                const label = this.closest('.mix-rule-checkbox');
+                                const ruleValue = this.value;
+                                
+                                // 스피드바둑과 따내기바둑 상호 배제
+                                if (this.checked) {
+                                    if (ruleValue === 'SPEED') {
+                                        // 스피드바둑 선택 시 따내기바둑 해제
+                                        const captureCheckbox = document.getElementById('mixRuleCapture');
+                                        if (captureCheckbox && captureCheckbox.checked) {
+                                            captureCheckbox.checked = false;
+                                            const captureLabel = captureCheckbox.closest('.mix-rule-checkbox');
+                                            if (captureLabel) {
+                                                captureLabel.style.borderColor = '#e2e8f0';
+                                                captureLabel.style.background = 'white';
+                                            }
+                                        }
+                                    } else if (ruleValue === 'CAPTURE') {
+                                        // 따내기바둑 선택 시 스피드바둑 해제
+                                        const speedCheckbox = document.getElementById('mixRuleSpeed');
+                                        if (speedCheckbox && speedCheckbox.checked) {
+                                            speedCheckbox.checked = false;
+                                            const speedLabel = speedCheckbox.closest('.mix-rule-checkbox');
+                                            if (speedLabel) {
+                                                speedLabel.style.borderColor = '#e2e8f0';
+                                                speedLabel.style.background = 'white';
+                                            }
+                                        }
+                                    }
+                                    
+                                    label.style.borderColor = '#667eea';
+                                    label.style.background = '#f0f4ff';
+                                } else {
+                                    label.style.borderColor = '#e2e8f0';
+                                    label.style.background = 'white';
+                                }
+                                
+                                updateMixRuleSettings();
+                                updateMixKomiVisibility();
+                            });
+                        });
+                    }, 100);
                     break;
                 default:
                     settingsContainer.style.display = 'none';
@@ -2088,6 +2557,155 @@
             }
             
             settingsContainer.innerHTML = settingsHTML;
+        }
+
+        // 믹스룰 바둑 덤 설정 표시/숨김 업데이트
+        function updateMixKomiVisibility() {
+            if (selectedMode !== 'MIX') {
+                // 믹스룰이 아니면 덤 설정 표시
+                const komiSection = document.querySelector('.request-section');
+                if (komiSection) {
+                    const komiItem = komiSection.querySelector('.setting-item');
+                    if (komiItem && komiItem.querySelector('#komiSelect')) {
+                        komiItem.style.display = 'block';
+                    }
+                }
+                return;
+            }
+
+            const captureCheckbox = document.getElementById('mixRuleCapture');
+            const baseCheckbox = document.getElementById('mixRuleBase');
+            const isCaptureSelected = captureCheckbox && captureCheckbox.checked;
+            const isBaseSelected = baseCheckbox && baseCheckbox.checked;
+            
+            // 따내기바둑이나 베이스바둑이 선택되면 덤 설정 숨김
+            const komiItem = document.getElementById('komiSettingItem');
+            if (komiItem) {
+                komiItem.style.display = (isCaptureSelected || isBaseSelected) ? 'none' : 'block';
+            }
+        }
+
+        // 믹스룰 바둑 규칙 설정 업데이트
+        function updateMixRuleSettings() {
+            const mixSettingsContainer = document.getElementById('mixRuleSettings');
+            if (!mixSettingsContainer) return;
+
+            const selectedRules = [];
+            const checkboxes = {
+                'CAPTURE': document.getElementById('mixRuleCapture'),
+                'SPEED': document.getElementById('mixRuleSpeed'),
+                'BASE': document.getElementById('mixRuleBase'),
+                'HIDDEN': document.getElementById('mixRuleHidden'),
+                'MISSILE': document.getElementById('mixRuleMissile')
+            };
+
+            Object.keys(checkboxes).forEach(rule => {
+                if (checkboxes[rule] && checkboxes[rule].checked) {
+                    selectedRules.push(rule);
+                }
+            });
+
+            if (selectedRules.length === 0) {
+                mixSettingsContainer.style.display = 'none';
+                mixSettingsContainer.innerHTML = '';
+                return;
+            }
+
+            mixSettingsContainer.style.display = 'block';
+            let settingsHTML = '<div style="border-top: 2px solid #e2e8f0; padding-top: 12px; margin-top: 12px;"><h4 style="margin-bottom: 10px; color: #1e293b; font-size: 13px; font-weight: 700;">선택된 규칙 설정</h4><div class="request-settings-grid">';
+
+            selectedRules.forEach(rule => {
+                switch(rule) {
+                    case 'CAPTURE':
+                        settingsHTML += `
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">따내기바둑 - 목표 개수</label>
+                                <select id="mixCaptureTargetSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    ${Array.from({length: 10}, (_, i) => {
+                                        const value = 5 + (i * 5);
+                                        return `<option value="${value}" ${value === 20 ? 'selected' : ''}>${value}개</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                        `;
+                        break;
+                    case 'SPEED':
+                        settingsHTML += `
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">스피드바둑 - 시간 제한</label>
+                                <select id="mixTimeLimitSelect" class="form-select" style="padding: 10px 14px; font-size: 13px;">
+                                    <option value="1">1분</option>
+                                    <option value="3">3분</option>
+                                    <option value="5">5분</option>
+                                    <option value="10" selected>10분 (표준)</option>
+                                    <option value="20">20분</option>
+                                    <option value="30">30분</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">추가 시간 (피셔)</label>
+                                <select id="mixTimeIncrementSelect" class="form-select" style="padding: 10px 14px; font-size: 13px;">
+                                    <option value="5" selected>5초</option>
+                                    <option value="10">10초</option>
+                                    <option value="15">15초</option>
+                                    <option value="20">20초</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                    case 'BASE':
+                        settingsHTML += `
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">베이스바둑 - 베이스 개수</label>
+                                <select id="mixBaseCountSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    ${Array.from({length: 8}, (_, i) => {
+                                        const value = 3 + i;
+                                        return `<option value="${value}" ${value === 4 ? 'selected' : ''}>${value}개</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                        `;
+                        break;
+                    case 'HIDDEN':
+                        settingsHTML += `
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">히든바둑 - 히든 돌 개수</label>
+                                <select id="mixHiddenCountSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    ${Array.from({length: 5}, (_, i) => {
+                                        const value = 1 + i;
+                                        return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}개</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">스캔 횟수</label>
+                                <select id="mixScanCountSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    ${Array.from({length: 10}, (_, i) => {
+                                        const value = 1 + i;
+                                        return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}회</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                        `;
+                        break;
+                    case 'MISSILE':
+                        settingsHTML += `
+                            <div class="setting-item">
+                                <label class="ai-battle-label" style="font-size: 12px; margin-bottom: 6px;">미사일바둑 - 이동 횟수</label>
+                                <select id="mixMissileMoveLimitSelect" class="form-select" style="padding: 8px 12px; font-size: 12px;">
+                                    ${Array.from({length: 20}, (_, i) => {
+                                        const value = 1 + i;
+                                        return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}회</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                        `;
+                        break;
+                }
+            });
+
+            settingsHTML += '</div></div>';
+            mixSettingsContainer.innerHTML = settingsHTML;
         }
 
         // 서버에서 전적 데이터 수신
@@ -2098,6 +2716,7 @@
                 const total = wins + losses;
                 const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
                 
+                // 우측 패널 전적 업데이트
                 const winsEl = document.getElementById('targetGameWins');
                 const lossesEl = document.getElementById('targetGameLosses');
                 const winRateEl = document.getElementById('targetGameWinRate');
@@ -2105,6 +2724,28 @@
                 if (winsEl) winsEl.textContent = wins;
                 if (lossesEl) lossesEl.textContent = losses;
                 if (winRateEl) winRateEl.textContent = `${winRate}%`;
+                
+                // 인라인 전적 업데이트 (우측 컬럼)
+                const winsElInline = document.getElementById('targetGameWinsInline');
+                const lossesElInline = document.getElementById('targetGameLossesInline');
+                const winRateElInline = document.getElementById('targetGameWinRateInline');
+                const statsTitleInline = document.getElementById('targetGameStatsTitleInline');
+                
+                if (winsElInline) winsElInline.textContent = wins;
+                if (lossesElInline) lossesElInline.textContent = losses;
+                if (winRateElInline) winRateElInline.textContent = `${winRate}%`;
+                if (statsTitleInline) {
+                    const modeNames = {
+                        'CLASSIC': '클래식바둑',
+                        'CAPTURE': '따내기바둑',
+                        'SPEED': '스피드바둑',
+                        'BASE': '베이스바둑',
+                        'HIDDEN': '히든바둑',
+                        'MISSILE': '미사일바둑',
+                        'MIX': '믹스바둑'
+                    };
+                    statsTitleInline.textContent = `${modeNames[selectedMode] || '게임'} 전적`;
+                }
             }
         });
 
@@ -2165,27 +2806,317 @@
         }
 
         document.getElementById('confirmRequestBtn')?.addEventListener('click', () => {
-            const komi = parseFloat(document.getElementById('komiSelect').value);
-            const color = document.querySelector('.ai-color-btn.active').dataset.color;
+            const komiSelect = document.getElementById('komiSelect');
+            const komi = komiSelect && komiSelect.style.display !== 'none' ? parseFloat(komiSelect.value) : 0;
+            const colorSelect = document.getElementById('colorSelect');
+            const color = colorSelect ? colorSelect.value : 'random';
+            const boardSizeSelect = document.getElementById('boardSizeSelect');
+            const boardSize = boardSizeSelect ? parseInt(boardSizeSelect.value) : 19;
             
             if (selectedTargetUser) {
-                const message = document.getElementById('requestMessage').value;
-                socket.emit('send_game_request', {
+                // 베이스바둑은 덤을 0.5집으로 고정
+                const finalKomi = selectedMode === 'BASE' ? 0.5 : komi;
+                
+                const requestData = {
                     targetUserId: selectedTargetUser.id,
                     mode: selectedMode,
-                    komi: komi,
-                    message: message
-                });
+                    komi: finalKomi,
+                    boardSize: boardSize
+                };
+
+                // 믹스룰 바둑 설정 추가
+                if (selectedMode === 'MIX') {
+                    const selectedRules = [];
+                    const checkboxes = {
+                        'CAPTURE': document.getElementById('mixRuleCapture'),
+                        'SPEED': document.getElementById('mixRuleSpeed'),
+                        'BASE': document.getElementById('mixRuleBase'),
+                        'HIDDEN': document.getElementById('mixRuleHidden'),
+                        'MISSILE': document.getElementById('mixRuleMissile')
+                    };
+
+                    Object.keys(checkboxes).forEach(rule => {
+                        if (checkboxes[rule] && checkboxes[rule].checked) {
+                            selectedRules.push(rule);
+                        }
+                    });
+
+                    if (selectedRules.length < 2) {
+                        alert('믹스룰 바둑은 최소 2개 이상의 규칙을 선택해야 합니다.');
+                        return;
+                    }
+
+                    requestData.mixRules = selectedRules;
+
+                    // 선택된 규칙별 설정 수집
+                    if (selectedRules.includes('CAPTURE')) {
+                        const mixCaptureTargetSelect = document.getElementById('mixCaptureTargetSelect');
+                        if (mixCaptureTargetSelect) {
+                            requestData.captureTarget = parseInt(mixCaptureTargetSelect.value) || 20;
+                        }
+                    }
+                    if (selectedRules.includes('SPEED')) {
+                        const mixTimeLimitSelect = document.getElementById('mixTimeLimitSelect');
+                        const mixTimeIncrementSelect = document.getElementById('mixTimeIncrementSelect');
+                        if (mixTimeLimitSelect) {
+                            requestData.timeLimit = parseInt(mixTimeLimitSelect.value) || 10;
+                        }
+                        if (mixTimeIncrementSelect) {
+                            requestData.timeIncrement = parseInt(mixTimeIncrementSelect.value) || 5;
+                        }
+                    }
+                    if (selectedRules.includes('BASE')) {
+                        const mixBaseCountSelect = document.getElementById('mixBaseCountSelect');
+                        if (mixBaseCountSelect) {
+                            requestData.baseStones = parseInt(mixBaseCountSelect.value) || 4;
+                        }
+                    }
+                    if (selectedRules.includes('HIDDEN')) {
+                        const mixHiddenCountSelect = document.getElementById('mixHiddenCountSelect');
+                        const mixScanCountSelect = document.getElementById('mixScanCountSelect');
+                        if (mixHiddenCountSelect) {
+                            requestData.hiddenStones = parseInt(mixHiddenCountSelect.value) || 10;
+                        }
+                        if (mixScanCountSelect) {
+                            requestData.scanCount = parseInt(mixScanCountSelect.value) || 3;
+                        }
+                    }
+                    if (selectedRules.includes('MISSILE')) {
+                        const mixMissileMoveLimitSelect = document.getElementById('mixMissileMoveLimitSelect');
+                        if (mixMissileMoveLimitSelect) {
+                            requestData.missileMoveLimit = parseInt(mixMissileMoveLimitSelect.value) || 10;
+                        }
+                    }
+                } else {
+                    // 다른 모드의 설정도 추가
+                    if (selectedMode === 'CAPTURE') {
+                        requestData.komi = 0; // 따내기바둑은 덤 없음
+                        const captureTargetSelect = document.getElementById('captureTargetSelect');
+                        if (captureTargetSelect) {
+                            requestData.captureTarget = parseInt(captureTargetSelect.value) || 20;
+                        }
+                        // 캡처바둑 시간 설정
+                        const timeLimitSelect = document.getElementById('timeLimitSelect');
+                        const byoyomiSecondsSelect = document.getElementById('byoyomiSecondsSelect');
+                        const byoyomiPeriodsSelect = document.getElementById('byoyomiPeriodsSelect');
+                        if (timeLimitSelect) {
+                            requestData.timeLimit = parseInt(timeLimitSelect.value) || 10;
+                        }
+                        if (byoyomiSecondsSelect) {
+                            requestData.byoyomiSeconds = parseInt(byoyomiSecondsSelect.value) || 30;
+                        }
+                        if (byoyomiPeriodsSelect) {
+                            requestData.byoyomiPeriods = parseInt(byoyomiPeriodsSelect.value) || 5;
+                        }
+                    }
+                if (selectedMode === 'SPEED') {
+                    const timeLimitSelect = document.getElementById('timeLimitSelect');
+                    const timeIncrementSelect = document.getElementById('timeIncrementSelect');
+                    if (timeLimitSelect) {
+                        requestData.timeLimit = parseInt(timeLimitSelect.value) || 10;
+                    }
+                    if (timeIncrementSelect) {
+                        requestData.timeIncrement = parseInt(timeIncrementSelect.value) || 5;
+                    }
+                } else if (selectedMode !== 'MIX' && selectedMode !== 'CAPTURE' && selectedMode !== 'BASE') {
+                    // 일반 모드: 제한시간 + 초읽기 설정
+                    const timeLimitSelect = document.getElementById('timeLimitSelect');
+                    const byoyomiSecondsSelect = document.getElementById('byoyomiSecondsSelect');
+                    const byoyomiPeriodsItem = document.getElementById('byoyomiPeriodsSelect');
+                    if (timeLimitSelect) {
+                        requestData.timeLimit = parseInt(timeLimitSelect.value) || 10;
+                    }
+                    if (byoyomiSecondsSelect) {
+                        requestData.byoyomiSeconds = parseInt(byoyomiSecondsSelect.value) || 30;
+                    }
+                    if (byoyomiPeriodsItem) {
+                        requestData.byoyomiPeriods = parseInt(byoyomiPeriodsItem.value) || 5;
+                    }
+                }
+                if (selectedMode === 'BASE') {
+                        const baseCountSelect = document.getElementById('baseCountSelect');
+                        if (baseCountSelect) {
+                            requestData.baseStones = parseInt(baseCountSelect.value) || 4;
+                        }
+                    }
+                    if (selectedMode === 'HIDDEN') {
+                        const hiddenCountSelect = document.getElementById('hiddenCountSelect');
+                        const scanCountSelect = document.getElementById('scanCountSelect');
+                        if (hiddenCountSelect) {
+                            requestData.hiddenStones = parseInt(hiddenCountSelect.value) || 10;
+                        }
+                        if (scanCountSelect) {
+                            requestData.scanCount = parseInt(scanCountSelect.value) || 3;
+                        }
+                    }
+                    if (selectedMode === 'MISSILE') {
+                        const missileMoveLimitSelect = document.getElementById('missileMoveLimitSelect');
+                        if (missileMoveLimitSelect) {
+                            requestData.missileMoveLimit = parseInt(missileMoveLimitSelect.value) || 10;
+                        }
+                    }
+                }
+
+                socket.emit('send_game_request', requestData);
                 alert('대국 신청을 보냈습니다.');
                 closeGameRequestModal();
             } else {
-                const level = parseInt(document.querySelector('.ai-level-btn.active').dataset.level);
-                socket.emit('start_ai_game', {
-                    level: level,
+                const currentRoomType = '<%= typeof roomType !== "undefined" ? roomType : "strategy" %>';
+                const isCasualMode = currentRoomType === 'casual';
+                
+                // 덤 설정 가져오기 (믹스룰에서 따내기바둑 선택 시 덤은 0)
+                const komiSelect = document.getElementById('komiSelect');
+                const komi = komiSelect && komiSelect.style.display !== 'none' ? parseFloat(komiSelect.value) : 0;
+                
+                // 놀이바둑일 때는 단일 AI봇 사용 (level 없음)
+                // 베이스바둑은 덤을 0.5집으로 고정
+                const finalKomi = selectedMode === 'BASE' ? 0.5 : komi;
+                const boardSizeSelect = document.getElementById('boardSizeSelect');
+                const boardSize = boardSizeSelect ? parseInt(boardSizeSelect.value) : 19;
+                
+                const gameData = {
                     color: color,
                     mode: selectedMode,
-                    komi: komi
-                });
+                    komi: finalKomi,
+                    boardSize: boardSize
+                };
+                
+                if (!isCasualMode) {
+                    // 전략바둑일 때만 level 전송
+                    const aiLevelSelect = document.getElementById('aiLevelSelect');
+                    if (aiLevelSelect) {
+                        gameData.level = parseInt(aiLevelSelect.value) || 3;
+                    }
+                }
+                
+                // 따내기바둑 설정 추가
+                if (selectedMode === 'CAPTURE') {
+                    gameData.komi = 0; // 따내기바둑은 덤 없음
+                    const captureTargetSelect = document.getElementById('captureTargetSelect');
+                    if (captureTargetSelect) {
+                        gameData.captureTarget = parseInt(captureTargetSelect.value) || 20;
+                    }
+                    // 캡처바둑 시간 설정
+                    const timeLimitSelect = document.getElementById('timeLimitSelect');
+                    const byoyomiSecondsSelect = document.getElementById('byoyomiSecondsSelect');
+                    const byoyomiPeriodsSelect = document.getElementById('byoyomiPeriodsSelect');
+                    if (timeLimitSelect) {
+                        gameData.timeLimit = parseInt(timeLimitSelect.value) || 10;
+                    }
+                    if (byoyomiSecondsSelect) {
+                        gameData.byoyomiSeconds = parseInt(byoyomiSecondsSelect.value) || 30;
+                    }
+                    if (byoyomiPeriodsSelect) {
+                        gameData.byoyomiPeriods = parseInt(byoyomiPeriodsSelect.value) || 5;
+                    }
+                }
+                
+                // 스피드바둑 설정 추가
+                if (selectedMode === 'SPEED') {
+                    const timeLimitSelect = document.getElementById('timeLimitSelect');
+                    const timeIncrementSelect = document.getElementById('timeIncrementSelect');
+                    if (timeLimitSelect) {
+                        gameData.timeLimit = parseInt(timeLimitSelect.value) || 10;
+                    }
+                    if (timeIncrementSelect) {
+                        gameData.timeIncrement = parseInt(timeIncrementSelect.value) || 5;
+                    }
+                }
+                
+                // 베이스바둑 설정 추가
+                if (selectedMode === 'BASE') {
+                    const baseCountSelect = document.getElementById('baseCountSelect');
+                    if (baseCountSelect) {
+                        gameData.baseStones = parseInt(baseCountSelect.value) || 4;
+                    }
+                }
+                
+                // 히든바둑 설정 추가
+                if (selectedMode === 'HIDDEN') {
+                    const hiddenCountSelect = document.getElementById('hiddenCountSelect');
+                    const scanCountSelect = document.getElementById('scanCountSelect');
+                    if (hiddenCountSelect) {
+                        gameData.hiddenStones = parseInt(hiddenCountSelect.value) || 10;
+                    }
+                    if (scanCountSelect) {
+                        gameData.scanCount = parseInt(scanCountSelect.value) || 3;
+                    }
+                }
+                
+                // 미사일바둑 설정 추가
+                if (selectedMode === 'MISSILE') {
+                    const missileMoveLimitSelect = document.getElementById('missileMoveLimitSelect');
+                    if (missileMoveLimitSelect) {
+                        gameData.missileMoveLimit = parseInt(missileMoveLimitSelect.value) || 10;
+                    }
+                }
+                
+                // 믹스룰 바둑 설정 추가
+                if (selectedMode === 'MIX') {
+                    const selectedRules = [];
+                    const checkboxes = {
+                        'CAPTURE': document.getElementById('mixRuleCapture'),
+                        'SPEED': document.getElementById('mixRuleSpeed'),
+                        'BASE': document.getElementById('mixRuleBase'),
+                        'HIDDEN': document.getElementById('mixRuleHidden'),
+                        'MISSILE': document.getElementById('mixRuleMissile')
+                    };
+
+                    Object.keys(checkboxes).forEach(rule => {
+                        if (checkboxes[rule] && checkboxes[rule].checked) {
+                            selectedRules.push(rule);
+                        }
+                    });
+
+                    if (selectedRules.length < 2) {
+                        alert('믹스룰 바둑은 최소 2개 이상의 규칙을 선택해야 합니다.');
+                        return;
+                    }
+
+                    gameData.mixRules = selectedRules;
+
+                    // 선택된 규칙별 설정 수집
+                    if (selectedRules.includes('CAPTURE')) {
+                        const mixCaptureTargetSelect = document.getElementById('mixCaptureTargetSelect');
+                        if (mixCaptureTargetSelect) {
+                            gameData.captureTarget = parseInt(mixCaptureTargetSelect.value) || 20;
+                        }
+                    }
+                    if (selectedRules.includes('SPEED')) {
+                        const mixTimeLimitSelect = document.getElementById('mixTimeLimitSelect');
+                        const mixTimeIncrementSelect = document.getElementById('mixTimeIncrementSelect');
+                        if (mixTimeLimitSelect) {
+                            gameData.timeLimit = parseInt(mixTimeLimitSelect.value) || 10;
+                        }
+                        if (mixTimeIncrementSelect) {
+                            gameData.timeIncrement = parseInt(mixTimeIncrementSelect.value) || 5;
+                        }
+                    }
+                    if (selectedRules.includes('BASE')) {
+                        const mixBaseCountSelect = document.getElementById('mixBaseCountSelect');
+                        if (mixBaseCountSelect) {
+                            gameData.baseStones = parseInt(mixBaseCountSelect.value) || 4;
+                        }
+                    }
+                    if (selectedRules.includes('HIDDEN')) {
+                        const mixHiddenCountSelect = document.getElementById('mixHiddenCountSelect');
+                        const mixScanCountSelect = document.getElementById('mixScanCountSelect');
+                        if (mixHiddenCountSelect) {
+                            gameData.hiddenStones = parseInt(mixHiddenCountSelect.value) || 10;
+                        }
+                        if (mixScanCountSelect) {
+                            gameData.scanCount = parseInt(mixScanCountSelect.value) || 3;
+                        }
+                    }
+                    if (selectedRules.includes('MISSILE')) {
+                        const mixMissileMoveLimitSelect = document.getElementById('mixMissileMoveLimitSelect');
+                        if (mixMissileMoveLimitSelect) {
+                            gameData.missileMoveLimit = parseInt(mixMissileMoveLimitSelect.value) || 10;
+                        }
+                    }
+                }
+                
+                socket.emit('start_ai_game', gameData);
                 closeGameRequestModal();
             }
         });

@@ -279,16 +279,31 @@ class WaitingRoomSocket {
 
         // Handle AI game
         socket.on('start_ai_game', async (data) => {
-            await this.startAiGame(userId, socket, data.level, data.color, {
+            // 놀이바둑 모드 목록
+            const casualModes = ['DICE', 'COPS', 'OMOK', 'TTAK', 'ALKKAGI', 'CURLING'];
+            const isCasualMode = casualModes.includes(data.mode);
+            
+            // 놀이바둑일 때는 level을 null로 전달 (단일 AI봇 사용)
+            const aiLevel = isCasualMode ? null : (data.level || 1);
+            
+            await this.startAiGame(userId, socket, aiLevel, data.color, {
                 mode: data.mode,
-                komi: data.komi
+                komi: data.komi,
+                isCasualMode: isCasualMode,
+                captureTarget: data.captureTarget,
+                timeLimit: data.timeLimit,
+                timeIncrement: data.timeIncrement,
+                baseStones: data.baseStones,
+                hiddenStones: data.hiddenStones,
+                scanCount: data.scanCount,
+                missileMoveLimit: data.missileMoveLimit
             });
         });
 
         // Handle PVP Game Request
         socket.on('send_game_request', async (data) => {
             try {
-                const { targetUserId, mode, komi, message } = data;
+                const { targetUserId, mode, komi, captureTarget, timeLimit, timeIncrement, baseStones, hiddenStones, scanCount, missileMoveLimit, boardSize, byoyomiSeconds, byoyomiPeriods } = data;
                 const targetSocketId = this.onlineUsers.get(targetUserId);
                 
                 if (!targetSocketId) {
@@ -302,7 +317,16 @@ class WaitingRoomSocket {
                     fromNickname: senderProfile.nickname,
                     mode,
                     komi,
-                    message
+                    captureTarget,
+                    timeLimit,
+                    timeIncrement,
+                    baseStones,
+                    hiddenStones,
+                    scanCount,
+                    missileMoveLimit,
+                    boardSize,
+                    byoyomiSeconds,
+                    byoyomiPeriods
                 });
             } catch (error) {
                 console.error('Send game request error:', error);
@@ -312,7 +336,7 @@ class WaitingRoomSocket {
 
         socket.on('accept_game_request', async (data) => {
             try {
-                const { fromUserId, mode, komi } = data;
+                const { fromUserId, mode, komi, captureTarget, timeLimit, timeIncrement, baseStones, hiddenStones, scanCount, missileMoveLimit, boardSize, byoyomiSeconds, byoyomiPeriods } = data;
                 const fromSocketId = this.onlineUsers.get(fromUserId);
 
                 if (!fromSocketId) {
@@ -340,11 +364,48 @@ class WaitingRoomSocket {
 
                 const gameService = require('../services/gameService');
                 // Friendly match (matchType: FRIENDLY)
-                const game = await gameService.createGame(fromUserId, userId, 0, 0, {
+                const gameOptions = {
                     matchType: 'FRIENDLY',
                     mode: mode,
-                    komi: komi
-                });
+                    komi: komi,
+                    boardSize: data.boardSize || 19
+                };
+                
+                // 따내기바둑 설정 추가
+                if (mode === 'CAPTURE' && captureTarget) {
+                    gameOptions.captureTarget = captureTarget;
+                }
+                // 스피드바둑 설정 추가
+                if (mode === 'SPEED' && timeLimit) {
+                    gameOptions.timeLimit = timeLimit;
+                    gameOptions.timeIncrement = timeIncrement;
+                }
+                // 베이스바둑 설정 추가
+                if (mode === 'BASE' && baseStones) {
+                    gameOptions.baseStones = baseStones;
+                    gameOptions.komi = 0.5; // 베이스바둑은 덤 0.5집 고정
+                }
+                // 히든바둑 설정 추가
+                if (mode === 'HIDDEN' && hiddenStones) {
+                    gameOptions.hiddenStones = hiddenStones;
+                    gameOptions.scanCount = scanCount || 3;
+                }
+                // 미사일바둑 설정 추가
+                if (mode === 'MISSILE' && missileMoveLimit) {
+                    gameOptions.missileMoveLimit = missileMoveLimit;
+                }
+                // 시간 설정 추가
+                if (data.byoyomiSeconds) {
+                    gameOptions.byoyomiSeconds = data.byoyomiSeconds;
+                }
+                if (data.byoyomiPeriods) {
+                    gameOptions.byoyomiPeriods = data.byoyomiPeriods;
+                }
+                if (data.timeLimit) {
+                    gameOptions.timeLimit = data.timeLimit;
+                }
+                
+                const game = await gameService.createGame(fromUserId, userId, 0, 0, gameOptions);
 
                 await this.setUserInGame(userId);
                 await this.setUserInGame(fromUserId);
@@ -700,10 +761,28 @@ class WaitingRoomSocket {
     async startAiGame(userId, socket, level, color, options = {}) {
         try {
             const gameService = require('../services/gameService');
-            const game = await gameService.createAiGame(userId, level, color, {
+            const gameOptions = {
                 mode: options.mode || 'CLASSIC',
-                komi: options.komi || 6.5
-            });
+                komi: options.komi || 6.5,
+                isCasualMode: options.isCasualMode || false,
+                captureTarget: options.captureTarget || 20,
+                timeLimit: options.timeLimit,
+                timeIncrement: options.timeIncrement,
+                baseStones: options.baseStones || 4,
+                hiddenStones: options.hiddenStones || 10,
+                scanCount: options.scanCount || 3,
+                missileMoveLimit: options.missileMoveLimit || 10,
+                boardSize: options.boardSize || 19,
+                byoyomiSeconds: options.byoyomiSeconds,
+                byoyomiPeriods: options.byoyomiPeriods
+            };
+            
+            // 베이스바둑은 덤 0.5집 고정
+            if (options.mode === 'BASE') {
+                gameOptions.komi = 0.5;
+            }
+            
+            const game = await gameService.createAiGame(userId, level, color, gameOptions);
             
             await this.updateUserStatus(userId, 'in-game');
             this.publishUserStatusChanged(userId, 'in-game');

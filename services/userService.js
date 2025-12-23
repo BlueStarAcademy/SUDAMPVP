@@ -80,6 +80,28 @@ class UserService {
     return await bcrypt.compare(password, hashedPassword);
   }
 
+  async updateMannerScore(userId, delta) {
+    try {
+      const user = await this.findUserById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const currentMannerScore = user.mannerScore || 1500;
+      const newMannerScore = Math.max(0, Math.min(3000, currentMannerScore + delta)); // 0~3000 범위로 제한
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { mannerScore: newMannerScore }
+      });
+
+      return newMannerScore;
+    } catch (error) {
+      console.error('Error updating manner score:', error);
+      throw error;
+    }
+  }
+
   async updateRating(userId, newRating) {
     const user = await prisma.user.update({
       where: { id: userId },
@@ -130,6 +152,7 @@ class UserService {
         email: user.email,
         nickname: user.nickname,
         rating: user.rating,
+        mannerScore: user.mannerScore || 1500,
         wins: user.wins,
         losses: user.losses,
         draws: user.draws,

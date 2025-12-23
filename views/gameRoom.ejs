@@ -293,6 +293,50 @@
             color: rgba(0, 0, 0, 0.7);
         }
 
+        .player-manner {
+            font-size: clamp(0.5rem, 1.5vmin, 0.65rem);
+            opacity: 0.7;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .player-panel.black .player-manner {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .player-panel.white .player-manner {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .manner-grade {
+            font-size: clamp(0.45rem, 1.2vmin, 0.55rem);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .manner-grade.excellent {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .manner-grade.good {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .manner-grade.normal {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+        }
+
+        .manner-grade.bad {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
         .timer-section {
             margin-top: 4px;
         }
@@ -1227,6 +1271,83 @@
             margin-top: 12px;
         }
 
+        .manner-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .manner-actions-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .manner-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .manner-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .manner-btn-positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .manner-btn-positive:hover:not(:disabled) {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: rgba(34, 197, 94, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .manner-btn-negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .manner-btn-negative:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .manner-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .manner-icon {
+            font-size: 16px;
+        }
+
+        .manner-text {
+            font-size: 12px;
+        }
+
         .leave-button {
             width: 100%;
             padding: 12px 20px;
@@ -1734,14 +1855,15 @@ if (game && game.mode) {
                                 if (blackPlayer && blackPlayer.rating) {
                                     const rating = blackPlayer.rating;
                                     let tier = 1;
-                                    if (rating >= 2400) tier = 9;
-                                    else if (rating >= 2200) tier = 8;
-                                    else if (rating >= 2000) tier = 7;
-                                    else if (rating >= 1800) tier = 6;
-                                    else if (rating >= 1600) tier = 5;
-                                    else if (rating >= 1400) tier = 4;
-                                    else if (rating >= 1200) tier = 3;
-                                    else if (rating >= 1000) tier = 2;
+                                    if (rating >= 3500) tier = 9; // 챌린저
+                                    else if (rating >= 3000) tier = 8; // 마스터
+                                    else if (rating >= 2400) tier = 7; // 다이아
+                                    else if (rating >= 2000) tier = 6; // 플래티넘
+                                    else if (rating >= 1700) tier = 5; // 골드
+                                    else if (rating >= 1500) tier = 4; // 실버
+                                    else if (rating >= 1400) tier = 3; // 브론즈
+                                    else if (rating >= 1300) tier = 2; // 루키
+                                    // else tier = 1; // 새싹
                                 %>
                                 <img src="/images/tire<%= tier %>.webp" alt="티어<%= tier %>" class="tier-icon" onerror="this.style.display='none';">
                                 <% } %>
@@ -1786,19 +1908,26 @@ if (game && game.mode) {
                                 if (whitePlayer && whitePlayer.rating) {
                                     const rating = whitePlayer.rating;
                                     let tier = 1;
-                                    if (rating >= 2400) tier = 9;
-                                    else if (rating >= 2200) tier = 8;
-                                    else if (rating >= 2000) tier = 7;
-                                    else if (rating >= 1800) tier = 6;
-                                    else if (rating >= 1600) tier = 5;
-                                    else if (rating >= 1400) tier = 4;
-                                    else if (rating >= 1200) tier = 3;
-                                    else if (rating >= 1000) tier = 2;
+                                    if (rating >= 3500) tier = 9; // 챌린저
+                                    else if (rating >= 3000) tier = 8; // 마스터
+                                    else if (rating >= 2400) tier = 7; // 다이아
+                                    else if (rating >= 2000) tier = 6; // 플래티넘
+                                    else if (rating >= 1700) tier = 5; // 골드
+                                    else if (rating >= 1500) tier = 4; // 실버
+                                    else if (rating >= 1400) tier = 3; // 브론즈
+                                    else if (rating >= 1300) tier = 2; // 루키
+                                    // else tier = 1; // 새싹
                                 %>
                                 <img src="/images/tire<%= tier %>.webp" alt="티어<%= tier %>" class="tier-icon" onerror="this.style.display='none';">
                                 <% } %>
                             </div>
                             <div class="player-level" id="whiteRating">레이팅: <%= whitePlayer ? whitePlayer.rating : '1500' %></div>
+                            <% if (whitePlayer && whitePlayer.mannerScore !== undefined) { %>
+                            <div class="player-manner" id="whiteManner">
+                                매너: <span id="whiteMannerScore"><%= whitePlayer.mannerScore || 1500 %></span>
+                                <span class="manner-grade" id="whiteMannerGrade"></span>
+                            </div>
+                            <% } %>
                         </div>
                         <div class="player-avatar" id="whiteAvatar" data-avatar="<%= whitePlayer && whitePlayer.avatar ? whitePlayer.avatar : '1' %>" data-user-id="<%= whitePlayer ? whitePlayer.id : '' %>">
                             <% if (whitePlayer && whitePlayer.avatar) { %>
@@ -1954,6 +2083,21 @@ if (game && game.mode) {
                     </div>
                 </div>
 
+                <!-- 매너액션 버튼 (PVP 게임에서만 표시) -->
+                <div class="manner-actions" id="mannerActions" style="display: none;">
+                    <div class="manner-actions-title">매너 평가</div>
+                    <div class="manner-buttons">
+                        <button class="manner-btn manner-btn-positive" id="mannerPositiveBtn" title="좋은 매너">
+                            <span class="manner-icon">👍</span>
+                            <span class="manner-text">좋아요</span>
+                        </button>
+                        <button class="manner-btn manner-btn-negative" id="mannerNegativeBtn" title="나쁜 매너">
+                            <span class="manner-icon">👎</span>
+                            <span class="manner-text">싫어요</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 나가기/일시정지 버튼 -->
                 <button class="leave-button" id="leaveBtn" disabled>나가기</button>
                 <button class="pause-button" id="pauseBtn" style="display: none;">일시정지</button>
@@ -1973,6 +2117,9 @@ if (game && game.mode) {
             nickname: '<%= user.nickname %>'
         };
         const isAiGame = <%= game.isAiGame || false %>;
+        const blackPlayerId = '<%= game.blackId || "" %>';
+        const whitePlayerId = '<%= game.whiteId || "" %>';
+        const currentUserId = '<%= user.id %>';
         let gameEnded = false;
         let isPaused = false;
         
@@ -2162,10 +2309,40 @@ if (game && game.mode) {
             
             avatarHTML += '</div>';
             
-            Modal.open('avatarSelector', avatarHTML, {
-                title: '프로필 아바타 선택',
-                width: '500px'
+            // 아바타 선택 모달 표시
+            showAvatarSelectorModal(avatarHTML);
+        }
+
+        // 아바타 선택 모달 표시 함수
+        function showAvatarSelectorModal(html) {
+            // 기존 모달이 있으면 제거
+            const existingModal = document.getElementById('avatarSelectorModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'avatarSelectorModal';
+            modal.className = 'modal-overlay';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;';
+            modal.innerHTML = `
+                <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>프로필 아바타 선택</h2>
+                        <button class="close-modal" onclick="document.getElementById('avatarSelectorModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    ${html}
+                </div>
+            `;
+            
+            // 배경 클릭 시 닫기
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
             });
+            
+            document.body.appendChild(modal);
             
             // 아바타 선택 버튼 이벤트 리스너 추가
             setTimeout(() => {
@@ -2173,7 +2350,8 @@ if (game && game.mode) {
                     btn.addEventListener('click', () => {
                         const avatarNum = btn.dataset.avatar;
                         socket.emit('update_avatar', { avatar: parseInt(avatarNum) });
-                        Modal.close('avatarSelector');
+                        const modalEl = document.getElementById('avatarSelectorModal');
+                        if (modalEl) modalEl.remove();
                     });
                     
                     btn.addEventListener('mouseenter', () => {
@@ -2189,17 +2367,35 @@ if (game && game.mode) {
             }, 100);
         }
         
-        // 티어 계산 함수 (레이팅에 따라)
+        // 티어 계산 함수 (레이팅에 따라) - 참고 저장소 기준
         function getTierFromRating(rating) {
-            if (rating < 1000) return 1; // 새싹
-            if (rating < 1200) return 2; // 루키
-            if (rating < 1400) return 3; // 브론즈
-            if (rating < 1600) return 4; // 실버
-            if (rating < 1800) return 5; // 골드
-            if (rating < 2000) return 6; // 플래티넘
-            if (rating < 2200) return 7; // 다이아
-            if (rating < 2400) return 8; // 마스터
+            if (rating < 1300) return 1; // 새싹
+            if (rating < 1400) return 2; // 루키
+            if (rating < 1500) return 3; // 브론즈
+            if (rating < 1700) return 4; // 실버
+            if (rating < 2000) return 5; // 골드
+            if (rating < 2400) return 6; // 플래티넘
+            if (rating < 3000) return 7; // 다이아
+            if (rating < 3500) return 8; // 마스터
             return 9; // 챌린저
+        }
+
+        // 매너등급 계산 함수
+        function getMannerGrade(mannerScore) {
+            if (mannerScore >= 2000) return { grade: 'excellent', text: '최우수' };
+            if (mannerScore >= 1700) return { grade: 'good', text: '우수' };
+            if (mannerScore >= 1300) return { grade: 'normal', text: '보통' };
+            return { grade: 'bad', text: '나쁨' };
+        }
+
+        // 매너등급 업데이트
+        function updateMannerGrade(elementId, mannerScore) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const gradeInfo = getMannerGrade(mannerScore);
+            element.textContent = gradeInfo.text;
+            element.className = 'manner-grade ' + gradeInfo.grade;
         }
         
         // 티어 이미지 업데이트
@@ -2291,6 +2487,11 @@ if (game && game.mode) {
         }
 
         // Game events
+        // 따내기바둑 입찰 관련 변수
+        let captureBidModal = null;
+        let localBid = 1;
+        let biddingState = null;
+
         socket.on('game_state', (data) => {
             window.game.loadState(data);
             if (data.timers) {
@@ -2300,6 +2501,22 @@ if (game && game.mode) {
                 }
                 if (data.timers.whiteTime !== undefined) {
                     updateTimerBar('white', data.timers.whiteTime, 30 * 60);
+                }
+            }
+            
+            // 매너점수 업데이트 (게임 상태에 포함된 경우)
+            if (data.blackPlayer && data.blackPlayer.mannerScore !== undefined) {
+                const blackMannerScore = document.getElementById('blackMannerScore');
+                if (blackMannerScore) {
+                    blackMannerScore.textContent = data.blackPlayer.mannerScore;
+                    updateMannerGrade('blackMannerGrade', data.blackPlayer.mannerScore);
+                }
+            }
+            if (data.whitePlayer && data.whitePlayer.mannerScore !== undefined) {
+                const whiteMannerScore = document.getElementById('whiteMannerScore');
+                if (whiteMannerScore) {
+                    whiteMannerScore.textContent = data.whitePlayer.mannerScore;
+                    updateMannerGrade('whiteMannerGrade', data.whitePlayer.mannerScore);
                 }
             }
             
@@ -2391,6 +2608,8 @@ if (game && game.mode) {
             
             // 나가기 버튼 업데이트
             updateLeaveButton();
+            // 매너액션 버튼 업데이트
+            updateMannerActions();
         });
         
         // 아바타 업데이트 이벤트
@@ -2460,6 +2679,470 @@ if (game && game.mode) {
         socket.on('ai_error', (data) => {
             document.getElementById('aiThinking').classList.remove('active');
             alert(`AI 오류: ${data.error || '알 수 없는 오류가 발생했습니다.'}`);
+        });
+
+        // 따내기바둑 입찰 업데이트
+        socket.on('capture_bid_update', (data) => {
+            if (data.needRebid) {
+                // 재입찰
+                biddingState = data;
+                localBid = 1;
+                updateCaptureBidModal(data);
+            } else if (!data.biddingPhase) {
+                // 입찰 완료
+                if (captureBidModal) {
+                    captureBidModal.style.display = 'none';
+                    captureBidModal = null;
+                }
+                // 게임 상태 다시 요청
+                socket.emit('get_game_state');
+            } else {
+                // 입찰 진행 중
+                biddingState = data;
+                updateCaptureBidModal(data);
+            }
+        });
+
+        socket.on('bid_error', (data) => {
+            alert(`입찰 오류: ${data.error || '알 수 없는 오류가 발생했습니다.'}`);
+        });
+
+        // 따내기바둑 입찰 모달 표시
+        function showCaptureBidModal(state) {
+            if (!captureBidModal) {
+                createCaptureBidModal();
+            }
+            biddingState = state;
+            localBid = 1;
+            updateCaptureBidModal(state);
+            captureBidModal.style.display = 'flex';
+        }
+
+        // 따내기바둑 입찰 모달 생성
+        function createCaptureBidModal() {
+            const modal = document.createElement('div');
+            modal.id = 'captureBidModal';
+            modal.className = 'stats-modal';
+            modal.style.display = 'none';
+            modal.innerHTML = `
+                <div class="stats-modal-content" style="max-width: 500px;">
+                    <div class="stats-modal-header">
+                        <div class="stats-modal-title" id="captureBidTitle">흑선 가져오기</div>
+                        <button class="close-modal" onclick="document.getElementById('captureBidModal').style.display='none'">&times;</button>
+                    </div>
+                    <div class="request-modal-body" style="padding: 20px;">
+                        <div id="captureBidContent">
+                            <p style="margin-bottom: 20px; color: #ccc;">
+                                기본 목표는 <span id="baseTarget" style="font-weight: bold; color: #ffd700;">20개</span>입니다. 
+                                흑(선수)을 잡기 위해 추가로 몇 개의 돌을 더 따낼지 설정하세요. 
+                                더 높은 숫자를 제시하는 쪽이 흑이 됩니다.
+                            </p>
+                            <div style="text-align: center; margin: 20px 0;">
+                                <div style="background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                                    <div style="font-size: 12px; color: #999; margin-bottom: 5px;">남은 시간</div>
+                                    <div id="bidCountdown" style="font-size: 36px; font-weight: bold; color: #ffd700;">30</div>
+                                </div>
+                                <div style="background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                    <div style="font-size: 24px; font-weight: bold; color: #ffd700;">
+                                        <span id="baseTargetDisplay">20</span> + <span id="bidDisplay">1</span>개
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0;">
+                                <button class="btn btn-secondary" onclick="adjustBid(10)">+10</button>
+                                <button class="btn btn-secondary" onclick="adjustBid(5)">+5</button>
+                                <button class="btn btn-secondary" onclick="adjustBid(3)">+3</button>
+                                <button class="btn btn-secondary" onclick="adjustBid(1)">+1</button>
+                                <button class="btn btn-secondary" onclick="adjustBid(-10)">-10</button>
+                                <button class="btn btn-secondary" onclick="adjustBid(-5)">-5</button>
+                                <button class="btn btn-secondary" onclick="adjustBid(-3)">-3</button>
+                                <button class="btn btn-secondary" onclick="adjustBid(-1)">-1</button>
+                            </div>
+                            <button id="submitBidBtn" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="submitCaptureBid()">
+                                설정하기
+                            </button>
+                            <div id="bidStatus" style="margin-top: 15px; text-align: center; color: #999;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            captureBidModal = modal;
+        }
+
+        // 입찰 모달 업데이트
+        function updateCaptureBidModal(state) {
+            if (!captureBidModal) return;
+            
+            const baseTarget = state.captureTarget || 20;
+            const myBid = state.bids && state.bids[currentUser.id];
+            const opponentBid = state.bids && Object.keys(state.bids).find(id => id !== currentUser.id && state.bids[id]);
+            
+            document.getElementById('baseTarget').textContent = baseTarget;
+            document.getElementById('baseTargetDisplay').textContent = baseTarget;
+            document.getElementById('bidDisplay').textContent = localBid;
+            
+            if (typeof myBid === 'number') {
+                document.getElementById('submitBidBtn').disabled = true;
+                document.getElementById('submitBidBtn').textContent = '설정 완료';
+                document.getElementById('bidStatus').textContent = '상대방의 설정을 기다리고 있습니다...';
+                document.getElementById('bidStatus').style.color = '#ffd700';
+            } else {
+                document.getElementById('submitBidBtn').disabled = false;
+                document.getElementById('submitBidBtn').textContent = state.biddingRound === 2 ? '재설정하기' : '설정하기';
+                document.getElementById('bidStatus').textContent = '';
+            }
+            
+            if (typeof myBid === 'number' && typeof opponentBid === 'number') {
+                const p1Bid = state.bids[Object.keys(state.bids)[0]];
+                const p2Bid = state.bids[Object.keys(state.bids)[1]];
+                const isTie = p1Bid === p2Bid;
+                
+                if (isTie && state.biddingRound === 1) {
+                    document.getElementById('bidStatus').textContent = '동점이므로 재설정합니다!';
+                    document.getElementById('bidStatus').style.color = '#ff6b6b';
+                } else if (isTie && state.biddingRound === 2) {
+                    document.getElementById('bidStatus').textContent = '두 번째에도 비겨서, 랜덤으로 결정됩니다.';
+                    document.getElementById('bidStatus').style.color = '#ff6b6b';
+                } else {
+                    const winnerBid = Math.max(p1Bid, p2Bid);
+                    document.getElementById('bidStatus').textContent = `${winnerBid}개를 추가 설정한 플레이어가 흑(선)이 됩니다.`;
+                    document.getElementById('bidStatus').style.color = '#4ade80';
+                }
+            }
+            
+            // 카운트다운 업데이트
+            if (state.captureBidDeadline) {
+                updateBidCountdown(state.captureBidDeadline);
+            }
+        }
+
+        // 입찰 카운트다운 업데이트
+        function updateBidCountdown(deadline) {
+            const countdownEl = document.getElementById('bidCountdown');
+            if (!countdownEl) return;
+            
+            const update = () => {
+                const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+                countdownEl.textContent = remaining;
+                
+                if (remaining > 0) {
+                    setTimeout(update, 1000);
+                } else {
+                    countdownEl.textContent = '0';
+                }
+            };
+            update();
+        }
+
+        // 입찰 조정
+        window.adjustBid = function(amount) {
+            if (biddingState && biddingState.bids && biddingState.bids[currentUser.id]) {
+                return; // 이미 입찰했으면 조정 불가
+            }
+            localBid = Math.max(1, Math.min(50, localBid + amount));
+            if (captureBidModal) {
+                document.getElementById('bidDisplay').textContent = localBid;
+            }
+        };
+
+        // 입찰 제출
+        window.submitCaptureBid = function() {
+            if (biddingState && biddingState.bids && biddingState.bids[currentUser.id]) {
+                return; // 이미 입찰했으면 제출 불가
+            }
+            socket.emit('submit_capture_bid', { bid: localBid });
+        };
+
+        // 베이스바둑 베이스돌 배치 모달 표시
+        function showBasePlacementModal(state) {
+            if (!basePlacementModal) {
+                createBasePlacementModal();
+            }
+            basePlacementState = state;
+            updateBasePlacementModal(state);
+            basePlacementModal.style.display = 'flex';
+        }
+
+        // 베이스바둑 베이스돌 배치 모달 생성
+        function createBasePlacementModal() {
+            const modal = document.createElement('div');
+            modal.id = 'basePlacementModal';
+            modal.className = 'stats-modal';
+            modal.style.display = 'none';
+            modal.innerHTML = `
+                <div class="stats-modal-content" style="max-width: 400px;">
+                    <div class="stats-modal-header">
+                        <div class="stats-modal-title">베이스돌 배치</div>
+                        <button class="close-modal" onclick="document.getElementById('basePlacementModal').style.display='none'">&times;</button>
+                    </div>
+                    <div class="request-modal-body" style="padding: 20px;">
+                        <p style="margin-bottom: 15px; color: #ccc; text-align: center;">
+                            상대에게 보이지 않는 베이스돌을 <span id="baseStoneCountDisplay">4</span>개 배치하세요.
+                        </p>
+                        <p style="margin-bottom: 15px; color: #999; text-align: center; font-size: 12px;">
+                            배치된 돌: <span id="placedBaseStones">0</span> / <span id="totalBaseStones">4</span>
+                        </p>
+                        <div style="text-align: center; margin: 15px 0;">
+                            <div id="basePlacementCountdown" style="font-size: 24px; font-weight: bold; color: #ffd700;">30</div>
+                        </div>
+                        <button id="randomPlaceBaseBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px;" onclick="placeRemainingBaseStonesRandomly()">
+                            남은 돌 무작위 배치
+                        </button>
+                        <div id="basePlacementStatus" style="margin-top: 15px; text-align: center; color: #999;"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            basePlacementModal = modal;
+            
+            // 바둑판 클릭으로 베이스돌 배치
+            const canvas = document.getElementById('goBoard');
+            if (canvas) {
+                const handleBasePlacement = (e) => {
+                    if (!basePlacementState || !basePlacementState.basePlacementPhase) return;
+                    
+                    const rect = canvas.getBoundingClientRect();
+                    const x = Math.round((e.clientX - rect.left) / (rect.width / 19)) - 1;
+                    const y = Math.round((e.clientY - rect.top) / (rect.height / 19)) - 1;
+                    
+                    if (x >= 0 && x < 19 && y >= 0 && y < 19) {
+                        socket.emit('place_base_stone', { x, y });
+                    }
+                };
+                
+                canvas.addEventListener('click', handleBasePlacement);
+                // 모달이 닫힐 때 이벤트 리스너 제거를 위해 저장
+                modal._basePlacementHandler = handleBasePlacement;
+            }
+        }
+
+        // 베이스돌 배치 모달 업데이트
+        function updateBasePlacementModal(state) {
+            if (!basePlacementModal) return;
+            
+            const game = window.game || {};
+            const playerKey = (game.blackId === currentUser.id) ? 'black' : 'white';
+            const placedCount = (state.baseStones && state.baseStones[playerKey]) ? state.baseStones[playerKey].length : 0;
+            const totalCount = state.baseStoneCount || 4;
+            
+            document.getElementById('baseStoneCountDisplay').textContent = totalCount;
+            document.getElementById('totalBaseStones').textContent = totalCount;
+            document.getElementById('placedBaseStones').textContent = placedCount;
+            
+            if (placedCount >= totalCount) {
+                document.getElementById('basePlacementStatus').textContent = '배치 완료! 상대방을 기다리고 있습니다...';
+                document.getElementById('basePlacementStatus').style.color = '#4ade80';
+                document.getElementById('randomPlaceBaseBtn').disabled = true;
+            } else {
+                document.getElementById('basePlacementStatus').textContent = '';
+                document.getElementById('randomPlaceBaseBtn').disabled = false;
+            }
+            
+            if (state.basePlacementDeadline) {
+                updateBasePlacementCountdown(state.basePlacementDeadline);
+            }
+        }
+
+        // 베이스돌 배치 카운트다운
+        function updateBasePlacementCountdown(deadline) {
+            const countdownEl = document.getElementById('basePlacementCountdown');
+            if (!countdownEl) return;
+            
+            const update = () => {
+                const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+                countdownEl.textContent = remaining;
+                
+                if (remaining > 0) {
+                    setTimeout(update, 1000);
+                } else {
+                    countdownEl.textContent = '0';
+                }
+            };
+            update();
+        }
+
+        // 남은 베이스돌 무작위 배치
+        window.placeRemainingBaseStonesRandomly = function() {
+            if (!basePlacementState || !basePlacementState.basePlacementPhase) return;
+            
+            const game = window.game || {};
+            const playerKey = (game.blackId === currentUser.id) ? 'black' : 'white';
+            const placedCount = (basePlacementState.baseStones && basePlacementState.baseStones[playerKey]) ? basePlacementState.baseStones[playerKey].length : 0;
+            const totalCount = basePlacementState.baseStoneCount || 4;
+            const remaining = totalCount - placedCount;
+            
+            if (remaining <= 0) return;
+            
+            // 빈 위치 찾기
+            const board = window.game ? window.game.stones : Array(19).fill(null).map(() => Array(19).fill(null));
+            const allBaseStones = [
+                ...(basePlacementState.baseStones.black || []),
+                ...(basePlacementState.baseStones.white || [])
+            ];
+            
+            const emptyPositions = [];
+            for (let y = 0; y < 19; y++) {
+                for (let x = 0; x < 19; x++) {
+                    if (board[y][x] === null && !allBaseStones.some(bs => bs.x === x && bs.y === y)) {
+                        emptyPositions.push({ x, y });
+                    }
+                }
+            }
+            
+            // 무작위로 남은 개수만큼 배치
+            for (let i = 0; i < remaining && emptyPositions.length > 0; i++) {
+                const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+                const pos = emptyPositions.splice(randomIndex, 1)[0];
+                socket.emit('place_base_stone', { x: pos.x, y: pos.y });
+            }
+        };
+
+        // 베이스바둑 덤 입찰 모달 표시
+        function showKomiBiddingModal(state) {
+            if (!komiBiddingModal) {
+                createKomiBiddingModal();
+            }
+            komiBiddingState = state;
+            selectedKomiColor = 'black';
+            localKomi = 0;
+            updateKomiBiddingModal(state);
+            komiBiddingModal.style.display = 'flex';
+        }
+
+        // 덤 입찰 모달 생성
+        function createKomiBiddingModal() {
+            const modal = document.createElement('div');
+            modal.id = 'komiBiddingModal';
+            modal.className = 'stats-modal';
+            modal.style.display = 'none';
+            modal.innerHTML = `
+                <div class="stats-modal-content" style="max-width: 500px;">
+                    <div class="stats-modal-header">
+                        <div class="stats-modal-title" id="komiBidTitle">흑백 및 덤 입찰</div>
+                        <button class="close-modal" onclick="document.getElementById('komiBiddingModal').style.display='none'">&times;</button>
+                    </div>
+                    <div class="request-modal-body" style="padding: 20px;">
+                        <p style="margin-bottom: 20px; color: #ccc; text-align: center;">
+                            베이스돌이 공개되었습니다. 흑(선수) 또는 백(후수)을 선택하고 덤을 입찰하세요.
+                        </p>
+                        <div style="margin: 20px 0;">
+                            <label style="display: block; margin-bottom: 10px; color: #ccc;">색상 선택</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button id="selectBlackBtn" class="btn btn-primary" onclick="selectKomiColor('black')">흑 (선수)</button>
+                                <button id="selectWhiteBtn" class="btn btn-secondary" onclick="selectKomiColor('white')">백 (후수)</button>
+                            </div>
+                        </div>
+                        <div style="margin: 20px 0;">
+                            <label style="display: block; margin-bottom: 10px; color: #ccc;">덤 (Komi)</label>
+                            <div style="background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 24px; font-weight: bold; color: #ffd700;" id="komiDisplay">0</div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0;">
+                                <button class="btn btn-secondary" onclick="adjustKomi(1)">+1</button>
+                                <button class="btn btn-secondary" onclick="adjustKomi(0.5)">+0.5</button>
+                                <button class="btn btn-secondary" onclick="adjustKomi(-0.5)">-0.5</button>
+                                <button class="btn btn-secondary" onclick="adjustKomi(-1)">-1</button>
+                            </div>
+                        </div>
+                        <button id="submitKomiBidBtn" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="submitKomiBid()">
+                            입찰하기
+                        </button>
+                        <div id="komiBidStatus" style="margin-top: 15px; text-align: center; color: #999;"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            komiBiddingModal = modal;
+        }
+
+        // 덤 입찰 모달 업데이트
+        function updateKomiBiddingModal(state) {
+            if (!komiBiddingModal) return;
+            
+            const myBid = state.komiBids && state.komiBids[currentUser.id];
+            
+            document.getElementById('komiDisplay').textContent = localKomi.toFixed(1);
+            
+            if (myBid) {
+                document.getElementById('submitKomiBidBtn').disabled = true;
+                document.getElementById('submitKomiBidBtn').textContent = '입찰 완료';
+                document.getElementById('komiBidStatus').textContent = '상대방의 입찰을 기다리고 있습니다...';
+                document.getElementById('komiBidStatus').style.color = '#ffd700';
+            } else {
+                document.getElementById('submitKomiBidBtn').disabled = false;
+                document.getElementById('submitKomiBidBtn').textContent = state.komiBiddingRound === 2 ? '재입찰하기' : '입찰하기';
+                document.getElementById('komiBidStatus').textContent = '';
+            }
+            
+            // 색상 선택 버튼 업데이트
+            document.getElementById('selectBlackBtn').classList.toggle('active', selectedKomiColor === 'black');
+            document.getElementById('selectWhiteBtn').classList.toggle('active', selectedKomiColor === 'white');
+        }
+
+        // 덤 입찰 색상 선택
+        window.selectKomiColor = function(color) {
+            selectedKomiColor = color;
+            if (komiBiddingModal) {
+                document.getElementById('selectBlackBtn').classList.toggle('active', color === 'black');
+                document.getElementById('selectWhiteBtn').classList.toggle('active', color === 'white');
+            }
+        };
+
+        // 덤 조정
+        window.adjustKomi = function(amount) {
+            if (komiBiddingState && komiBiddingState.komiBids && komiBiddingState.komiBids[currentUser.id]) {
+                return; // 이미 입찰했으면 조정 불가
+            }
+            localKomi = Math.max(-10, Math.min(20, localKomi + amount));
+            if (komiBiddingModal) {
+                document.getElementById('komiDisplay').textContent = localKomi.toFixed(1);
+            }
+        };
+
+        // 덤 입찰 제출
+        window.submitKomiBid = function() {
+            if (komiBiddingState && komiBiddingState.komiBids && komiBiddingState.komiBids[currentUser.id]) {
+                return; // 이미 입찰했으면 제출 불가
+            }
+            if (selectedKomiColor === 'none') {
+                alert('색상을 선택해주세요.');
+                return;
+            }
+            socket.emit('submit_komi_bid', { color: selectedKomiColor, komi: localKomi });
+        };
+
+        // 베이스돌 배치 업데이트
+        socket.on('base_stone_placed', (data) => {
+            basePlacementState = data;
+            updateBasePlacementModal(data);
+        });
+
+        socket.on('base_stone_error', (data) => {
+            alert(`베이스돌 배치 오류: ${data.error || '알 수 없는 오류가 발생했습니다.'}`);
+        });
+
+        // 덤 입찰 업데이트
+        socket.on('komi_bid_update', (data) => {
+            if (data.needRebid) {
+                komiBiddingState = data;
+                selectedKomiColor = 'black';
+                localKomi = 0;
+                updateKomiBiddingModal(data);
+            } else if (!data.komiBiddingPhase) {
+                if (komiBiddingModal) {
+                    komiBiddingModal.style.display = 'none';
+                    komiBiddingModal = null;
+                }
+                socket.emit('get_game_state');
+            } else {
+                komiBiddingState = data;
+                updateKomiBiddingModal(data);
+            }
+        });
+
+        socket.on('komi_bid_error', (data) => {
+            alert(`덤 입찰 오류: ${data.error || '알 수 없는 오류가 발생했습니다.'}`);
         });
 
         socket.on('timer_update', (data) => {
@@ -2541,16 +3224,171 @@ if (game && game.mode) {
                 </div>
             `;
 
-            Modal.open('gameResult', modalHtml);
+            // 게임 결과 모달 표시
+            showGameResultModal(modalHtml);
+        }
+
+        // 게임 결과 모달 표시 함수
+        function showGameResultModal(html) {
+            // 기존 모달이 있으면 제거
+            const existingModal = document.getElementById('gameResultModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'gameResultModal';
+            modal.className = 'modal-overlay';
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 10000;';
+            modal.innerHTML = `
+                <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    ${html}
+                </div>
+            `;
+            
+            // 배경 클릭 시 닫기
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            document.body.appendChild(modal);
         }
 
         socket.on('score_result', (data) => {
-            Modal.open('scoreResult', `
+            const scoreHtml = `
                 <h2>계가 결과</h2>
                 <p>흑: ${data.blackScore}점</p>
                 <p>백: ${data.whiteScore}점</p>
                 <p>승자: ${data.winner === 'black' ? '흑' : '백'}</p>
-            `);
+            `;
+            showGameResultModal(scoreHtml);
+        });
+
+        // 미사일바둑 관련 변수
+        let missileMode = false;
+        let missileButton = null;
+        let selectedMissileStone = null;
+        let isMissileMode = false;
+
+        // 미사일바둑 모드 토글
+        socket.on('game_state', (data) => {
+            if (data.game && data.game.mode === 'MISSILE') {
+                missileMode = true;
+                showMissileControls(data);
+            } else {
+                missileMode = false;
+                hideMissileControls();
+            }
+        });
+
+        // 미사일바둑 컨트롤 표시
+        function showMissileControls(state) {
+            // 기존 버튼이 있으면 제거
+            if (missileButton) {
+                missileButton.remove();
+            }
+
+            // 미사일 이동 버튼
+            missileButton = document.createElement('button');
+            missileButton.className = 'btn btn-secondary';
+            const missileUsed = (state.missileMovesUsed && state.missileMovesUsed[currentUser.id === window.game?.blackId ? 'black' : 'white']) || 0;
+            const missileLimit = state.missileMoveLimit || 10;
+            missileButton.textContent = `미사일 이동 (${missileUsed}/${missileLimit})`;
+            missileButton.style.margin = '5px';
+            missileButton.disabled = missileUsed >= missileLimit;
+            missileButton.onclick = () => {
+                toggleMissileMode();
+            };
+
+            // 버튼을 게임 컨트롤 영역에 추가
+            const gameControls = document.querySelector('.game-controls') || document.querySelector('.player-panel-container');
+            if (gameControls) {
+                gameControls.appendChild(missileButton);
+            }
+        }
+
+        function hideMissileControls() {
+            if (missileButton) {
+                missileButton.remove();
+                missileButton = null;
+            }
+            selectedMissileStone = null;
+            isMissileMode = false;
+        }
+
+        function toggleMissileMode() {
+            isMissileMode = !isMissileMode;
+            selectedMissileStone = null;
+            if (missileButton) {
+                missileButton.classList.toggle('active', isMissileMode);
+                const missileUsed = (window.gameState?.missileMovesUsed?.[currentUser.id === window.game?.blackId ? 'black' : 'white']) || 0;
+                const missileLimit = window.gameState?.missileMoveLimit || 10;
+                missileButton.textContent = isMissileMode ? '미사일 이동 (활성) - 돌 선택' : `미사일 이동 (${missileUsed}/${missileLimit})`;
+            }
+        }
+
+        // 바둑판 클릭 이벤트 수정 (미사일바둑 모드)
+        if (window.game) {
+            const originalBoardClick = window.game.handleBoardClick;
+            window.game.handleBoardClick = function(x, y) {
+                if (missileMode && isMissileMode) {
+                    // 미사일 이동 모드
+                    if (!selectedMissileStone) {
+                        // 돌 선택
+                        const playerColor = (window.game.blackId === currentUser.id) ? 'black' : 'white';
+                        if (window.game.stones[y][x] === playerColor) {
+                            selectedMissileStone = { x, y };
+                            if (missileButton) {
+                                missileButton.textContent = `미사일 이동 (활성) - 목적지 선택`;
+                            }
+                        } else {
+                            alert('자신의 돌을 선택해주세요.');
+                        }
+                    } else {
+                        // 목적지 선택
+                        socket.emit('move_missile', {
+                            fromX: selectedMissileStone.x,
+                            fromY: selectedMissileStone.y,
+                            toX: x,
+                            toY: y
+                        });
+                        selectedMissileStone = null;
+                        isMissileMode = false;
+                        if (missileButton) {
+                            missileButton.classList.remove('active');
+                        }
+                    }
+                } else {
+                    // 일반 모드
+                    if (originalBoardClick) {
+                        originalBoardClick.call(this, x, y);
+                    }
+                }
+            };
+        }
+
+        // 미사일 이동 업데이트
+        socket.on('missile_moved', (data) => {
+            if (window.game) {
+                window.game.loadState({ stones: data.stones || window.game.stones });
+            }
+            if (missileButton && window.gameState) {
+                const missileUsed = data.missileMovesUsed[currentUser.id === window.game?.blackId ? 'black' : 'white'] || 0;
+                const missileLimit = window.gameState.missileMoveLimit || 10;
+                missileButton.textContent = `미사일 이동 (${missileUsed}/${missileLimit})`;
+                missileButton.disabled = missileUsed >= missileLimit;
+            }
+        });
+
+        socket.on('missile_error', (data) => {
+            alert(`미사일 이동 오류: ${data.error || '알 수 없는 오류가 발생했습니다.'}`);
+            selectedMissileStone = null;
+            isMissileMode = false;
+            if (missileButton) {
+                missileButton.classList.remove('active');
+            }
         });
 
         // 채팅 기능
@@ -2816,6 +3654,62 @@ if (game && game.mode) {
             if (confirm('정말 기권하시겠습니까?')) {
                 updateGameNotice('기권했습니다. 게임이 곧 종료됩니다.');
                 socket.emit('resign');
+            }
+        });
+
+        // 매너액션 버튼 (PVP 게임에서만 표시)
+        function updateMannerActions() {
+            const mannerActions = document.getElementById('mannerActions');
+            if (mannerActions) {
+                mannerActions.style.display = (!isAiGame && gameEnded) ? 'flex' : 'none';
+            }
+        }
+
+        // 매너점수 업데이트
+        let mannerActionUsed = false;
+        const mannerPositiveBtn = document.getElementById('mannerPositiveBtn');
+        const mannerNegativeBtn = document.getElementById('mannerNegativeBtn');
+
+        if (mannerPositiveBtn) {
+            mannerPositiveBtn.addEventListener('click', () => {
+                if (mannerActionUsed) return;
+                const opponentId = currentUserId === blackPlayerId ? whitePlayerId : blackPlayerId;
+                if (opponentId) {
+                    socket.emit('update_manner_score', { targetUserId: opponentId, delta: 10 });
+                    mannerActionUsed = true;
+                    mannerPositiveBtn.disabled = true;
+                    mannerNegativeBtn.disabled = true;
+                }
+            });
+        }
+
+        if (mannerNegativeBtn) {
+            mannerNegativeBtn.addEventListener('click', () => {
+                if (mannerActionUsed) return;
+                const opponentId = currentUserId === blackPlayerId ? whitePlayerId : blackPlayerId;
+                if (opponentId) {
+                    socket.emit('update_manner_score', { targetUserId: opponentId, delta: -10 });
+                    mannerActionUsed = true;
+                    mannerPositiveBtn.disabled = true;
+                    mannerNegativeBtn.disabled = true;
+                }
+            });
+        }
+
+        // 매너점수 업데이트 수신
+        socket.on('manner_score_updated', (data) => {
+            if (data.userId === blackPlayerId) {
+                const blackMannerScore = document.getElementById('blackMannerScore');
+                if (blackMannerScore) {
+                    blackMannerScore.textContent = data.newMannerScore;
+                    updateMannerGrade('blackMannerGrade', data.newMannerScore);
+                }
+            } else if (data.userId === whitePlayerId) {
+                const whiteMannerScore = document.getElementById('whiteMannerScore');
+                if (whiteMannerScore) {
+                    whiteMannerScore.textContent = data.newMannerScore;
+                    updateMannerGrade('whiteMannerGrade', data.newMannerScore);
+                }
             }
         });
 

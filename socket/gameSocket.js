@@ -18,6 +18,46 @@ class GameSocket {
         // Update user status based on whether they're playing or spectating
         this.updateGameUserStatus(gameId, userId);
 
+        // Handle manner score update
+        socket.on('update_manner_score', async (data) => {
+            try {
+                const { targetUserId, delta } = data;
+                const game = await gameService.getGame(gameId);
+                
+                // PVP 게임에서만 매너점수 업데이트 가능
+                if (game.isAiGame) {
+                    return socket.emit('manner_error', { error: 'AI 게임에서는 매너점수를 평가할 수 없습니다.' });
+                }
+
+                // 게임에 참여한 플레이어인지 확인
+                if (game.blackId !== userId && game.whiteId !== userId) {
+                    return socket.emit('manner_error', { error: '게임에 참여한 플레이어만 매너점수를 평가할 수 있습니다.' });
+                }
+
+                // 상대방인지 확인
+                if (targetUserId !== game.blackId && targetUserId !== game.whiteId) {
+                    return socket.emit('manner_error', { error: '상대방만 매너점수를 평가할 수 있습니다.' });
+                }
+
+                // 자신에게는 평가 불가
+                if (targetUserId === userId) {
+                    return socket.emit('manner_error', { error: '자신에게는 매너점수를 평가할 수 없습니다.' });
+                }
+
+                const userService = require('../services/userService');
+                const newMannerScore = await userService.updateMannerScore(targetUserId, delta);
+
+                // 모든 클라이언트에 업데이트 전송
+                this.io.to(`game-${gameId}`).emit('manner_score_updated', {
+                    userId: targetUserId,
+                    newMannerScore: newMannerScore
+                });
+            } catch (error) {
+                console.error('Update manner score error:', error);
+                socket.emit('manner_error', { error: error.message });
+            }
+        });
+
         // Get initial game state
         socket.on('get_game_state', async () => {
             try {
@@ -66,6 +106,226 @@ class GameSocket {
             }
         });
 
+        // Base stone placement
+        socket.on('place_base_stone', async (data) => {
+            try {
+                const { x, y } = data;
+                const result = await gameService.placeBaseStone(gameId, userId, x, y);
+                
+                // Broadcast to all in room
+                this.io.to(`game-${gameId}`).emit('base_stone_placed', result);
+                
+                // 베이스돌 배치 완료 후 입찰 단계로
+                if (!result.basePlacementPhase && result.komiBiddingPhase) {
+                    const state = await gameService.getGameState(gameId);
+                    this.io.to(`game-${gameId}`).emit('game_state', {
+                        ...state,
+                        game: {
+                            id: gameId,
+                            mode: state.mode
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Place base stone error:', error);
+                socket.emit('base_stone_error', { error: error.message });
+            }
+        });
+
+        // Komi bidding
+        socket.on('submit_komi_bid', async (data) => {
+            try {
+                const { color, komi } = data;
+                const result = await gameService.submitKomiBid(gameId, userId, color, komi);
+                
+                // Broadcast to all in room
+                this.io.to(`game-${gameId}`).emit('komi_bid_update', result);
+                
+                // 입찰 완료 후 게임 시작
+                if (!result.komiBiddingPhase && result.finalKomi) {
+                    const state = await gameService.getGameState(gameId);
+                    const game = await gameService.getGame(gameId);
+                    this.io.to(`game-${gameId}`).emit('game_state', {
+                        ...state,
+                        game: {
+                            id: game.id,
+                            blackId: game.blackId,
+                            whiteId: game.whiteId,
+                            isAiGame: game.isAiGame,
+                            aiLevel: game.aiLevel,
+                            aiColor: game.aiColor,
+                            mode: game.mode,
+                            komi: game.komi,
+                            endedAt: game.endedAt,
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Submit komi bid error:', error);
+                socket.emit('komi_bid_error', { error: error.message });
+            }
+        });
+
+        // Capture bidding
+        socket.on('submit_capture_bid', async (data) => {
+            try {
+                const { bid } = data;
+                const result = await gameService.submitCaptureBid(gameId, userId, bid);
+                
+                // Broadcast to all in room
+                this.io.to(`game-${gameId}`).emit('capture_bid_update', result);
+                
+                // 입찰이 완료되고 게임이 시작되면 게임 상태 전송
+                if (!result.biddingPhase && result.finalTarget) {
+                    const state = await gameService.getGameState(gameId);
+                    const game = await gameService.getGame(gameId);
+                    this.io.to(`game-${gameId}`).emit('game_state', {
+                        ...state,
+                        game: {
+                            id: game.id,
+                            blackId: game.blackId,
+                            whiteId: game.whiteId,
+                            isAiGame: game.isAiGame,
+                            aiLevel: game.aiLevel,
+                            aiColor: game.aiColor,
+                            mode: game.mode,
+                            endedAt: game.endedAt,
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Submit capture bid error:', error);
+                socket.emit('bid_error', { error: error.message });
+            }
+        });
+
+        // Dice Go - Roll dice
+        socket.on('roll_dice', async () => {
+            try {
+                const result = await gameService.rollDice(gameId, userId);
+                this.io.to(`game-${gameId}`).emit('dice_rolled', result);
+                
+                const state = await gameService.getGameState(gameId);
+                const game = await gameService.getGame(gameId);
+                this.io.to(`game-${gameId}`).emit('game_state', {
+                    ...state,
+                    game: {
+                        id: game.id,
+                        blackId: game.blackId,
+                        whiteId: game.whiteId,
+                        isAiGame: game.isAiGame,
+                        aiLevel: game.aiLevel,
+                        aiColor: game.aiColor,
+                        mode: game.mode,
+                        endedAt: game.endedAt,
+                    }
+                });
+            } catch (error) {
+                console.error('Roll dice error:', error);
+                socket.emit('dice_error', { error: error.message });
+            }
+        });
+
+        // Cops and Robbers - Roll dice
+        socket.on('roll_cops_dice', async () => {
+            try {
+                const result = await gameService.rollCopsDice(gameId, userId);
+                this.io.to(`game-${gameId}`).emit('cops_dice_rolled', result);
+                
+                const state = await gameService.getGameState(gameId);
+                const game = await gameService.getGame(gameId);
+                this.io.to(`game-${gameId}`).emit('game_state', {
+                    ...state,
+                    game: {
+                        id: game.id,
+                        blackId: game.blackId,
+                        whiteId: game.whiteId,
+                        isAiGame: game.isAiGame,
+                        aiLevel: game.aiLevel,
+                        aiColor: game.aiColor,
+                        mode: game.mode,
+                        endedAt: game.endedAt,
+                    }
+                });
+            } catch (error) {
+                console.error('Roll cops dice error:', error);
+                socket.emit('cops_dice_error', { error: error.message });
+            }
+        });
+
+        // Cops and Robbers - End round
+        socket.on('end_cops_round', async () => {
+            try {
+                const result = await gameService.endCopsRound(gameId, userId);
+                this.io.to(`game-${gameId}`).emit('cops_round_ended', result);
+                
+                if (result.gameEnded) {
+                    const state = await gameService.getGameState(gameId);
+                    const game = await gameService.getGame(gameId);
+                    this.io.to(`game-${gameId}`).emit('game_ended', {
+                        winner: result.winner,
+                        roundScores: result.roundScores
+                    });
+                } else {
+                    const state = await gameService.getGameState(gameId);
+                    const game = await gameService.getGame(gameId);
+                    this.io.to(`game-${gameId}`).emit('game_state', {
+                        ...state,
+                        game: {
+                            id: game.id,
+                            blackId: game.blackId,
+                            whiteId: game.whiteId,
+                            isAiGame: game.isAiGame,
+                            aiLevel: game.aiLevel,
+                            aiColor: game.aiColor,
+                            mode: game.mode,
+                            endedAt: game.endedAt,
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('End cops round error:', error);
+                socket.emit('cops_dice_error', { error: error.message });
+            }
+        });
+
+        // Dice Go - End round
+        socket.on('end_dice_round', async () => {
+            try {
+                const result = await gameService.endDiceRound(gameId, userId);
+                this.io.to(`game-${gameId}`).emit('dice_round_ended', result);
+                
+                if (result.gameEnded) {
+                    // 게임 종료 처리
+                    const state = await gameService.getGameState(gameId);
+                    const game = await gameService.getGame(gameId);
+                    this.io.to(`game-${gameId}`).emit('game_ended', {
+                        winner: result.winner,
+                        roundScores: result.roundScores
+                    });
+                } else {
+                    const state = await gameService.getGameState(gameId);
+                    const game = await gameService.getGame(gameId);
+                    this.io.to(`game-${gameId}`).emit('game_state', {
+                        ...state,
+                        game: {
+                            id: game.id,
+                            blackId: game.blackId,
+                            whiteId: game.whiteId,
+                            isAiGame: game.isAiGame,
+                            aiLevel: game.aiLevel,
+                            aiColor: game.aiColor,
+                            mode: game.mode,
+                            endedAt: game.endedAt,
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('End dice round error:', error);
+                socket.emit('dice_error', { error: error.message });
+            }
+        });
+
         // Make move
         socket.on('make_move', async (data) => {
             try {
@@ -87,11 +347,11 @@ class GameSocket {
                         return;
                     }
 
-                    // Update timer
-                    timerService.switchTurn(gameId);
+                    // Update timer (스피드바둑일 때는 피셔 방식 적용, 그 외는 초읽기 모드)
+                    const game = await gameService.getGame(gameId);
+                    await timerService.switchTurn(gameId, game.mode);
                     
                     // Check if AI turn
-                    const game = await gameService.getGame(gameId);
                     if (game.isAiGame && game.aiColor !== moveResult.color) {
                         const aiService = require('../services/aiService');
                         this.io.to(`game-${gameId}`).emit('ai_thinking');
