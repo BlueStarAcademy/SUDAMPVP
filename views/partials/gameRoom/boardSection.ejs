@@ -1,0 +1,71 @@
+<!-- Board Section -->
+<div class="board-section-wrapper">
+    <div class="board-section" id="boardSection">
+        <!-- 아이템 타이머 표시 -->
+        <div class="item-timer-container" id="hiddenItemTimerContainer">
+            <div class="item-timer-bar-container">
+                <div class="item-timer-bar" id="hiddenItemTimerBar"></div>
+            </div>
+            <div class="item-timer-text" id="hiddenItemTimerText"></div>
+        </div>
+        <div class="item-timer-container" id="scanItemTimerContainer">
+            <div class="item-timer-bar-container">
+                <div class="item-timer-bar" id="scanItemTimerBar"></div>
+            </div>
+            <div class="item-timer-text" id="scanItemTimerText"></div>
+        </div>
+        <div class="board-wrapper">
+            <canvas id="goBoard" width="900" height="900"></canvas>
+            <div class="ai-thinking" id="aiThinking">AI가 생각 중...</div>
+            <!-- 미사일 방향 선택기 -->
+            <div id="missileDirectionSelector" style="display: none; position: absolute; pointer-events: none;">
+                <div class="missile-direction-arrow" data-direction="up">↑</div>
+                <div class="missile-direction-arrow" data-direction="down">↓</div>
+                <div class="missile-direction-arrow" data-direction="left">←</div>
+                <div class="missile-direction-arrow" data-direction="right">→</div>
+            </div>
+        </div>
+        
+        <!-- 전광판 - 게임 상태 안내 -->
+        <div class="game-notice-board" id="gameNoticeBoard">
+            게임이 시작되었습니다.
+        </div>
+        
+        <!-- 모바일 착수 버튼 영역 (전광판과 버튼 패널 사이) -->
+        <div class="mobile-move-button-area" id="mobileMoveButtonArea" style="display: none;">
+            <!-- 동그란 착수 버튼 -->
+            <button class="mobile-confirm-move-btn" id="confirmMoveBtn" disabled>
+                <span>착수</span>
+            </button>
+            <!-- 착수 버튼 사용 체크박스 -->
+            <div class="mobile-move-control" id="mobileMoveControl">
+                <label class="mobile-move-checkbox-label">
+                    <input type="checkbox" id="useMoveButton" checked>
+                    <span>착수 버튼 사용</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- 버튼 패널 - 바둑판 하단에 붙어서 움직임 -->
+        <div class="button-panel">
+            <!-- 버튼 그룹: 좌측 - 우측 -->
+            <div class="button-group-container">
+                <!-- 좌측: 대국 기능 버튼 (패스, 기권) -->
+                <div class="button-group button-group-left">
+                    <button class="game-btn btn-pass" id="passBtn" data-tooltip="통과" title="통과">
+                        <img src="/images/pass.webp" alt="통과" onerror="this.style.display='none'; this.parentElement.innerHTML='⏭️';">
+                    </button>
+                    <button class="game-btn btn-resign" id="resignBtn" data-tooltip="기권" title="기권">
+                        <img src="/images/giveup.webp" alt="기권" onerror="this.style.display='none'; this.parentElement.innerHTML='🏳️';">
+                    </button>
+                </div>
+                
+                <!-- 우측: 특수 기능 버튼 (형세판단, 힌트 등) -->
+                <div class="button-group button-group-right" id="specialButtons">
+                    <!-- 버튼들은 게임 모드에 따라 동적으로 표시됨 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

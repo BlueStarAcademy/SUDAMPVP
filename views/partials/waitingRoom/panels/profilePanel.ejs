@@ -1,0 +1,77 @@
+﻿            <div class="panel profile-panel">
+                <div class="profile-content">
+                    <div class="profile-card">
+                        <div class="profile-card-top">
+                            <div class="profile-left-section">
+                                <div class="profile-avatar-container">
+                                    <div class="profile-avatar-large" id="profileAvatar">
+                                        <% if (user.avatar) { %>
+                                        <img src="/images/profile<%= user.avatar %>.webp" alt="<%= user.nickname %>" onerror="this.style.display='none'; this.parentElement.textContent='<%= user.nickname.charAt(0).toUpperCase() %>';">
+                                        <% } else { %>
+                                        <%= user.nickname.charAt(0).toUpperCase() %>
+                                        <% } %>
+                                    </div>
+                                    <div class="profile-edit-icon" id="profileEditBtn" title="프로필 수정">✏️</div>
+                                </div>
+                                <div class="profile-name">
+                                    <%= user.nickname %>
+                                    <% 
+                                    // 티어 계산
+                                    const rating = user.rating || 1500;
+                                    let tier = 1;
+                                    if (rating >= 3500) tier = 9; // 챌린저
+                                    else if (rating >= 3000) tier = 8; // 마스터
+                                    else if (rating >= 2400) tier = 7; // 다이아
+                                    else if (rating >= 2000) tier = 6; // 플래티넘
+                                    else if (rating >= 1700) tier = 5; // 골드
+                                    else if (rating >= 1500) tier = 4; // 실버
+                                    else if (rating >= 1400) tier = 3; // 브론즈
+                                    else if (rating >= 1300) tier = 2; // 루키
+                                    // else tier = 1; // 새싹
+                                    %>
+                                    <img src="/images/tire<%= tier %>.webp" alt="티어<%= tier %>" class="profile-tier-icon" id="profileTierIcon" onerror="this.style.display='none';">
+                                </div>
+                            </div>
+                            <div class="profile-right-section">
+                                <div class="profile-info-item">
+                                    <div class="profile-info-label">매너점수</div>
+                                    <div class="profile-info-value" id="profileMannerScore"><%= user.mannerScore || 1500 %></div>
+                                </div>
+                                <div class="profile-info-item">
+                                    <div class="profile-info-label">바둑MBTI</div>
+                                    <div class="profile-info-value" id="profileMBTI"><%= user.badukMBTI || '설정하지 않음' %></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="profile-stats-with-detail">
+                            <div class="profile-stats-compact">
+                                <div class="profile-stat"><div class="profile-stat-value"><%= user.wins || 0 %></div><div class="profile-stat-label">승</div></div>
+                                <div class="profile-stat"><div class="profile-stat-value"><%= user.losses || 0 %></div><div class="profile-stat-label">패</div></div>
+                                <div class="profile-stat"><div class="profile-stat-value"><% const totalGamesForProfile = (user.wins || 0) + (user.losses || 0); const winRateForProfile = totalGamesForProfile > 0 ? Math.round((user.wins / totalGamesForProfile) * 100) : 0; %><%= winRateForProfile %>%</div><div class="profile-stat-label">승률</div></div>
+                            </div>
+                            <button class="detail-btn" id="detailBtn">상세보기</button>
+                        </div>
+                    </div>
+                    <div class="matching-content" id="matchingContent">
+                        <div class="matching-info">
+                            <div class="matching-title">랭킹전 매칭</div>
+                            <% 
+                            const totalGames = (user.wins || 0) + (user.losses || 0);
+                            const winRate = totalGames > 0 ? Math.round(((user.wins || 0) / totalGames) * 100) : 0;
+                            %>
+                            <div class="matching-rating-stats" style="font-size: 12px; color: #666; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                                <span>레이팅: <strong style="color: #667eea;"><%= user.rating %></strong></span>
+                                <span style="color: #d1d5db;">|</span>
+                                <span>승: <strong style="color: #667eea;"><%= user.wins || 0 %></strong></span>
+                                <span>패: <strong style="color: #ef4444;"><%= user.losses || 0 %></strong></span>
+                                <span>승률: <strong style="color: #10b981;"><%= winRate %>%</strong></span>
+                            </div>
+                            <div class="matching-status" id="matchingStatus">대기 중</div>
+                        </div>
+                        <div class="matching-buttons">
+                            <button class="btn btn-primary" id="startMatchingBtn">매칭 시작</button>
+                            <button class="btn btn-secondary" id="cancelMatchingBtn" style="display: none;">매칭 취소</button>
+                        </div>
+                    </div>
+                </div>
+            </div>

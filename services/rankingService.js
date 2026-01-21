@@ -269,38 +269,6 @@ class RankingService {
         await this.removeFromMatchingQueue(userId1);
         await this.removeFromMatchingQueue(userId2);
 
-        // Consume tickets before creating game
-        const ticketService = require('./ticketService');
-        const ticketType = roomType === 'casual' ? 'casual' : 'strategy';
-        
-        // Check and consume tickets for both players
-        const user1HasTicket = await ticketService.consumeTicket(userId1, ticketType);
-        const user2HasTicket = await ticketService.consumeTicket(userId2, ticketType);
-
-        if (!user1HasTicket || !user2HasTicket) {
-            // Return tickets if one player doesn't have enough
-            if (user1HasTicket) {
-                // Refund ticket (add back)
-                const prisma = require('../config/database');
-                await prisma.user.update({
-                    where: { id: userId1 },
-                    data: ticketType === 'strategy' 
-                        ? { strategyTickets: { increment: 1 } }
-                        : { casualTickets: { increment: 1 } }
-                });
-            }
-            if (user2HasTicket) {
-                const prisma = require('../config/database');
-                await prisma.user.update({
-                    where: { id: userId2 },
-                    data: ticketType === 'strategy' 
-                        ? { strategyTickets: { increment: 1 } }
-                        : { casualTickets: { increment: 1 } }
-                });
-            }
-            throw new Error('Not enough tickets');
-        }
-
         // Create game (Default to CLASSIC for ranked matching)
         const game = await gameService.createGame(userId1, userId2, rating1, rating2, {
             matchType: 'RANKED',
@@ -358,6 +326,14 @@ class RankingService {
         const game = await gameService.getGame(gameId);
         if (!game) return;
 
+        // 중복 업데이트 방지: 게임이 이미 종료되었고 result가 이미 설정되어 있으면
+        // 이 함수가 이미 호출되었을 가능성이 높으므로 로그만 남기고 진행
+        // (단, result가 null이면 아직 설정되지 않은 것이므로 정상 진행)
+        if (game.endedAt && game.result && game.result !== result) {
+            console.warn(`[updateRatings] 게임 ${gameId}의 결과가 이미 ${game.result}로 설정되어 있는데, ${result}로 업데이트하려고 시도했습니다. 중복 업데이트를 방지합니다.`);
+            return rewards;
+        }
+
         const isRanked = game.matchType === 'RANKED';
         const blackUser = game.blackId ? await userService.findUserById(game.blackId) : null;
         const whiteUser = game.whiteId ? await userService.findUserById(game.whiteId) : null;
@@ -393,24 +369,45 @@ class RankingService {
             rewards.black.ratingChange = Math.round(blackK * (actualBlack - expectedBlack));
             rewards.white.ratingChange = Math.round(whiteK * (actualWhite - expectedWhite));
 
+            // 현재 레이팅 저장 (모달 표시용)
+            rewards.black.currentRating = blackRating;
+            rewards.white.currentRating = whiteRating;
+
             await userService.updateRating(game.blackId, blackRating + rewards.black.ratingChange);
             await userService.updateRating(game.whiteId, whiteRating + rewards.white.ratingChange);
         }
 
-        // 2. Gold Rewards
+        // 2. Gold Rewards (매너 점수에 따른 보상 조정)
         const WIN_GOLD = isRanked ? 100 : 50;
         const LOSE_GOLD = isRanked ? 20 : 10;
         const DRAW_GOLD = isRanked ? 40 : 20;
 
+        // 매너 점수에 따른 보상 배율 계산
+        const getMannerBonus = (mannerScore) => {
+            if (mannerScore >= 2000) return 1.2; // +20%
+            if (mannerScore >= 1500) return 1.0; // 기본
+            if (mannerScore >= 1000) return 0.9;  // -10%
+            return 0.8; // -20%
+        };
+
+        const blackMannerScore = blackUser?.mannerScore || 1500;
+        const whiteMannerScore = whiteUser?.mannerScore || 1500;
+        const blackMannerBonus = getMannerBonus(blackMannerScore);
+        const whiteMannerBonus = getMannerBonus(whiteMannerScore);
+
         if (result === 'black_win') {
-            rewards.black.gold = WIN_GOLD;
+            rewards.black.gold = Math.round(WIN_GOLD * blackMannerBonus);
             rewards.white.gold = LOSE_GOLD;
+            rewards.black.mannerBonus = blackMannerBonus;
         } else if (result === 'white_win') {
             rewards.black.gold = LOSE_GOLD;
-            rewards.white.gold = WIN_GOLD;
+            rewards.white.gold = Math.round(WIN_GOLD * whiteMannerBonus);
+            rewards.white.mannerBonus = whiteMannerBonus;
         } else {
-            rewards.black.gold = DRAW_GOLD;
-            rewards.white.gold = DRAW_GOLD;
+            rewards.black.gold = Math.round(DRAW_GOLD * blackMannerBonus);
+            rewards.white.gold = Math.round(DRAW_GOLD * whiteMannerBonus);
+            rewards.black.mannerBonus = blackMannerBonus;
+            rewards.white.mannerBonus = whiteMannerBonus;
         }
 
         // Apply gold and win/loss records (AI 게임은 전적에 포함하지 않음)

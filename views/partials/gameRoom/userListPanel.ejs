@@ -1,0 +1,19 @@
+<!-- User List Panel -->
+<div class="info-panel">
+    <div class="panel-title">
+        <div class="panel-title-text">유저 목록</div>
+    </div>
+    <div class="user-list" id="userList">
+        <div class="user-item" style="cursor: pointer;" onclick="<%= blackPlayer && blackPlayer.id !== user.id ? `showProfileModal('${blackPlayer.id}')` : '' %>" data-user-id="<%= blackPlayer ? blackPlayer.id : '' %>">
+            <div class="user-avatar-small"><%= blackPlayer ? blackPlayer.nickname.charAt(0).toUpperCase() : '흑' %></div>
+            <div class="user-name"><%= blackPlayer ? blackPlayer.nickname : '흑' %></div>
+            <div class="user-role">흑</div>
+        </div>
+        <div class="user-item" style="cursor: pointer;" onclick="<%= whitePlayer && whitePlayer.id !== user.id ? `showProfileModal('${whitePlayer.id}')` : '' %>" data-user-id="<%= whitePlayer ? whitePlayer.id : '' %>">
+            <div class="user-avatar-small"><%= whitePlayer ? whitePlayer.nickname.charAt(0).toUpperCase() : '백' %></div>
+            <div class="user-name"><%= whitePlayer ? whitePlayer.nickname : '백' %></div>
+            <div class="user-role">백</div>
+        </div>
+    </div>
+</div>
+

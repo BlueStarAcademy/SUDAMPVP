@@ -1,0 +1,48 @@
+<!-- Manner Actions Panel -->
+<div class="manner-actions" id="mannerActions" style="display: none;">
+    <div class="manner-actions-title">매너 액션</div>
+    <div class="manner-buttons">
+        <!-- 매너 액션 -->
+        <button class="manner-btn manner-btn-positive" id="mannerGreetBtn" title="인사" data-action="greet" data-delta="5">
+            <span class="manner-icon">👍</span>
+            <span class="manner-text">인사</span>
+        </button>
+        <button class="manner-btn manner-btn-positive" id="mannerGoodMoveBtn" title="좋은 수" data-action="good_move" data-delta="5">
+            <span class="manner-icon">👏</span>
+            <span class="manner-text">좋은 수</span>
+        </button>
+        <button class="manner-btn manner-btn-positive" id="mannerWaitBtn" title="기다려주기" data-action="wait" data-delta="3">
+            <span class="manner-icon">⏰</span>
+            <span class="manner-text">기다려주기</span>
+        </button>
+        <button class="manner-btn manner-btn-positive" id="mannerEncourageBtn" title="격려" data-action="encourage" data-delta="3">
+            <span class="manner-icon">💪</span>
+            <span class="manner-text">격려</span>
+        </button>
+        <button class="manner-btn manner-btn-positive" id="mannerThanksBtn" title="감사" data-action="thanks" data-delta="5">
+            <span class="manner-icon">🙏</span>
+            <span class="manner-text">감사</span>
+        </button>
+        <!-- 비매너 액션 -->
+        <button class="manner-btn manner-btn-negative" id="mannerStallBtn" title="시간 끌기" data-action="stall" data-delta="-10">
+            <span class="manner-icon">⏱️</span>
+            <span class="manner-text">시간 끌기</span>
+        </button>
+        <button class="manner-btn manner-btn-negative" id="mannerRudeBtn" title="무례" data-action="rude" data-delta="-10">
+            <span class="manner-icon">😤</span>
+            <span class="manner-text">무례</span>
+        </button>
+        <button class="manner-btn manner-btn-negative" id="mannerDisturbBtn" title="방해" data-action="disturb" data-delta="-15">
+            <span class="manner-icon">🚫</span>
+            <span class="manner-text">방해</span>
+        </button>
+        <button class="manner-btn manner-btn-negative" id="mannerAngryBtn" title="화남" data-action="angry" data-delta="-15">
+            <span class="manner-icon">😡</span>
+            <span class="manner-text">화남</span>
+        </button>
+    </div>
+    <div class="manner-actions-info" id="mannerActionsInfo" style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px; text-align: center;">
+        남은 사용 횟수: <span id="mannerActionsRemaining">10</span>회
+    </div>
+</div>
+

@@ -1,0 +1,100 @@
+<% 
+// Props: player, color, user, game
+const isBlack = color === 'black';
+const playerId = isBlack ? 'blackPlayer' : 'whitePlayer';
+const playerNameId = isBlack ? 'blackName' : 'whiteName';
+const playerAvatarId = isBlack ? 'blackAvatar' : 'whiteAvatar';
+const playerRatingId = isBlack ? 'blackRating' : 'whiteRating';
+const playerTimerBarId = isBlack ? 'blackTimerBar' : 'whiteTimerBar';
+const playerTimerId = isBlack ? 'blackTimer' : 'whiteTimer';
+const playerByoyomiDisplayId = isBlack ? 'blackByoyomiDisplay' : 'whiteByoyomiDisplay';
+const playerByoyomiCountId = isBlack ? 'blackByoyomiCount' : 'whiteByoyomiCount';
+const playerCapturedId = isBlack ? 'blackCaptured' : 'whiteCaptured';
+const playerCapturedTargetId = isBlack ? 'blackCapturedTarget' : 'whiteCapturedTarget';
+const playerMannerId = isBlack ? 'blackManner' : 'whiteManner';
+const playerMannerScoreId = isBlack ? 'blackMannerScore' : 'whiteMannerScore';
+const playerMannerGradeId = isBlack ? 'blackMannerGrade' : 'whiteMannerGrade';
+
+// Tier calculation
+let tier = 1;
+if (player && player.rating) {
+    const rating = player.rating;
+    if (rating >= 3500) tier = 9;
+    else if (rating >= 3000) tier = 8;
+    else if (rating >= 2400) tier = 7;
+    else if (rating >= 2000) tier = 6;
+    else if (rating >= 1700) tier = 5;
+    else if (rating >= 1500) tier = 4;
+    else if (rating >= 1400) tier = 3;
+    else if (rating >= 1300) tier = 2;
+}
+%>
+<div class="player-panel <%= color %>" id="<%= playerId %>">
+    <% if (isBlack) { %>
+    <div class="player-info-section">
+        <!-- 흑: 프로필사진 / 닉네임(레이팅) / 등급 순서 -->
+        <div class="player-header">
+            <div class="player-avatar" id="<%= playerAvatarId %>" data-avatar="" data-user-id="" style="cursor: default;" onclick=""></div>
+            <div class="player-name-group">
+                <div class="player-name" id="<%= playerNameId %>" style="cursor: default;" data-user-id=""></div>
+                <div class="player-level" id="<%= playerRatingId %>"></div>
+            </div>
+            <img src="/images/tire1.webp" alt="티어" class="tier-icon" id="<%= isBlack ? 'blackTierIcon' : 'whiteTierIcon' %>" style="display: none;" onerror="this.style.display='none';">
+            <div class="player-manner" id="<%= playerMannerId %>" style="display: none;">
+                매너: <span id="<%= playerMannerScoreId %>"></span>
+                <span class="manner-grade" id="<%= playerMannerGradeId %>"></span>
+            </div>
+        </div>
+        <div class="timer-section">
+            <div class="timer-bar">
+                <div class="timer-bar-fill" id="<%= playerTimerBarId %>" style="width: 100%"></div>
+            </div>
+            <div class="timer-display">
+                <div class="byoyomi-display" id="<%= playerByoyomiDisplayId %>" style="display: none;">
+                    <img src="/images/timer.webp" alt="초읽기" class="byoyomi-icon">
+                    <span class="byoyomi-count" id="<%= playerByoyomiCountId %>">0</span>
+                </div>
+                <span class="timer-text" id="<%= playerTimerId %>"></span>
+            </div>
+        </div>
+    </div>
+    <div class="captured-stones">
+        <div class="captured-label">따낸 돌</div>
+        <div class="captured-count" id="<%= playerCapturedId %>">0</div>
+        <div class="captured-target" id="<%= playerCapturedTargetId %>"></div>
+    </div>
+    <% } else { %>
+    <div class="captured-stones">
+        <div class="captured-label">따낸 돌</div>
+        <div class="captured-count" id="<%= playerCapturedId %>">0</div>
+        <div class="captured-target" id="<%= playerCapturedTargetId %>"></div>
+    </div>
+    <div class="player-info-section">
+        <!-- 백: 등급 / 닉네임(레이팅) / 프로필사진 순서 (우측 정렬, 프로필사진이 제일 우측) (게임 시작 전 빈 값, 게임 시작 후 표시) -->
+        <div class="player-header">
+            <img src="/images/tire1.webp" alt="티어" class="tier-icon" id="<%= isBlack ? 'blackTierIcon' : 'whiteTierIcon' %>" style="display: none;" onerror="this.style.display='none';">
+            <div class="player-name-group">
+                <div class="player-name" id="<%= playerNameId %>" style="cursor: default;" data-user-id=""></div>
+                <div class="player-level" id="<%= playerRatingId %>"></div>
+            </div>
+            <div class="player-avatar" id="<%= playerAvatarId %>" data-avatar="" data-user-id="" style="cursor: default;" onclick=""></div>
+            <div class="player-manner" id="<%= playerMannerId %>" style="display: none;">
+                매너: <span id="<%= playerMannerScoreId %>"></span>
+                <span class="manner-grade" id="<%= playerMannerGradeId %>"></span>
+            </div>
+        </div>
+        <div class="timer-section">
+            <div class="timer-bar">
+                <div class="timer-bar-fill" id="<%= playerTimerBarId %>" style="width: 100%"></div>
+            </div>
+            <div class="timer-display">
+                <span class="timer-text" id="<%= playerTimerId %>"></span>
+                <div class="byoyomi-display" id="<%= playerByoyomiDisplayId %>" style="display: none;">
+                    <img src="/images/timer.webp" alt="초읽기" class="byoyomi-icon">
+                    <span class="byoyomi-count" id="<%= playerByoyomiCountId %>">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>

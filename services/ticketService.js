@@ -140,29 +140,47 @@ class TicketService {
             return 0;
         }
 
-        // 먼저 회복 처리
-        await this.recoverTickets(userId);
-        
-        // 최신 데이터 다시 가져오기
-        const updatedUser = await prisma.user.findUnique({ where: { id: userId } });
-        
         const currentTickets = ticketType === 'strategy' 
-            ? updatedUser.strategyTickets 
-            : updatedUser.casualTickets;
+            ? user.strategyTickets 
+            : user.casualTickets;
         const maxTickets = ticketType === 'strategy'
-            ? updatedUser.strategyTicketMax
-            : updatedUser.casualTicketMax;
+            ? user.strategyTicketMax
+            : user.casualTicketMax;
 
-        // 이미 최대치면 0 반환
+        // 이미 최대치면 0 반환 (회복 불필요)
         if (currentTickets >= maxTickets) {
             return 0;
         }
 
+        // 회복이 필요한지 확인 (30분 경과 여부)
         const now = new Date();
-        const lastRecovery = updatedUser.lastTicketRecovery || updatedUser.createdAt;
+        const lastRecovery = user.lastTicketRecovery || user.createdAt;
         const elapsed = now.getTime() - new Date(lastRecovery).getTime();
-        const remaining = TicketService.TICKET_RECOVERY_INTERVAL - (elapsed % TicketService.TICKET_RECOVERY_INTERVAL);
+        
+        // 30분이 경과했으면 회복 처리 (한 번만)
+        if (elapsed >= TicketService.TICKET_RECOVERY_INTERVAL) {
+            await this.recoverTickets(userId);
+            // 회복 후 다시 계산
+            const updatedUser = await prisma.user.findUnique({ where: { id: userId } });
+            const updatedTickets = ticketType === 'strategy' 
+                ? updatedUser.strategyTickets 
+                : updatedUser.casualTickets;
+            const updatedMax = ticketType === 'strategy'
+                ? updatedUser.strategyTicketMax
+                : updatedUser.casualTicketMax;
+            
+            if (updatedTickets >= updatedMax) {
+                return 0;
+            }
+            
+            const newLastRecovery = updatedUser.lastTicketRecovery || updatedUser.createdAt;
+            const newElapsed = now.getTime() - new Date(newLastRecovery).getTime();
+            const remaining = TicketService.TICKET_RECOVERY_INTERVAL - (newElapsed % TicketService.TICKET_RECOVERY_INTERVAL);
+            return remaining;
+        }
 
+        // 아직 회복 시간이 안 지났으면 남은 시간만 계산
+        const remaining = TicketService.TICKET_RECOVERY_INTERVAL - (elapsed % TicketService.TICKET_RECOVERY_INTERVAL);
         return remaining;
     }
 }

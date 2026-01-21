@@ -1,0 +1,245 @@
+<!-- 공지사항 모달 -->
+<div class="modal-overlay" id="noticeModalOverlay" style="display: none;">
+    <div class="modal" id="noticeModal" style="max-width: 700px; width: 90%; max-height: 80vh;">
+        <div class="modal-header">
+            <h2>📢 공지사항</h2>
+            <button class="modal-close" onclick="closeNoticeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="noticeModalBody" style="overflow-y: auto; max-height: calc(80vh - 120px);">
+            <!-- 공지사항 내용이 여기에 동적으로 추가됩니다 -->
+        </div>
+    </div>
+</div>
+
+<style>
+    .notice-item {
+        padding: 20px;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .notice-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .notice-item.important {
+        border-left-color: #ef4444;
+        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+    }
+
+    .notice-item.update {
+        border-left-color: #10b981;
+        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    }
+
+    .notice-item.event {
+        border-left-color: #f59e0b;
+        background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+    }
+
+    .notice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        gap: 15px;
+    }
+
+    .notice-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+        flex: 1;
+    }
+
+    .notice-date {
+        font-size: 12px;
+        color: #6b7280;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .notice-content {
+        font-size: 14px;
+        color: #374151;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    .notice-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .notice-tag.important {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .notice-tag.update {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .notice-tag.event {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .notice-tag.info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .empty-notice {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+
+    .empty-notice-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+</style>
+
+<script>
+    // 공지사항 데이터 (나중에 서버에서 가져올 수 있음)
+    const notices = [
+        {
+            id: 1,
+            title: 'SUDAM 바둑 플랫폼 오픈!',
+            content: 'SUDAM 바둑 게임 플랫폼에 오신 것을 환영합니다! 다양한 게임 모드와 AI봇과의 대결을 즐겨보세요. 즐거운 게임 되세요!',
+            date: '2024-01-15',
+            type: 'info',
+            important: false
+        },
+        {
+            id: 2,
+            title: '랭킹 시스템 업데이트',
+            content: '랭킹 시스템이 개선되었습니다. 이제 더 정확한 매칭과 공정한 랭킹을 경험하실 수 있습니다. 티어 시스템도 추가되어 더욱 재미있는 경쟁이 가능합니다.',
+            date: '2024-01-10',
+            type: 'update',
+            important: false
+        },
+        {
+            id: 3,
+            title: '바둑MBTI 기능 추가!',
+            content: '이제 바둑MBTI를 설정하여 상대방과의 상성을 확인하고, 강점과 약점을 분석할 수 있습니다. 프로필에서 다른 유저를 클릭하여 상성 분석을 확인해보세요!',
+            date: '2024-01-08',
+            type: 'update',
+            important: true
+        },
+        {
+            id: 4,
+            title: '게임 모드 안내',
+            content: '현재 지원되는 게임 모드:\n• 클래식바둑: 전통적인 바둑 규칙\n• 따내기바둑: 목표 개수만큼 돌을 따내면 승리\n• 베이스바둑: 베이스돌을 보호하는 모드\n• 스피드바둑: 빠른 판단력이 필요한 모드\n그 외 다양한 모드를 즐겨보세요!',
+            date: '2024-01-05',
+            type: 'info',
+            important: false
+        },
+        {
+            id: 5,
+            title: 'AI봇 난이도 조정',
+            content: 'AI봇의 난이도가 조정되었습니다. 1단부터 10단까지 다양한 난이도를 선택하여 실력을 향상시켜보세요. AI봇과의 대결은 티켓을 소모하지 않습니다.',
+            date: '2024-01-03',
+            type: 'update',
+            important: false
+        }
+    ];
+
+    // 공지사항 모달 표시
+    function showNoticeModal() {
+        const modal = document.getElementById('noticeModalOverlay');
+        const modalBody = document.getElementById('noticeModalBody');
+        
+        if (!modal || !modalBody) {
+            console.error('Notice modal elements not found');
+            return;
+        }
+
+        // 공지사항 렌더링
+        if (notices.length === 0) {
+            modalBody.innerHTML = `
+                <div class="empty-notice">
+                    <div class="empty-notice-icon">📭</div>
+                    <p>등록된 공지사항이 없습니다.</p>
+                </div>
+            `;
+        } else {
+            modalBody.innerHTML = notices.map(notice => {
+                const typeClass = notice.type || 'info';
+                const importantClass = notice.important ? 'important' : '';
+                const tagLabels = {
+                    'important': '중요',
+                    'update': '업데이트',
+                    'event': '이벤트',
+                    'info': '안내'
+                };
+
+                return `
+                    <div class="notice-item ${typeClass} ${importantClass}">
+                        <div class="notice-tag ${typeClass}">${tagLabels[typeClass] || '안내'}</div>
+                        <div class="notice-header">
+                            <h3 class="notice-title">${escapeHtml(notice.title)}</h3>
+                            <span class="notice-date">${notice.date}</span>
+                        </div>
+                        <p class="notice-content">${escapeHtml(notice.content).replace(/\n/g, '<br>')}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+
+    // 공지사항 모달 닫기
+    function closeNoticeModal() {
+        const modal = document.getElementById('noticeModalOverlay');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('active');
+        }
+    }
+
+    // HTML 이스케이프 함수
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // 모달 외부 클릭 시 닫기
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('noticeModalOverlay');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeNoticeModal();
+                }
+            });
+        }
+
+        // ESC 키로 닫기
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('noticeModalOverlay');
+                if (modal && modal.classList.contains('active')) {
+                    closeNoticeModal();
+                }
+            }
+        });
+    });
+</script>
+

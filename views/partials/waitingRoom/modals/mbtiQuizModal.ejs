@@ -1,0 +1,25 @@
+﻿                    <div id="mbtiQuizModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+                        <div style="background: white; border-radius: 16px; padding: 30px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                                <h2 style="font-size: 20px; font-weight: 700; color: #333; margin: 0;">諛붾몣MBTI ?댁쫰</h2>
+                                <button onclick="closeMBTIQuiz()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">&times;</button>
+                            </div>
+                            
+                            <!-- 吏꾪뻾 ?곹깭 -->
+                            <div style="margin-bottom: 25px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: 14px; color: #666;">吏덈Ц <span id="mbtiQuizProgress">1</span>/4</span>
+                                    <span style="font-size: 14px; color: #667eea; font-weight: 600;"><span id="mbtiQuizPercent">25</span>%</span>
+                                </div>
+                                <div style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;">
+                                    <div id="mbtiQuizProgressBar" style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: 25%; transition: width 0.3s;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 吏덈Ц 諛??좏깮吏 -->
+                            <div id="mbtiQuizContent">
+                                <!-- ?댁쫰 ?댁슜???ш린???숈쟻?쇰줈 濡쒕뱶?⑸땲??-->
+                            </div>
+                        </div>
+                    </div>
+                </div>

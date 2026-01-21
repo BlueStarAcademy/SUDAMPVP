@@ -1,0 +1,23 @@
+<!-- Base Placement Modal Template -->
+<div class="stats-modal-content" style="max-width: 400px;">
+    <div class="stats-modal-header">
+        <div class="stats-modal-title">베이스돌 배치</div>
+        <button class="close-modal" onclick="document.getElementById('basePlacementModal').style.display='none'">&times;</button>
+    </div>
+    <div class="request-modal-body" style="padding: 20px;">
+        <p style="margin-bottom: 15px; color: #ccc; text-align: center;">
+            상대에게 보이지 않는 베이스돌을 <span id="baseStoneCountDisplay">4</span>개 배치하세요.
+        </p>
+        <p style="margin-bottom: 15px; color: #999; text-align: center; font-size: 12px;">
+            배치된 돌: <span id="placedBaseStones">0</span> / <span id="totalBaseStones">4</span>
+        </p>
+        <div style="text-align: center; margin: 15px 0;">
+            <div id="basePlacementCountdown" style="font-size: 24px; font-weight: bold; color: #ffd700;">30</div>
+        </div>
+        <button id="randomPlaceBaseBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px;" onclick="placeRemainingBaseStonesRandomly()">
+            남은 돌 무작위 배치
+        </button>
+        <div id="basePlacementStatus" style="margin-top: 15px; text-align: center; color: #999;"></div>
+    </div>
+</div>
+

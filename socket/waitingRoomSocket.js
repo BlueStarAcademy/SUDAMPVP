@@ -9,6 +9,26 @@ class WaitingRoomSocket {
         this.casualRoomUsers = new Map(); // userId -> socketId (놀이바둑 대기실)
         this.userRoomType = new Map(); // userId -> 'strategy' | 'casual'
         this.setupRedisPubSub().catch(console.error);
+        
+        // 주기적으로 진행중인 게임 목록 업데이트 (30초마다)
+        // 무한 루프 방지를 위한 플래그
+        this.isUpdatingOngoingGames = false;
+        setInterval(async () => {
+            if (this.isUpdatingOngoingGames) {
+                console.log('Skipping ongoing games update - already in progress');
+                return;
+            }
+            try {
+                this.isUpdatingOngoingGames = true;
+                const games = await this.getOngoingGames();
+                this.io.to('waiting-room-strategy').emit('ongoing_games_update', games);
+                this.io.to('waiting-room-casual').emit('ongoing_games_update', games);
+            } catch (error) {
+                console.error('Error in periodic ongoing games update:', error);
+            } finally {
+                this.isUpdatingOngoingGames = false;
+            }
+        }, 30000);
     }
 
     async setupRedisPubSub() {
@@ -64,7 +84,10 @@ class WaitingRoomSocket {
         // Handle room join
         socket.on('join_waiting_room', (roomType) => {
             console.log('User joining room:', userId, roomType);
-            this.userRoomType.set(userId, roomType || 'strategy');
+            const finalRoomType = roomType || 'strategy';
+            this.userRoomType.set(userId, finalRoomType);
+            // 실제로 소켓 룸에 조인
+            socket.join(`waiting-room-${finalRoomType}`);
         });
 
         // Send current user list
@@ -83,9 +106,23 @@ class WaitingRoomSocket {
 
         // Get ongoing games
         socket.on('get_ongoing_games', async () => {
-            const games = await this.getOngoingGames();
-            socket.emit('ongoing_games_update', games);
+            // 무한 루프 방지
+            if (this.isUpdatingOngoingGames) {
+                console.log('Skipping get_ongoing_games - already updating');
+                return;
+            }
+            try {
+                this.isUpdatingOngoingGames = true;
+                const games = await this.getOngoingGames();
+                socket.emit('ongoing_games_update', games);
+            } catch (error) {
+                console.error('Error getting ongoing games:', error);
+            } finally {
+                this.isUpdatingOngoingGames = false;
+            }
         });
+
+        // 주기적 업데이트는 생성자에서만 수행 (중복 방지)
 
         // Get game by room number
         socket.on('get_game_by_room_number', async (data, callback) => {
@@ -279,6 +316,18 @@ class WaitingRoomSocket {
 
         // Handle AI game
         socket.on('start_ai_game', async (data) => {
+            console.log('[WaitingRoomSocket] start_ai_game received:', {
+                boardSize: data.boardSize,
+                timeLimit: data.timeLimit,
+                byoyomiSeconds: data.byoyomiSeconds,
+                byoyomiPeriods: data.byoyomiPeriods,
+                mode: data.mode,
+                level: data.level,
+                color: data.color,
+                captureTarget: data.captureTarget,
+                captureTargetType: typeof data.captureTarget
+            });
+            
             // 놀이바둑 모드 목록
             const casualModes = ['DICE', 'COPS', 'OMOK', 'TTAK', 'ALKKAGI', 'CURLING'];
             const isCasualMode = casualModes.includes(data.mode);
@@ -286,24 +335,49 @@ class WaitingRoomSocket {
             // 놀이바둑일 때는 level을 null로 전달 (단일 AI봇 사용)
             const aiLevel = isCasualMode ? null : (data.level || 1);
             
-            await this.startAiGame(userId, socket, aiLevel, data.color, {
+            // captureTarget 처리: 명시적으로 숫자로 변환
+            let captureTarget = 20; // 기본값
+            if (data.captureTarget !== undefined && data.captureTarget !== null) {
+                const parsed = parseInt(data.captureTarget);
+                if (!isNaN(parsed) && parsed > 0) {
+                    captureTarget = parsed;
+                }
+            }
+            
+            const gameOptions = {
                 mode: data.mode,
                 komi: data.komi,
                 isCasualMode: isCasualMode,
-                captureTarget: data.captureTarget,
+                captureTarget: captureTarget,
                 timeLimit: data.timeLimit,
                 timeIncrement: data.timeIncrement,
                 baseStones: data.baseStones,
                 hiddenStones: data.hiddenStones,
                 scanCount: data.scanCount,
-                missileMoveLimit: data.missileMoveLimit
+                missileMoveLimit: data.missileMoveLimit,
+                boardSize: data.boardSize !== undefined && data.boardSize !== null ? parseInt(data.boardSize) : undefined,
+                byoyomiSeconds: data.byoyomiSeconds,
+                byoyomiPeriods: data.byoyomiPeriods,
+                autoScoringMove: data.autoScoringMove !== undefined && data.autoScoringMove !== null ? parseInt(data.autoScoringMove) : undefined
+            };
+            
+            console.log('[WaitingRoomSocket] start_ai_game gameOptions:', JSON.stringify(gameOptions, null, 2));
+            
+            console.log('[WaitingRoomSocket] Calling startAiGame with options:', JSON.stringify(gameOptions, null, 2));
+            console.log('[WaitingRoomSocket] captureTarget details:', {
+                dataCaptureTarget: data.captureTarget,
+                dataType: typeof data.captureTarget,
+                finalCaptureTarget: gameOptions.captureTarget,
+                finalType: typeof gameOptions.captureTarget
             });
+            
+            await this.startAiGame(userId, socket, aiLevel, data.color, gameOptions);
         });
 
         // Handle PVP Game Request
         socket.on('send_game_request', async (data) => {
             try {
-                const { targetUserId, mode, komi, captureTarget, timeLimit, timeIncrement, baseStones, hiddenStones, scanCount, missileMoveLimit, boardSize, byoyomiSeconds, byoyomiPeriods } = data;
+                const { targetUserId, mode, komi, captureTarget, timeLimit, timeIncrement, baseStones, hiddenStones, scanCount, missileMoveLimit, boardSize, byoyomiSeconds, byoyomiPeriods, mixRules, mixModes, mixModeSwitchCount, mixCaptureTarget, mixTimeLimit, mixTimeIncrement, mixBaseCount, mixHiddenCount, mixScanCount, mixMissileMoveLimit, maxRounds, stonesPerRound, maxMoves } = data;
                 const targetSocketId = this.onlineUsers.get(targetUserId);
                 
                 if (!targetSocketId) {
@@ -326,7 +400,19 @@ class WaitingRoomSocket {
                     missileMoveLimit,
                     boardSize,
                     byoyomiSeconds,
-                    byoyomiPeriods
+                    byoyomiPeriods,
+                    mixRules,
+                    mixModes,
+                    mixModeSwitchCount,
+                    mixCaptureTarget,
+                    mixTimeLimit,
+                    mixTimeIncrement,
+                    mixBaseCount,
+                    mixHiddenCount,
+                    mixScanCount,
+                    mixMissileMoveLimit,
+                    maxRounds,
+                    stonesPerRound
                 });
             } catch (error) {
                 console.error('Send game request error:', error);
@@ -336,39 +422,20 @@ class WaitingRoomSocket {
 
         socket.on('accept_game_request', async (data) => {
             try {
-                const { fromUserId, mode, komi, captureTarget, timeLimit, timeIncrement, baseStones, hiddenStones, scanCount, missileMoveLimit, boardSize, byoyomiSeconds, byoyomiPeriods } = data;
+                const { fromUserId, mode, komi, captureTarget, timeLimit, timeIncrement, baseStones, hiddenStones, scanCount, missileMoveLimit, boardSize, byoyomiSeconds, byoyomiPeriods, mixRules, mixModes, mixModeSwitchCount, mixCaptureTarget, mixTimeLimit, mixTimeIncrement, mixBaseCount, mixHiddenCount, mixScanCount, mixMissileMoveLimit, maxRounds, stonesPerRound, maxMoves } = data;
                 const fromSocketId = this.onlineUsers.get(fromUserId);
 
                 if (!fromSocketId) {
                     return socket.emit('game_request_error', { error: '상대방이 오프라인 상태입니다.' });
                 }
 
-                // Check tickets for both
-                const ticketService = require('../services/ticketService');
-                const roomType = this.userRoomType.get(userId) || 'strategy';
-                const ticketType = roomType === 'casual' ? 'casual' : 'strategy';
-
-                const hasTicket1 = await ticketService.consumeTicket(userId, ticketType);
-                const hasTicket2 = await ticketService.consumeTicket(fromUserId, ticketType);
-
-                if (!hasTicket1 || !hasTicket2) {
-                    // Refund if one failed
-                    if (hasTicket1) {
-                        await prisma.user.update({ where: { id: userId }, data: { [ticketType === 'strategy' ? 'strategyTickets' : 'casualTickets']: { increment: 1 } } });
-                    }
-                    if (hasTicket2) {
-                        await prisma.user.update({ where: { id: fromUserId }, data: { [ticketType === 'strategy' ? 'strategyTickets' : 'casualTickets']: { increment: 1 } } });
-                    }
-                    return socket.emit('game_request_error', { error: '이용권이 부족합니다.' });
-                }
-
                 const gameService = require('../services/gameService');
                 // Friendly match (matchType: FRIENDLY)
                 const gameOptions = {
                     matchType: 'FRIENDLY',
-                    mode: mode,
-                    komi: komi,
-                    boardSize: data.boardSize || 19
+                    mode: mode || 'CLASSIC',
+                    komi: komi !== undefined && komi !== null ? komi : 6.5,
+                    boardSize: boardSize || 19
                 };
                 
                 // 따내기바둑 설정 추가
@@ -381,8 +448,18 @@ class WaitingRoomSocket {
                     gameOptions.timeIncrement = timeIncrement;
                 }
                 // 베이스바둑 설정 추가
-                if (mode === 'BASE' && baseStones) {
-                    gameOptions.baseStones = baseStones;
+                if (mode === 'BASE') {
+                    // baseStones가 제공되었으면 사용, 없으면 기본값 4
+                    if (baseStones !== undefined && baseStones !== null && baseStones !== '') {
+                        const parsed = parseInt(baseStones);
+                        if (!isNaN(parsed) && parsed > 0) {
+                            gameOptions.baseStones = parsed;
+                        } else {
+                            gameOptions.baseStones = 4; // 기본값
+                        }
+                    } else {
+                        gameOptions.baseStones = 4; // 기본값
+                    }
                     gameOptions.komi = 0.5; // 베이스바둑은 덤 0.5집 고정
                 }
                 // 히든바둑 설정 추가
@@ -394,25 +471,110 @@ class WaitingRoomSocket {
                 if (mode === 'MISSILE' && missileMoveLimit) {
                     gameOptions.missileMoveLimit = missileMoveLimit;
                 }
-                // 시간 설정 추가
-                if (data.byoyomiSeconds) {
-                    gameOptions.byoyomiSeconds = data.byoyomiSeconds;
+                // 믹스바둑 설정 추가
+                if (mode === 'MIX') {
+                    // mixRules 또는 mixModes를 mixModes로 변환
+                    if (mixRules && Array.isArray(mixRules) && mixRules.length >= 2) {
+                        gameOptions.mixModes = mixRules;
+                    } else if (mixModes && Array.isArray(mixModes) && mixModes.length >= 2) {
+                        gameOptions.mixModes = mixModes;
+                    }
+                    if (mixModeSwitchCount) {
+                        gameOptions.mixModeSwitchCount = mixModeSwitchCount;
+                    }
+                    // 믹스바둑 세부 설정
+                    if (mixCaptureTarget) gameOptions.mixCaptureTarget = mixCaptureTarget;
+                    if (mixTimeLimit) gameOptions.mixTimeLimit = mixTimeLimit;
+                    if (mixTimeIncrement) gameOptions.mixTimeIncrement = mixTimeIncrement;
+                    if (mixBaseCount) gameOptions.mixBaseCount = mixBaseCount;
+                    if (mixHiddenCount) gameOptions.mixHiddenCount = mixHiddenCount;
+                    if (mixScanCount) gameOptions.mixScanCount = mixScanCount;
+                    if (mixMissileMoveLimit) gameOptions.mixMissileMoveLimit = mixMissileMoveLimit;
                 }
-                if (data.byoyomiPeriods) {
-                    gameOptions.byoyomiPeriods = data.byoyomiPeriods;
+                // 놀이바둑 모드별 설정 추가
+                if (mode === 'DICE' && maxRounds) {
+                    gameOptions.maxRounds = maxRounds;
                 }
-                if (data.timeLimit) {
-                    gameOptions.timeLimit = data.timeLimit;
+                if (mode === 'COPS' && maxRounds) {
+                    gameOptions.maxRounds = maxRounds;
+                }
+                if (mode === 'TTAK' && captureTarget) {
+                    gameOptions.captureTarget = captureTarget;
+                }
+                if (mode === 'ALKKAGI') {
+                    if (maxRounds) gameOptions.maxRounds = maxRounds;
+                    if (stonesPerRound) gameOptions.stonesPerRound = stonesPerRound;
+                }
+                if (mode === 'CURLING' && stonesPerRound) {
+                    gameOptions.stonesPerRound = stonesPerRound;
+                }
+                // 시간 설정 추가 (전략바둑 모드에만 적용, 놀이바둑은 시간 제한 없음)
+                const casualModes = ['DICE', 'COPS', 'OMOK', 'TTAK', 'ALKKAGI', 'CURLING'];
+                if (!casualModes.includes(mode)) {
+                    if (timeLimit !== undefined && timeLimit !== null) {
+                        gameOptions.timeLimit = timeLimit;
+                    }
+                    if (timeIncrement !== undefined && timeIncrement !== null) {
+                        gameOptions.timeIncrement = timeIncrement;
+                    }
+                    if (byoyomiSeconds !== undefined && byoyomiSeconds !== null) {
+                        gameOptions.byoyomiSeconds = byoyomiSeconds;
+                    }
+                    if (byoyomiPeriods !== undefined && byoyomiPeriods !== null) {
+                        gameOptions.byoyomiPeriods = byoyomiPeriods;
+                    }
                 }
                 
+                // boardSize 추가 확인
+                if (boardSize !== undefined && boardSize !== null) {
+                    gameOptions.boardSize = parseInt(boardSize);
+                }
+                
+                // 클래식 바둑: 제한 턴수 설정 추가
+                if (mode === 'CLASSIC' && maxMoves !== undefined && maxMoves !== null && maxMoves !== '') {
+                    const parsed = parseInt(maxMoves);
+                    if (!isNaN(parsed) && parsed > 0) {
+                        gameOptions.maxMoves = parsed;
+                    }
+                }
+                
+                console.log('Creating game with options:', JSON.stringify(gameOptions, null, 2));
                 const game = await gameService.createGame(fromUserId, userId, 0, 0, gameOptions);
+
+                if (!game || !game.id) {
+                    throw new Error('Failed to create game');
+                }
+                
+                console.log('Game created:', {
+                    id: game.id,
+                    mode: game.mode,
+                    komi: game.komi,
+                    boardSize: gameOptions.boardSize
+                });
 
                 await this.setUserInGame(userId);
                 await this.setUserInGame(fromUserId);
 
                 const gameData = { gameId: game.id };
+                console.log('[WaitingRoomSocket] Emitting game_started to users:', { 
+                    userId, 
+                    fromUserId, 
+                    gameId: game.id,
+                    socketId: socket.id,
+                    fromSocketId: fromSocketId
+                });
+                
+                // 수락한 사용자에게 전송
                 socket.emit('game_started', gameData);
-                this.io.to(fromSocketId).emit('game_started', gameData);
+                console.log('[WaitingRoomSocket] game_started emitted to socket:', socket.id);
+                
+                // 신청한 사용자에게 전송
+                if (fromSocketId) {
+                    this.io.to(fromSocketId).emit('game_started', gameData);
+                    console.log('[WaitingRoomSocket] game_started emitted to fromSocketId:', fromSocketId);
+                } else {
+                    console.warn('[WaitingRoomSocket] fromSocketId not found, cannot emit game_started to requester');
+                }
             } catch (error) {
                 console.error('Accept game request error:', error);
                 socket.emit('game_request_error', { error: '대국 수락 중 오류가 발생했습니다.' });
@@ -424,6 +586,52 @@ class WaitingRoomSocket {
             const fromSocketId = this.onlineUsers.get(fromUserId);
             if (fromSocketId) {
                 this.io.to(fromSocketId).emit('game_request_rejected', { message: '상대방이 대국 신청을 거절했습니다.' });
+            }
+        });
+
+        // 수정제안 처리
+        socket.on('modify_game_request', async (data) => {
+            try {
+                const { targetUserId, mode, komi, captureTarget, timeLimit, timeIncrement, baseStones, hiddenStones, scanCount, missileMoveLimit, boardSize, byoyomiSeconds, byoyomiPeriods, mixRules, mixCaptureTarget, mixTimeLimit, mixTimeIncrement, mixBaseCount, mixHiddenCount, mixScanCount, mixMissileMoveLimit, maxRounds, stonesPerRound } = data;
+                const targetSocketId = this.onlineUsers.get(targetUserId);
+                
+                if (!targetSocketId) {
+                    return socket.emit('game_request_error', { error: '유저가 오프라인 상태입니다.' });
+                }
+
+                const senderProfile = await userService.getUserProfile(userId);
+                
+                // 수정된 신청서를 상대방에게 전송
+                this.io.to(targetSocketId).emit('game_request_modified', {
+                    fromUserId: userId,
+                    fromNickname: senderProfile.nickname,
+                    fromRating: senderProfile.rating,
+                    mode,
+                    komi,
+                    captureTarget,
+                    timeLimit,
+                    timeIncrement,
+                    baseStones,
+                    hiddenStones,
+                    scanCount,
+                    missileMoveLimit,
+                    boardSize,
+                    byoyomiSeconds,
+                    byoyomiPeriods,
+                    mixRules,
+                    mixCaptureTarget,
+                    mixTimeLimit,
+                    mixTimeIncrement,
+                    mixBaseCount,
+                    mixHiddenCount,
+                    mixScanCount,
+                    mixMissileMoveLimit,
+                    maxRounds,
+                    stonesPerRound
+                });
+            } catch (error) {
+                console.error('Modify game request error:', error);
+                socket.emit('game_request_error', { error: '수정제안 중 오류가 발생했습니다.' });
             }
         });
 
@@ -717,30 +925,6 @@ class WaitingRoomSocket {
     }
 
     async startMatching(userId, socket, roomType = 'strategy') {
-        // Check tickets before starting matching
-        const ticketService = require('../services/ticketService');
-        const ticketType = roomType === 'casual' ? 'casual' : 'strategy';
-        
-        try {
-            const tickets = await ticketService.getTickets(userId);
-            const hasTicket = ticketType === 'strategy' 
-                ? tickets.strategyTickets > 0 
-                : tickets.casualTickets > 0;
-
-            if (!hasTicket) {
-                socket.emit('matching_error', { 
-                    error: '이용권이 부족합니다. 30분마다 이용권이 회복됩니다.' 
-                });
-                return;
-            }
-        } catch (error) {
-            console.error('Ticket check error:', error);
-            socket.emit('matching_error', { 
-                error: '이용권 확인 중 오류가 발생했습니다.' 
-            });
-            return;
-        }
-
         const rankingService = require('../services/rankingService');
         await this.updateUserStatus(userId, 'matching');
         this.publishUserStatusChanged(userId, 'matching');
@@ -760,22 +944,78 @@ class WaitingRoomSocket {
 
     async startAiGame(userId, socket, level, color, options = {}) {
         try {
+            console.log('[WaitingRoomSocket] startAiGame called with:', {
+                level,
+                color,
+                options: {
+                    boardSize: options.boardSize,
+                    timeLimit: options.timeLimit,
+                    byoyomiSeconds: options.byoyomiSeconds,
+                    byoyomiPeriods: options.byoyomiPeriods,
+                    mode: options.mode
+                }
+            });
+            
             const gameService = require('../services/gameService');
+            // captureTarget 처리: 명시적으로 숫자로 변환
+            let captureTarget = 20; // 기본값
+            if (options.captureTarget !== undefined && options.captureTarget !== null) {
+                const parsed = parseInt(options.captureTarget);
+                if (!isNaN(parsed) && parsed > 0) {
+                    captureTarget = parsed;
+                }
+            }
+            
+            console.log('[WaitingRoomSocket] startAiGame - captureTarget processing:', {
+                optionsCaptureTarget: options.captureTarget,
+                optionsType: typeof options.captureTarget,
+                finalCaptureTarget: captureTarget,
+                finalType: typeof captureTarget
+            });
+            
             const gameOptions = {
                 mode: options.mode || 'CLASSIC',
                 komi: options.komi || 6.5,
                 isCasualMode: options.isCasualMode || false,
-                captureTarget: options.captureTarget || 20,
-                timeLimit: options.timeLimit,
-                timeIncrement: options.timeIncrement,
-                baseStones: options.baseStones || 4,
+                captureTarget: captureTarget,
+                timeLimit: options.timeLimit !== undefined && options.timeLimit !== null ? options.timeLimit : undefined,
+                timeIncrement: options.timeIncrement !== undefined && options.timeIncrement !== null ? options.timeIncrement : undefined,
+                baseStones: (() => {
+                    if (options.baseStones === undefined || options.baseStones === null || options.baseStones === '') {
+                        console.log('[WaitingRoomSocket] baseStones is undefined/null/empty, using default 4');
+                        return 4;
+                    }
+                    const parsed = parseInt(String(options.baseStones));
+                    if (isNaN(parsed) || parsed <= 0) {
+                        console.log('[WaitingRoomSocket] baseStones parse failed:', options.baseStones, 'parsed:', parsed, 'using default 4');
+                        return 4;
+                    }
+                    console.log('[WaitingRoomSocket] baseStones parsed successfully:', options.baseStones, '->', parsed);
+                    return parsed;
+                })(),
                 hiddenStones: options.hiddenStones || 10,
                 scanCount: options.scanCount || 3,
                 missileMoveLimit: options.missileMoveLimit || 10,
-                boardSize: options.boardSize || 19,
-                byoyomiSeconds: options.byoyomiSeconds,
-                byoyomiPeriods: options.byoyomiPeriods
+                autoScoringMove: options.autoScoringMove ? parseInt(options.autoScoringMove) : undefined,
+                boardSize: options.boardSize !== undefined && options.boardSize !== null ? parseInt(options.boardSize) : undefined,
+                byoyomiSeconds: options.byoyomiSeconds !== undefined && options.byoyomiSeconds !== null ? options.byoyomiSeconds : undefined,
+                byoyomiPeriods: options.byoyomiPeriods !== undefined && options.byoyomiPeriods !== null ? options.byoyomiPeriods : undefined,
+                maxMoves: options.maxMoves !== undefined && options.maxMoves !== null && options.maxMoves !== '' ? parseInt(options.maxMoves) : undefined
             };
+            
+            console.log('[WaitingRoomSocket] startAiGame - Final gameOptions:', {
+                ...gameOptions,
+                captureTarget: gameOptions.captureTarget,
+                captureTargetType: typeof gameOptions.captureTarget,
+                originalCaptureTarget: options.captureTarget,
+                originalType: typeof options.captureTarget,
+                baseStones: gameOptions.baseStones,
+                baseStonesType: typeof gameOptions.baseStones,
+                originalBaseStones: options.baseStones,
+                originalBaseStonesType: typeof options.baseStones
+            });
+            
+            console.log('[WaitingRoomSocket] Final gameOptions:', gameOptions);
             
             // 베이스바둑은 덤 0.5집 고정
             if (options.mode === 'BASE') {
@@ -787,19 +1027,28 @@ class WaitingRoomSocket {
             await this.updateUserStatus(userId, 'in-game');
             this.publishUserStatusChanged(userId, 'in-game');
             
+            console.log('[WaitingRoomSocket] AI game created successfully:', game.id);
             socket.emit('ai_game_started', { gameId: game.id });
         } catch (error) {
-            console.error('Start AI game error:', error);
-            socket.emit('ai_game_error', { error: error.message });
+            console.error('[WaitingRoomSocket] Start AI game error:', error);
+            console.error('[WaitingRoomSocket] Error stack:', error.stack);
+            socket.emit('ai_game_error', { error: error.message || '게임 생성 중 오류가 발생했습니다.' });
         }
     }
 
     async getOngoingGames() {
         try {
             const prisma = require('../config/database');
+            // endedAt이 null이고, startedAt이 있는 게임만 가져오기
+            // 또한 너무 오래된 게임(24시간 이상)은 제외
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             const games = await prisma.game.findMany({
                 where: {
-                    endedAt: null
+                    endedAt: null,
+                    startedAt: {
+                        gte: oneDayAgo // 24시간 이내에 시작된 게임만 (null이 아닌 것은 자동으로 보장됨)
+                    },
+                    isAiGame: false // AI 게임은 제외 (관전 불가)
                 },
                 include: {
                     blackPlayer: {
@@ -835,45 +1084,32 @@ class WaitingRoomSocket {
                 // Handle AI players
                 if (game.blackId === null || !blackPlayer) {
                     blackPlayer = { 
-                        nickname: game.isAiGame ? `AI (${game.aiLevel || 1}단)` : 'Unknown', 
+                        nickname: game.isAiGame ? `AI (${game.aiLevel || 1}단계)` : 'Unknown', 
                         rating: game.blackRating 
                     };
                 }
                 
                 if (game.whiteId === null || !whitePlayer) {
                     whitePlayer = { 
-                        nickname: game.isAiGame ? `AI (${game.aiLevel || 1}단)` : 'Unknown', 
+                        nickname: game.isAiGame ? `AI (${game.aiLevel || 1}단계)` : 'Unknown', 
                         rating: game.whiteRating 
                     };
                 }
 
-                // If player is not found, fetch from userService
+                // Prisma include로 이미 데이터를 가져왔으므로 추가 쿼리 불필요
+                // 무한 루프 방지를 위해 getUserProfile 호출 제거
                 if (!blackPlayer && game.blackId !== null) {
-                    try {
-                        const profile = await userService.getUserProfile(game.blackId);
-                        if (profile) {
-                            blackPlayer = {
-                                nickname: profile.nickname,
-                                rating: profile.rating
-                            };
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching black player ${game.blackId}:`, error);
-                    }
+                    blackPlayer = { 
+                        nickname: 'Unknown', 
+                        rating: game.blackRating 
+                    };
                 }
 
                 if (!whitePlayer && game.whiteId !== null) {
-                    try {
-                        const profile = await userService.getUserProfile(game.whiteId);
-                        if (profile) {
-                            whitePlayer = {
-                                nickname: profile.nickname,
-                                rating: profile.rating
-                            };
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching white player ${game.whiteId}:`, error);
-                    }
+                    whitePlayer = { 
+                        nickname: 'Unknown', 
+                        rating: game.whiteRating 
+                    };
                 }
 
                 // 랜덤 타이틀 생성
@@ -1002,7 +1238,7 @@ class WaitingRoomSocket {
             try {
                 // getTopRankings 내부에서 이미 타임아웃 처리를 하므로, 여기서는 더 긴 타임아웃 설정
                 rankings = await Promise.race([
-                    userService.getTopRankings(50),
+                    userService.getTopRankings(100),
                     new Promise((_, reject) => 
                         setTimeout(() => reject(new Error('getTopRankings timeout')), 15000)
                     )
@@ -1050,8 +1286,8 @@ class WaitingRoomSocket {
                 rank.rank = index + 1;
             });
             
-            // 최대 5개만 반환
-            const topRankings = allRankings.slice(0, 5);
+            // 최대 100개 반환
+            const topRankings = allRankings.slice(0, 100);
             console.log('getRankings: returning', topRankings.length, 'rankings');
             return topRankings;
         } catch (error) {
@@ -1078,6 +1314,25 @@ class WaitingRoomSocket {
         // Remove from matching queue if in queue
         const rankingService = require('../services/rankingService');
         rankingService.removeFromMatchingQueue(userId);
+    }
+
+    // 진행중인 게임 목록 업데이트를 모든 대기실에 브로드캐스트
+    async broadcastOngoingGamesUpdate() {
+        // 무한 루프 방지
+        if (this.isUpdatingOngoingGames) {
+            console.log('Skipping broadcast - already updating');
+            return;
+        }
+        try {
+            this.isUpdatingOngoingGames = true;
+            const games = await this.getOngoingGames();
+            this.io.to('waiting-room-strategy').emit('ongoing_games_update', games);
+            this.io.to('waiting-room-casual').emit('ongoing_games_update', games);
+        } catch (error) {
+            console.error('Error broadcasting ongoing games update:', error);
+        } finally {
+            this.isUpdatingOngoingGames = false;
+        }
     }
 }
 

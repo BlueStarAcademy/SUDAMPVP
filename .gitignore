@@ -13,4 +13,9 @@ prisma/migrations/
 *~
 prisma/*.db
 prisma/*.db-journal
+katago/*.bin.gz
+katago/*.exe
+katago/katago
+gnugo/*.exe
+gnugo/*.dll
 

@@ -21,6 +21,9 @@ model User {
   losses            Int      @default(0)
   draws             Int      @default(0)
   gold              Int      @default(1000)
+  gem               Int      @default(0)
+  avatar            Int?     @default(1)
+  badukMBTI         String?
   strategyTickets   Int      @default(10)
   casualTickets     Int      @default(10)
   strategyTicketMax Int      @default(10)
@@ -50,7 +53,7 @@ model Game {
   isAiGame    Boolean  @default(false)
   aiLevel     Int?
   aiColor     String?  // "black" or "white"
-  startedAt   DateTime @default(now())
+  startedAt   DateTime? // nullable: 경기 준비 모달 후에만 설정됨
   endedAt     DateTime?
   createdAt   DateTime @default(now())
 

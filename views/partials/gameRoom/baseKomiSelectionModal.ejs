@@ -1,0 +1,40 @@
+<!-- Base Komi Selection Modal Template -->
+<div class="base-komi-modal-content">
+    <div class="base-komi-modal-header">
+        <div class="base-komi-modal-title">
+            <span>덤 설정</span>
+        </div>
+        <button class="base-komi-close-modal" onclick="document.getElementById('baseKomiSelectionModal').style.display='none'">&times;</button>
+    </div>
+    <div class="base-komi-modal-body">
+        <p class="base-komi-description">
+            덤을 설정하여 게임을 시작하세요.
+        </p>
+        
+        <!-- 덤 설정 -->
+        <div class="base-komi-section">
+            <label class="base-section-label">덤 설정</label>
+            <div class="base-komi-display">
+                <div class="base-komi-value" id="baseKomiDisplay">0</div>
+                <div class="base-komi-label">기본 0.5집 + 제시한 덤</div>
+            </div>
+            <input type="range" id="baseKomiSlider" class="base-komi-slider" min="0" max="50" value="0" step="1">
+            <div class="base-komi-buttons">
+                <button class="base-komi-btn" onclick="adjustBaseKomi(10)">+10</button>
+                <button class="base-komi-btn" onclick="adjustBaseKomi(5)">+5</button>
+                <button class="base-komi-btn" onclick="adjustBaseKomi(1)">+1</button>
+                <button class="base-komi-btn" onclick="adjustBaseKomi(-1)">-1</button>
+                <button class="base-komi-btn" onclick="adjustBaseKomi(-5)">-5</button>
+                <button class="base-komi-btn" onclick="adjustBaseKomi(-10)">-10</button>
+                <button class="base-komi-btn" onclick="adjustBaseKomi(0)">초기화</button>
+                <button class="base-komi-btn base-komi-btn-max" onclick="adjustBaseKomi(50)">MAX</button>
+            </div>
+        </div>
+        
+        <button id="confirmBaseSelectionBtn" class="base-confirm-btn" onclick="confirmBaseSelection()">
+            <span class="base-confirm-icon">▶</span>
+            <span>경기 시작</span>
+        </button>
+    </div>
+</div>
+

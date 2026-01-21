@@ -1,0 +1,44 @@
+<!-- Stone Picking Modal (돌가리기 모달) -->
+<div class="game-start-modal" id="stonePickingModal" style="display: none;">
+    <div class="game-start-modal-content">
+        <div class="game-start-modal-header">
+            <div class="game-start-modal-title">돌가리기</div>
+            <div class="game-start-modal-subtitle" id="stonePickingSubtitle">흑/백을 결정합니다</div>
+        </div>
+        <div class="game-start-modal-body">
+            <!-- 백 역할 UI -->
+            <div id="whiteRoleSection" style="display: none;">
+                <div class="stone-picking-status">
+                    ✋ 돌을 쥐었습니다
+                </div>
+                <div class="stone-picking-message">
+                    상대방이 홀수 또는 짝수를 선택할 때까지 기다려주세요.
+                </div>
+            </div>
+            
+            <!-- 흑 역할 UI -->
+            <div id="blackRoleSection" style="display: none;">
+                <div class="stone-picking-status">
+                    상대방이 돌을 쥐었습니다
+                </div>
+                <div class="stone-picking-message">
+                    홀수 또는 짝수를 선택하세요.
+                </div>
+                <div class="stone-picking-buttons">
+                    <button class="btn btn-primary" id="chooseOddBtn">홀수</button>
+                    <button class="btn btn-secondary" id="chooseEvenBtn">짝수</button>
+                </div>
+            </div>
+            
+            <!-- 타이머 섹션 -->
+            <div class="stone-picking-timer">
+                <div class="timer-bar-container">
+                    <div class="timer-bar" id="stonePickingTimerBar"></div>
+                </div>
+                <div class="timer-text" id="stonePickingTimerText">30초</div>
+            </div>
+            
+            <div id="stonePickingStatusInfo">돌가리기를 진행합니다...</div>
+        </div>
+    </div>
+</div>

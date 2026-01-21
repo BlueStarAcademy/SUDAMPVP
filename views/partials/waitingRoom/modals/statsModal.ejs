@@ -1,0 +1,219 @@
+﻿    <div id="statsModal" class="stats-modal">
+        <div class="stats-modal-content">
+            <div class="stats-modal-header" id="statsModalHeader">
+                <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                    <div class="stats-modal-title">?꾩쟻 ?곸꽭蹂닿린</div>
+                    <button class="gem-btn" onclick="resetAllStats()" title="?꾩껜 ?꾩쟻 珥덇린?? id="resetAllStatsBtn">
+                        <span>?꾩껜 ?꾩쟻 珥덇린??/span>
+                        <img src="/images/Zem.webp" alt="?? style="width: 16px; height: 16px; margin-left: 8px;">
+                        <span class="gem-price" data-price="300" style="font-weight: 700; margin-left: 4px;">300</span>
+                    </button>
+                </div>
+                <button class="close-modal" id="closeStatsModalBtn">&times;</button>
+            </div>
+            <div class="stats-tabs">
+                <button class="stats-tab active" onclick="switchStatsTab('strategy')">?꾨왂諛붾몣</button>
+                <button class="stats-tab" onclick="switchStatsTab('casual')">??대컮??/button>
+            </div>
+            <div id="strategyTab" class="stats-tab-content active">
+                <div class="stats-summary">
+                    <div class="stats-grid">
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="strategyWins">0</div>
+                            <div class="stats-item-label">??/div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="strategyLosses">0</div>
+                            <div class="stats-item-label">??/div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="strategyWinRate">0%</div>
+                            <div class="stats-item-label">?밸쪧</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: center; margin-top: 15px;">
+                        <button class="gem-btn" onclick="resetStrategyStats()" title="?꾨왂諛붾몣 ?꾩쟻 珥덇린?? id="resetStrategyStatsBtn">
+                            <span>?꾨왂諛붾몣 ?꾩쟻 珥덇린??/span>
+                            <img src="/images/Zem.webp" alt="?? style="width: 16px; height: 16px; margin-left: 8px;">
+                            <span class="gem-price" data-price="200" style="font-weight: 700; margin-left: 4px;">200</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="game-types-list">
+                    <div class="game-type-item">
+                        <div class="game-type-name">?대옒?앸컮??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="strategyClassicWins">0??/span> / <span id="strategyClassicLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('CLASSIC')" title="遺遺??꾩쟻 珥덇린?? data-mode="CLASSIC">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">?곕궡湲곕컮??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="strategyCaptureWins">0??/span> / <span id="strategyCaptureLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('CAPTURE')" title="遺遺??꾩쟻 珥덇린?? data-mode="CAPTURE">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">?ㅽ뵾?쒕컮??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="strategySpeedWins">0??/span> / <span id="strategySpeedLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('SPEED')" title="遺遺??꾩쟻 珥덇린?? data-mode="SPEED">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">踰좎씠?ㅻ컮??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="strategyBaseWins">0??/span> / <span id="strategyBaseLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('BASE')" title="遺遺??꾩쟻 珥덇린?? data-mode="BASE">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">?덈뱺諛붾몣</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="strategyHiddenWins">0??/span> / <span id="strategyHiddenLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('HIDDEN')" title="遺遺??꾩쟻 珥덇린?? data-mode="HIDDEN">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">誘몄궗?쇰컮??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="strategyMissileWins">0??/span> / <span id="strategyMissileLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('MISSILE')" title="遺遺??꾩쟻 珥덇린?? data-mode="MISSILE">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">誘뱀뒪猷곕컮??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="strategyMixWins">0??/span> / <span id="strategyMixLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('MIX')" title="遺遺??꾩쟻 珥덇린?? data-mode="MIX">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="casualTab" class="stats-tab-content">
+                <div class="stats-summary">
+                    <div class="stats-grid">
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="casualWins">0</div>
+                            <div class="stats-item-label">??/div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="casualLosses">0</div>
+                            <div class="stats-item-label">??/div>
+                        </div>
+                        <div class="stats-item">
+                            <div class="stats-item-value" id="casualWinRate">0%</div>
+                            <div class="stats-item-label">?밸쪧</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: center; margin-top: 15px;">
+                        <button class="gem-btn" onclick="resetCasualStats()" title="??대컮???꾩쟻 珥덇린?? id="resetCasualStatsBtn">
+                            <span>??대컮???꾩쟻 珥덇린??/span>
+                            <img src="/images/Zem.webp" alt="?? style="width: 16px; height: 16px; margin-left: 8px;">
+                            <span class="gem-price" data-price="200" style="font-weight: 700; margin-left: 4px;">200</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="game-types-list">
+                    <div class="game-type-item">
+                        <div class="game-type-name">二쇱궗?꾨컮??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="casualDiceWins">0??/span> / <span id="casualDiceLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('DICE')" title="遺遺??꾩쟻 珥덇린?? data-mode="DICE">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">寃쎌같怨쇰룄??/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="casualCopsWins">0??/span> / <span id="casualCopsLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('COPS')" title="遺遺??꾩쟻 珥덇린?? data-mode="COPS">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">?ㅻぉ</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="casualOmokWins">0??/span> / <span id="casualOmokLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('OMOK')" title="遺遺??꾩쟻 珥덇린?? data-mode="OMOK">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">?곕ぉ</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="casualTtakWins">0??/span> / <span id="casualTtakLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('TTAK')" title="遺遺??꾩쟻 珥덇린?? data-mode="TTAK">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">?뚭퉴湲?/div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="casualAlkkagiWins">0??/span> / <span id="casualAlkkagiLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('ALKKAGI')" title="遺遺??꾩쟻 珥덇린?? data-mode="ALKKAGI">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="game-type-item">
+                        <div class="game-type-name">諛붾몣而щ쭅</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="game-type-stats"><span id="casualCurlingWins">0??/span> / <span id="casualCurlingLosses">0??/span></div>
+                            <button class="gem-btn-small" onclick="resetPartialStats('CURLING')" title="遺遺??꾩쟻 珥덇린?? data-mode="CURLING">
+                                <span>珥덇린??/span>
+                                <img src="/images/Zem.webp" alt="?? style="width: 14px; height: 14px;">
+                                <span class="gem-price-small" data-price="100">100</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-modal-options">
+                <label><input type="checkbox" id="rememberPositionCheckbox"><span>李??꾩튂 湲곗뼲</span></label>
+            </div>
+        </div>
+    </div>

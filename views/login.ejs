@@ -133,6 +133,131 @@
         .form-toggle a:hover {
             text-decoration: underline;
         }
+
+        /* 모바일 대응 (세로 화면) */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .login-container {
+                padding: 24px 20px;
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            }
+
+            .login-header {
+                margin-bottom: 24px;
+            }
+
+            .login-header h1 {
+                font-size: 28px;
+                margin-bottom: 8px;
+            }
+
+            .login-header p {
+                font-size: 13px;
+            }
+
+            .form-group {
+                margin-bottom: 16px;
+            }
+
+            .form-group label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            .form-group input {
+                padding: 14px 12px;
+                font-size: 16px; /* iOS 줌 방지 */
+                border-radius: 10px;
+            }
+
+            .btn {
+                padding: 16px;
+                font-size: 16px;
+                border-radius: 10px;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .btn-primary {
+                margin-bottom: 12px;
+            }
+
+            .error-message {
+                padding: 10px;
+                font-size: 13px;
+                margin-bottom: 16px;
+            }
+
+            .form-toggle {
+                margin-top: 16px;
+                font-size: 13px;
+            }
+        }
+
+        /* 작은 모바일 기기 (320px ~ 360px) */
+        @media (max-width: 360px) {
+            .login-container {
+                padding: 20px 16px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            .login-header p {
+                font-size: 12px;
+            }
+
+            .form-group label {
+                font-size: 12px;
+            }
+
+            .btn {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+
+        /* 세로 화면 최적화 (높이 667px 이하) */
+        @media (max-height: 667px) and (orientation: portrait) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+                padding-top: 20px;
+            }
+
+            .login-container {
+                padding: 20px;
+            }
+
+            .login-header {
+                margin-bottom: 20px;
+            }
+
+            .login-header h1 {
+                font-size: 26px;
+                margin-bottom: 6px;
+            }
+
+            .form-group {
+                margin-bottom: 14px;
+            }
+        }
+
+        /* 가로 방향 모바일 (768px 이하) */
+        @media (max-width: 768px) and (orientation: landscape) {
+            body {
+                padding: 15px;
+            }
+
+            .login-container {
+                max-width: 450px;
+                padding: 30px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -147,11 +272,11 @@
         <form id="loginForm">
             <div class="form-group">
                 <label for="email">이메일</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" autocomplete="email" required>
             </div>
             <div class="form-group">
                 <label for="password">비밀번호</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" autocomplete="current-password" required>
             </div>
             <button type="submit" class="btn btn-primary">로그인</button>
         </form>
@@ -159,15 +284,15 @@
         <form id="registerForm" style="display: none;">
             <div class="form-group">
                 <label for="regEmail">이메일</label>
-                <input type="email" id="regEmail" name="email" required>
+                <input type="email" id="regEmail" name="email" autocomplete="email" required>
             </div>
             <div class="form-group">
                 <label for="regNickname">닉네임</label>
-                <input type="text" id="regNickname" name="nickname" required>
+                <input type="text" id="regNickname" name="nickname" autocomplete="username" required>
             </div>
             <div class="form-group">
                 <label for="regPassword">비밀번호</label>
-                <input type="password" id="regPassword" name="password" required>
+                <input type="password" id="regPassword" name="password" autocomplete="new-password" required>
             </div>
             <button type="submit" class="btn btn-primary">회원가입</button>
         </form>
@@ -231,7 +356,10 @@
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ error: '서버 오류가 발생했습니다.' }));
                     console.error('로그인 실패:', errorData);
-                    showError(errorData.error || '로그인에 실패했습니다.');
+                    const errorMessage = errorData.error === 'Invalid credentials' 
+                        ? '이메일 또는 비밀번호가 올바르지 않습니다.' 
+                        : (errorData.message || errorData.error || '로그인에 실패했습니다.');
+                    showError(errorMessage);
                     return;
                 }
 
@@ -259,13 +387,56 @@
             }
         });
 
+        // 닉네임 검증 함수 (한글 기준 1~6글자)
+        function validateNickname(nickname) {
+            if (!nickname || typeof nickname !== 'string') {
+                return { valid: false, error: '닉네임을 입력해주세요.' };
+            }
+            
+            // 한글, 영문, 숫자만 허용
+            const koreanRegex = /^[가-힣a-zA-Z0-9]+$/;
+            if (!koreanRegex.test(nickname)) {
+                return { valid: false, error: '닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.' };
+            }
+            
+            // 한글 기준 길이 계산 (한글 1글자 = 1, 영문/숫자 1글자 = 0.5)
+            let length = 0;
+            for (let i = 0; i < nickname.length; i++) {
+                const char = nickname[i];
+                if (/[가-힣]/.test(char)) {
+                    length += 1;
+                } else if (/[a-zA-Z0-9]/.test(char)) {
+                    length += 0.5;
+                }
+            }
+            
+            if (length < 1) {
+                return { valid: false, error: '닉네임은 한글 기준 최소 1글자 이상이어야 합니다.' };
+            }
+            
+            if (length > 6) {
+                return { valid: false, error: '닉네임은 한글 기준 최대 6글자까지 가능합니다.' };
+            }
+            
+            return { valid: true };
+        }
+
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMessage.classList.remove('show');
 
+            const nickname = document.getElementById('regNickname').value.trim();
+            
+            // 클라이언트 측 닉네임 검증
+            const validation = validateNickname(nickname);
+            if (!validation.valid) {
+                showError(validation.error);
+                return;
+            }
+
             const formData = {
                 email: document.getElementById('regEmail').value,
-                nickname: document.getElementById('regNickname').value,
+                nickname: nickname,
                 password: document.getElementById('regPassword').value,
             };
 
@@ -281,7 +452,7 @@
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ error: '서버 오류가 발생했습니다.' }));
-                    showError(errorData.error || '회원가입에 실패했습니다.');
+                    showError(errorData.message || errorData.error || '회원가입에 실패했습니다.');
                     return;
                 }
 
@@ -290,7 +461,7 @@
                 if (data.success) {
                     window.location.href = '/waiting-room';
                 } else {
-                    showError(data.error || '회원가입에 실패했습니다.');
+                    showError(data.message || data.error || '회원가입에 실패했습니다.');
                 }
             } catch (error) {
                 showError('서버 오류가 발생했습니다.');

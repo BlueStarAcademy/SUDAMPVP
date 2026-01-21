@@ -44,9 +44,15 @@ SESSION_SECRET=your-secret-key-change-this-in-production
 
 # AI Engines (paths)
 GNUGO_PATH=gnugo
-KATAGO_PATH=katago
-KATAGO_MODEL=path/to/katago_model.bin.gz
-KATAGO_CONFIG=path/to/katago_config.cfg
+
+# Katago 설정 (로컬 실행 파일 또는 서버 API 중 하나 선택)
+# 방법 1: 카타고 서버 API 사용 (권장)
+KATAGO_SERVER_URL=https://your-katago-server.com/api/score
+
+# 방법 2: 로컬 카타고 실행 파일 사용
+# KATAGO_PATH=katago
+# KATAGO_MODEL=path/to/katago_model.bin.gz
+# KATAGO_CONFIG=path/to/katago_config.cfg
 ```
 
 ### 3. 데이터베이스 설정
@@ -88,13 +94,38 @@ brew install gnugo
 #### Windows
 [GnuGo 공식 사이트](https://www.gnu.org/software/gnugo/)에서 다운로드
 
-### 6. Katago 설치 (선택사항)
+### 6. Katago 설정 (선택사항)
 
-계가 기능을 사용하려면 Katago를 설치해야 합니다:
+계가 기능을 사용하려면 Katago를 설정해야 합니다. 두 가지 방법 중 하나를 선택할 수 있습니다:
+
+#### 방법 1: 카타고 서버 API 사용 (권장)
+
+배포된 카타고 서버를 사용하는 경우:
+
+1. `.env` 파일에 카타고 서버 URL 설정:
+```env
+KATAGO_SERVER_URL=https://your-katago-server.com/api/score
+```
+
+2. 카타고 서버는 다음 형식의 요청을 받아야 합니다:
+   - **요청**: POST `/api/score`
+   - **Body**: `{ "sgf": "...", "boardSize": 19, "komi": 6.5 }`
+   - **응답**: `{ "areaScore": { "black": 0, "white": 0 }, "winner": "black" }` 또는 `{ "blackScore": 0, "whiteScore": 0, "winner": "black" }` 또는 `{ "score": 0 }`
+
+#### 방법 2: 로컬 카타고 실행 파일 사용
+
+로컬에 카타고를 설치하여 사용하는 경우:
 
 1. [Katago GitHub](https://github.com/lightvector/Katago)에서 릴리즈 다운로드
 2. 모델 파일 다운로드
-3. `.env` 파일에 경로 설정
+3. `.env` 파일에 경로 설정:
+```env
+KATAGO_PATH=katago
+KATAGO_MODEL=path/to/katago_model.bin.gz
+KATAGO_CONFIG=path/to/katago_config.cfg
+```
+
+**참고**: `KATAGO_SERVER_URL`이 설정되어 있으면 서버 API를 우선 사용하고, 없으면 로컬 실행 파일을 사용합니다.
 
 ## 실행
 
@@ -148,6 +179,16 @@ docker-compose up -d
 
 - Prisma Studio로 데이터베이스 확인: `npx prisma studio`
 - 로그 확인: `pm2 logs sudam` (PM2 사용 시)
+
+
+
+
+
+
+
+
+
+
 
 
 

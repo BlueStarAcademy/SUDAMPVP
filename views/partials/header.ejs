@@ -17,26 +17,17 @@
             <img src="/images/Gold.webp" alt="금화" class="currency-icon" onerror="this.style.display='none';">
             <span class="currency-amount">0</span>
         </div>
-        <div class="ticket-section">
-            <div class="ticket-item ticket-strategy" id="strategyTicketItem">
-                <div class="ticket-icon ticket-yellow">🎫</div>
-                <div class="ticket-info">
-                    <span class="ticket-count" id="strategyTicketCount">0/10</span>
-                    <span class="ticket-timer" id="strategyTicketTimer" style="display: none;"></span>
-                </div>
-            </div>
-            <div class="ticket-item ticket-casual" id="casualTicketItem">
-                <div class="ticket-icon ticket-blue">🎫</div>
-                <div class="ticket-info">
-                    <span class="ticket-count" id="casualTicketCount">0/10</span>
-                    <span class="ticket-timer" id="casualTicketTimer" style="display: none;"></span>
-                </div>
-            </div>
+        <div class="currency-section">
+            <img src="/images/Zem.webp" alt="젬" class="currency-icon" onerror="this.style.display='none';">
+            <span class="currency-amount" id="gemAmount">0</span>
         </div>
     </div>
     <div class="header-right">
         <button class="header-btn shop-btn" title="상점">
             <img src="/images/store.webp" alt="상점" class="header-icon" onerror="this.style.display='none';">
+        </button>
+        <button class="header-btn quest-btn" title="퀘스트">
+            <img src="/images/quest.webp" alt="퀘스트" class="header-icon" onerror="this.style.display='none';">
         </button>
         <button class="header-btn mailbox-btn" title="우편함">
             <img src="/images/mail.webp" alt="우편함" class="header-icon" onerror="this.style.display='none';">
@@ -44,6 +35,73 @@
         <button class="header-btn notice-btn" id="noticeBtn" title="공지사항">📢</button>
         <button class="header-btn settings-btn" title="설정">⚙️</button>
         <button class="header-btn logout-btn" id="logoutBtn" title="로그아웃">로그아웃</button>
+        <!-- 모바일 햄버거 메뉴 버튼 - 가장 우측에 배치 -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="메뉴">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+    <!-- 모바일 메뉴 드로어 -->
+    <div class="mobile-menu-drawer" id="mobileMenuDrawer">
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+        <div class="mobile-menu-content">
+            <!-- 상단 버튼 섹션 (가로 배치) -->
+            <div class="mobile-menu-top-buttons">
+                <button class="mobile-menu-top-btn shop-btn" title="상점">
+                    <img src="/images/store.webp" alt="상점" class="header-icon" onerror="this.style.display='none';">
+                    <span>상점</span>
+                </button>
+                <button class="mobile-menu-top-btn quest-btn" title="퀘스트">
+                    <img src="/images/quest.webp" alt="퀘스트" class="header-icon" onerror="this.style.display='none';">
+                    <span>퀘스트</span>
+                </button>
+                <button class="mobile-menu-top-btn mailbox-btn" title="우편함">
+                    <img src="/images/mail.webp" alt="우편함" class="header-icon" onerror="this.style.display='none';">
+                    <span>우편함</span>
+                </button>
+                <button class="mobile-menu-top-btn notice-btn" id="mobileNoticeBtn" title="공지사항">
+                    <span class="mobile-menu-icon">📢</span>
+                    <span>공지사항</span>
+                </button>
+                <button class="mobile-menu-top-btn settings-btn" title="설정">
+                    <span class="mobile-menu-icon">⚙️</span>
+                    <span>설정</span>
+                </button>
+            </div>
+            
+            <!-- 하단 콘텐츠 섹션 (랭킹보드 + 채팅창) -->
+            <div class="mobile-menu-bottom-content">
+                <!-- 랭킹보드 섹션 (대기실에서만 표시) -->
+                <div class="mobile-menu-ranking-section" id="mobileMenuRankingSection" style="display: none;">
+                    <div class="panel ranking-board" style="margin: 0; border-radius: 0; box-shadow: none; padding: 15px; border-bottom: 1px solid #e5e7eb; display: flex; flex-direction: column; min-height: 200px; max-height: 400px;">
+                        <div class="panel-title" style="font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; flex-shrink: 0;">랭킹보드</div>
+                        <div id="mobileMenuRankingList" style="flex: 1; overflow-y: auto; min-height: 150px;">
+                            <div class="empty-state">랭킹 데이터를 불러오는 중...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 채팅창 섹션 (대기실에서만 표시) -->
+                <div class="mobile-menu-chat-section" id="mobileMenuChatSection" style="display: none;">
+                    <div class="panel chat-panel" style="margin: 0; border-radius: 0; box-shadow: none; padding: 15px; display: flex; flex-direction: column; min-height: 300px; max-height: 400px;">
+                        <div class="panel-title" style="font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0;">채팅</div>
+                        <div class="chat-messages" id="mobileMenuChatMessages" style="flex: 1; overflow-y: auto; min-height: 200px; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 10px;">
+                            <!-- 채팅 메시지들이 여기에 표시됩니다 -->
+                        </div>
+                        <div class="chat-input-container" style="display: flex; gap: 8px; flex-shrink: 0;">
+                            <input type="text" class="chat-input" id="mobileMenuChatInput" placeholder="메시지를 입력하세요..." maxlength="200" style="flex: 1; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                            <button class="chat-send-btn" id="mobileMenuChatSendBtn" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">전송</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 로그아웃 버튼 (하단 고정) -->
+            <button class="mobile-menu-btn logout-btn" id="mobileLogoutBtn" title="로그아웃">
+                <span>로그아웃</span>
+            </button>
+        </div>
     </div>
 </header>
 
@@ -151,84 +209,6 @@
         font-size: 14px;
     }
 
-    .ticket-section {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .ticket-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        background: #f9f9f9;
-        border-radius: 8px;
-        border: 2px solid;
-        transition: all 0.3s;
-    }
-
-    .ticket-strategy {
-        border-color: #fbbf24;
-        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-    }
-
-    .ticket-casual {
-        border-color: #3b82f6;
-        background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
-    }
-
-    .ticket-icon {
-        font-size: 20px;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .ticket-yellow {
-        filter: hue-rotate(0deg) saturate(1.5) brightness(1.1);
-    }
-
-    .ticket-blue {
-        filter: hue-rotate(200deg) saturate(1.3) brightness(1.1);
-    }
-
-    .ticket-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .ticket-count {
-        font-weight: 600;
-        font-size: 14px;
-        line-height: 1.2;
-    }
-
-    .ticket-strategy .ticket-count {
-        color: #fef3c7;
-    }
-
-    .ticket-casual .ticket-count {
-        color: #dbeafe;
-    }
-
-    .ticket-timer {
-        font-size: 11px;
-        color: #666;
-        font-weight: 500;
-    }
-
-    .ticket-strategy .ticket-timer {
-        color: #fde68a;
-    }
-
-    .ticket-casual .ticket-timer {
-        color: #bfdbfe;
-    }
-
     .notice-btn {
         padding: 8px 12px;
         font-size: 18px;
@@ -288,6 +268,451 @@
         align-items: center;
         gap: 12px;
     }
+
+    /* 모바일 햄버거 메뉴 버튼 */
+    .mobile-menu-toggle {
+        display: none;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+        width: 40px;
+        height: 40px;
+        background: #f5f5f5;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        cursor: pointer;
+        padding: 8px;
+        z-index: 1001;
+        position: relative;
+        transition: all 0.3s;
+        box-sizing: border-box;
+    }
+
+    .mobile-menu-toggle:hover {
+        background: #e0e0e0;
+        transform: translateY(-1px);
+    }
+
+    .mobile-menu-toggle span {
+        width: 100%;
+        height: 3px;
+        background: #333;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-menu-toggle.active span:nth-child(1) {
+        transform: rotate(45deg) translate(8px, 8px);
+    }
+
+    .mobile-menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .mobile-menu-toggle.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(8px, -8px);
+    }
+
+    /* 모바일 메뉴 드로어 */
+    .mobile-menu-drawer {
+        display: none;
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        pointer-events: none;
+    }
+
+    .mobile-menu-drawer.active {
+        pointer-events: all;
+    }
+
+    .mobile-menu-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .mobile-menu-drawer.active .mobile-menu-overlay {
+        opacity: 1;
+    }
+
+    .mobile-menu-content {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 280px;
+        max-width: 80%;
+        height: 100%;
+        background: white;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        padding: 60px 0 20px 0;
+        gap: 0;
+        overflow-y: auto;
+    }
+    
+    /* 상단 버튼 섹션 (가로 배치) */
+    .mobile-menu-top-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        padding: 8px;
+        background: #f9f9f9;
+        border-bottom: 1px solid #e5e7eb;
+        flex-shrink: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .mobile-menu-top-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px 4px;
+        border: none;
+        border-radius: 6px;
+        background: #f5f5f5;
+        color: #333;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+        flex: 1;
+        min-width: 0;
+        min-height: 60px;
+    }
+    
+    .mobile-menu-top-btn:hover {
+        background: #e0e0e0;
+    }
+    
+    .mobile-menu-top-btn .header-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .mobile-menu-top-btn .mobile-menu-icon {
+        font-size: 18px;
+        width: auto;
+    }
+    
+    .mobile-menu-top-btn span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+    
+    /* 하단 콘텐츠 섹션 */
+    .mobile-menu-bottom-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .mobile-menu-ranking-section {
+        flex: 1;
+        min-height: 0;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .mobile-menu-chat-section {
+        flex: 1;
+        min-height: 0;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .mobile-menu-ranking-section .panel {
+        padding: 15px 20px;
+        background: transparent;
+    }
+
+    .mobile-menu-ranking-section .panel-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .mobile-menu-ranking-section .ranking-item,
+    .mobile-menu-ranking-section .my-ranking-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .mobile-menu-ranking-section .ranking-item:last-child,
+    .mobile-menu-ranking-section .my-ranking-item:last-child {
+        border-bottom: none;
+    }
+
+    .mobile-menu-ranking-section .rank-number {
+        font-weight: 700;
+        min-width: 30px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .mobile-menu-ranking-section .ranking-user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .mobile-menu-ranking-section .ranking-nickname {
+        font-weight: 600;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobile-menu-ranking-section .ranking-stats {
+        font-size: 12px;
+        color: #666;
+        margin-top: 2px;
+    }
+
+    .mobile-menu-ranking-section .ranking-rating {
+        font-weight: 600;
+        font-size: 14px;
+        min-width: 50px;
+        text-align: right;
+    }
+
+    .mobile-menu-content > .mobile-menu-btn {
+        margin: 0 20px;
+        flex-shrink: 0;
+    }
+
+    .mobile-menu-drawer.active .mobile-menu-content {
+        transform: translateX(0);
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #f5f5f5;
+        color: #333;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: left;
+        width: 100%;
+    }
+
+    .mobile-menu-btn:hover {
+        background: #e0e0e0;
+    }
+
+    .mobile-menu-btn.logout-btn {
+        background: #ef4444;
+        color: white;
+        margin-top: auto;
+        order: 999;
+    }
+
+    .mobile-menu-btn.logout-btn:hover {
+        background: #dc2626;
+    }
+
+    .mobile-menu-icon {
+        font-size: 20px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .mobile-menu-btn .header-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* 모바일 대응 (세로 화면) */
+    @media (max-width: 768px) {
+        .main-header {
+            padding: 6px 8px !important;
+            flex-wrap: nowrap !important;
+            gap: 6px !important;
+            height: 60px !important;
+            min-height: 60px !important;
+            max-height: 60px !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 1000 !important;
+            justify-content: space-between !important;
+        }
+
+        .header-left {
+            gap: 12px !important;
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
+            order: 1 !important;
+        }
+
+        .logo {
+            font-size: 16px !important;
+        }
+
+        .user-profile-section {
+            gap: 6px !important;
+        }
+
+        .user-avatar-small {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 12px !important;
+        }
+
+        .user-name-small {
+            font-size: 11px !important;
+            display: none !important; /* 모바일에서 닉네임 숨김 */
+        }
+
+        .header-center {
+            position: absolute !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            gap: 6px !important;
+            width: auto !important;
+            flex: 0 0 auto !important;
+            justify-content: center !important;
+            padding-top: 0 !important;
+            border-top: none !important;
+            overflow: visible !important;
+            z-index: 1 !important;
+        }
+
+        .currency-section {
+            padding: 4px 6px !important;
+            gap: 4px !important;
+            flex-shrink: 0 !important;
+            justify-content: center !important;
+        }
+
+        .currency-icon {
+            width: 16px !important;
+            height: 16px !important;
+        }
+
+        .currency-amount {
+            font-size: 11px !important;
+        }
+
+        .header-right {
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            gap: 4px !important;
+            flex-shrink: 0 !important;
+            flex: 0 0 auto !important;
+            margin-left: auto !important;
+            order: 3 !important;
+        }
+
+        .header-right .header-btn {
+            display: none !important; /* 모바일에서 일반 버튼 숨김 */
+        }
+
+        .mobile-menu-toggle {
+            display: flex !important;
+            width: 32px !important;
+            height: 32px !important;
+            padding: 4px !important;
+            order: 999 !important; /* 가장 우측에 배치 */
+        }
+
+        .mobile-menu-drawer {
+            display: block;
+        }
+    }
+
+    /* 작은 모바일 기기 (480px 이하) */
+    @media (max-width: 480px) {
+        .main-header {
+            padding: 8px 12px;
+        }
+
+        .logo {
+            font-size: 18px;
+        }
+
+        .user-avatar-small {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+
+        .header-center {
+            gap: 8px !important;
+            position: absolute !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            flex: 0 0 auto !important;
+        }
+
+        .currency-section {
+            padding: 5px 8px;
+            gap: 4px;
+        }
+
+        .currency-amount {
+            font-size: 11px;
+        }
+
+
+    }
+
+    /* 가로 방향 모바일 */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .main-header {
+            flex-wrap: nowrap;
+        }
+
+        .header-center {
+            order: 2;
+            width: auto;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .header-right {
+            order: 3;
+        }
+    }
 </style>
 
 <script>
@@ -307,125 +732,137 @@
 
     // 공지사항 버튼 클릭 핸들러
     document.getElementById('noticeBtn')?.addEventListener('click', () => {
-        alert('공지사항 기능은 준비 중입니다.');
-        // TODO: 공지사항 모달 또는 페이지 구현
+        if (typeof showNoticeModal === 'function') {
+            showNoticeModal();
+        } else {
+            console.error('showNoticeModal function not found');
+        }
     });
 
-    // 시간 포맷팅 함수 (밀리초를 MM:SS 형식으로)
-    function formatTime(ms) {
-        const totalSeconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
+    // 모바일 메뉴 토글
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileMenuDrawer = document.getElementById('mobileMenuDrawer');
+    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+    const mobileMenuRankingSection = document.getElementById('mobileMenuRankingSection');
+    const mobileMenuChatSection = document.getElementById('mobileMenuChatSection');
 
-    // 이용권 개수 및 타이머 업데이트 함수
-    async function updateTicketCounts() {
-        try {
-            const response = await fetch('/api/ticket/tickets');
-            const data = await response.json();
-            console.log('Ticket API response:', data);
-            if (data.success && data.tickets) {
-                const strategyCountEl = document.getElementById('strategyTicketCount');
-                const casualCountEl = document.getElementById('casualTicketCount');
-                const strategyTimerEl = document.getElementById('strategyTicketTimer');
-                const casualTimerEl = document.getElementById('casualTicketTimer');
-                
-                // 전략바둑 이용권 - "남은개수/최대치" 형식으로 표시
-                if (strategyCountEl) {
-                    const strategyTickets = data.tickets.strategyTickets ?? 0;
-                    const strategyMax = data.tickets.strategyMax ?? 10;
-                    strategyCountEl.textContent = `${strategyTickets}/${strategyMax}`;
-                    console.log('Updated strategy tickets:', `${strategyTickets}/${strategyMax}`);
+    if (mobileMenuToggle && mobileMenuDrawer) {
+        mobileMenuToggle.addEventListener('click', () => {
+            mobileMenuToggle.classList.toggle('active');
+            mobileMenuDrawer.classList.toggle('active');
+            
+            // 대기실 페이지인 경우 랭킹보드와 채팅창 표시
+            if (window.location.pathname.includes('waiting-room')) {
+                if (mobileMenuRankingSection) {
+                    mobileMenuRankingSection.style.display = 'flex';
                 }
-                
-                // 전략바둑 타이머 표시
-                if (strategyTimerEl) {
-                    if (data.tickets.strategyTickets < data.tickets.strategyMax) {
-                        const timeResponse = await fetch('/api/ticket/recovery-time?ticketType=strategy');
-                        const timeData = await timeResponse.json();
-                        if (timeData.success) {
-                            strategyTimerEl.textContent = formatTime(timeData.timeRemaining);
-                            strategyTimerEl.style.display = 'block';
-                        }
-                    } else {
-                        strategyTimerEl.style.display = 'none';
-                    }
+                if (mobileMenuChatSection) {
+                    mobileMenuChatSection.style.display = 'flex';
                 }
-                
-                // 놀이바둑 이용권 - "남은개수/최대치" 형식으로 표시
-                if (casualCountEl) {
-                    const casualTickets = data.tickets.casualTickets ?? 0;
-                    const casualMax = data.tickets.casualMax ?? 10;
-                    casualCountEl.textContent = `${casualTickets}/${casualMax}`;
-                    console.log('Updated casual tickets:', `${casualTickets}/${casualMax}`);
+            } else {
+                if (mobileMenuRankingSection) {
+                    mobileMenuRankingSection.style.display = 'none';
                 }
-                
-                // 놀이바둑 타이머 표시
-                if (casualTimerEl) {
-                    if (data.tickets.casualTickets < data.tickets.casualMax) {
-                        const timeResponse = await fetch('/api/ticket/recovery-time?ticketType=casual');
-                        const timeData = await timeResponse.json();
-                        if (timeData.success) {
-                            casualTimerEl.textContent = formatTime(timeData.timeRemaining);
-                            casualTimerEl.style.display = 'block';
-                        }
-                    } else {
-                        casualTimerEl.style.display = 'none';
-                    }
+                if (mobileMenuChatSection) {
+                    mobileMenuChatSection.style.display = 'none';
                 }
             }
-        } catch (error) {
-            console.error('Update ticket counts error:', error);
-        }
-    }
-
-    // 타이머 업데이트 함수 (1초마다)
-    function updateTicketTimers() {
-        const strategyTimerEl = document.getElementById('strategyTicketTimer');
-        const casualTimerEl = document.getElementById('casualTicketTimer');
-        
-        if (strategyTimerEl && strategyTimerEl.style.display !== 'none') {
-            fetch('/api/ticket/recovery-time?ticketType=strategy')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        strategyTimerEl.textContent = formatTime(data.timeRemaining);
-                        if (data.timeRemaining <= 0) {
-                            updateTicketCounts(); // 회복 시간이 지나면 전체 업데이트
-                        }
-                    }
-                })
-                .catch(err => console.error('Timer update error:', err));
-        }
-        
-        if (casualTimerEl && casualTimerEl.style.display !== 'none') {
-            fetch('/api/ticket/recovery-time?ticketType=casual')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        casualTimerEl.textContent = formatTime(data.timeRemaining);
-                        if (data.timeRemaining <= 0) {
-                            updateTicketCounts(); // 회복 시간이 지나면 전체 업데이트
-                        }
-                    }
-                })
-                .catch(err => console.error('Timer update error:', err));
-        }
-    }
-
-    // 페이지 로드 시 이용권 개수 업데이트
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            updateTicketCounts();
-            // 1초마다 타이머 업데이트
-            setInterval(updateTicketTimers, 1000);
-            // 30초마다 이용권 개수 업데이트 (회복 확인)
-            setInterval(updateTicketCounts, 30000);
         });
-    } else {
-        updateTicketCounts();
-        setInterval(updateTicketTimers, 1000);
-        setInterval(updateTicketCounts, 30000);
+
+        mobileMenuOverlay?.addEventListener('click', () => {
+            mobileMenuToggle.classList.remove('active');
+            mobileMenuDrawer.classList.remove('active');
+        });
+        
+        // 모바일 메뉴 상단 버튼 이벤트 연결
+        const mobileTopButtons = mobileMenuDrawer.querySelectorAll('.mobile-menu-top-btn');
+        mobileTopButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const btnClass = btn.classList;
+                if (btnClass.contains('shop-btn')) {
+                    if (typeof openShopModal === 'function') openShopModal();
+                    else console.log('상점 모달 열기');
+                } else if (btnClass.contains('quest-btn')) {
+                    if (typeof openQuestModal === 'function') openQuestModal();
+                    else console.log('퀘스트 모달 열기');
+                } else if (btnClass.contains('mailbox-btn')) {
+                    if (typeof openMailboxModal === 'function') openMailboxModal();
+                    else console.log('우편함 모달 열기');
+                } else if (btnClass.contains('settings-btn')) {
+                    if (typeof openSettingsModal === 'function') openSettingsModal();
+                    else console.log('설정 모달 열기');
+                }
+                // 공지사항은 이미 연결되어 있음
+            });
+        });
+
+        // 모바일 메뉴의 버튼 클릭 시 메뉴 닫기 (로그아웃 제외)
+        const mobileMenuBtns = mobileMenuDrawer.querySelectorAll('.mobile-menu-btn:not(.logout-btn)');
+        mobileMenuBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                mobileMenuToggle.classList.remove('active');
+                mobileMenuDrawer.classList.remove('active');
+            });
+        });
+        
+        // 모바일 메뉴 채팅 전송 기능
+        const mobileMenuChatInput = document.getElementById('mobileMenuChatInput');
+        const mobileMenuChatSendBtn = document.getElementById('mobileMenuChatSendBtn');
+        
+        if (mobileMenuChatSendBtn && mobileMenuChatInput) {
+            function sendMobileMenuChat() {
+                const message = mobileMenuChatInput.value.trim();
+                if (!message) return;
+                
+                // Socket.IO가 있는 경우에만 전송
+                if (typeof socket !== 'undefined' && socket) {
+                    socket.emit('chat_message', {
+                        message: message,
+                        timestamp: Date.now()
+                    });
+                    mobileMenuChatInput.value = '';
+                } else {
+                    console.warn('Socket.IO not available for chat');
+                }
+            }
+            
+            mobileMenuChatSendBtn.addEventListener('click', sendMobileMenuChat);
+            mobileMenuChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMobileMenuChat();
+                }
+            });
+        }
+
+        // 모바일 로그아웃 버튼 이벤트 연결
+        const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+        if (mobileLogoutBtn) {
+            mobileLogoutBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.href = '/login';
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            });
+        }
+
+        // 모바일 공지사항 버튼 이벤트 연결
+        const mobileNoticeBtn = document.getElementById('mobileNoticeBtn');
+        if (mobileNoticeBtn) {
+            mobileNoticeBtn.addEventListener('click', () => {
+                if (typeof showNoticeModal === 'function') {
+                    showNoticeModal();
+                } else {
+                    console.error('showNoticeModal function not found');
+                }
+            });
+        }
     }
+
 </script>

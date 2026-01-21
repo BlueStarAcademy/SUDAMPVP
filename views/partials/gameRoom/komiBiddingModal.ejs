@@ -1,0 +1,45 @@
+<!-- Komi Bidding Modal Template -->
+<div class="stats-modal-content" style="max-width: 500px;">
+    <div class="stats-modal-header">
+        <div class="stats-modal-title" id="komiBidTitle">흑백 및 덤 입찰</div>
+        <button class="close-modal" onclick="document.getElementById('komiBiddingModal').style.display='none'">&times;</button>
+    </div>
+    <div class="request-modal-body" style="padding: 20px;">
+        <p style="margin-bottom: 15px; color: #ccc; text-align: center;">
+            같은 색상을 선택하셨습니다. 해당 색상으로 대국하기 위해 덤을 입찰하세요 (0~50집).
+        </p>
+        <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 12px; color: rgba(255, 215, 0, 0.9);">
+            <strong>💎 베이스돌 안내:</strong> 베이스돌은 각각 5점의 가치를 가집니다. 베이스돌을 따내면 5점을 획득하고, 계가 시 사석으로 남아있으면 5점으로 계산됩니다.
+        </div>
+        <div style="margin: 20px 0;">
+            <label style="display: block; margin-bottom: 10px; color: #ccc;">덤 (기본 0.5집 + 제시한 덤)</label>
+            <div style="background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+                <div style="font-size: 24px; font-weight: bold; color: #ffd700;" id="komiDisplay">0</div>
+                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.7); margin-top: 5px;">기본 0.5집 + 제시한 덤</div>
+            </div>
+            <input type="range" id="komiSlider" min="0" max="50" value="0" step="1" style="width: 100%; margin-bottom: 15px;">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <button class="btn btn-secondary" onclick="adjustKomi(10)">+10</button>
+                <button class="btn btn-secondary" onclick="adjustKomi(5)">+5</button>
+                <button class="btn btn-secondary" onclick="adjustKomi(1)">+1</button>
+                <button class="btn btn-secondary" onclick="adjustKomi(-1)">-1</button>
+                <button class="btn btn-secondary" onclick="adjustKomi(-5)">-5</button>
+                <button class="btn btn-secondary" onclick="adjustKomi(-10)">-10</button>
+                <button class="btn btn-secondary" onclick="adjustKomi(0)">0</button>
+                <button class="btn btn-secondary" onclick="adjustKomi(50)">MAX</button>
+            </div>
+        </div>
+        <div class="bid-timer-section" style="margin-top: 20px;">
+            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.7); text-align: center; margin-bottom: 8px;">남은 시간</div>
+            <div class="bid-timer-bar-container" style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                <div class="bid-timer-bar" id="komiBidTimerBar" style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: 100%; transition: width 0.1s linear;"></div>
+            </div>
+            <div class="bid-timer-text" id="komiBidTimerText" style="text-align: center; font-size: 16px; font-weight: 600; color: #fff;">30초</div>
+        </div>
+        <div id="komiBidStatus" style="margin-top: 15px; text-align: center; color: #999;"></div>
+        <button id="submitKomiBidBtn" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="submitKomiBid()">
+            입찰하기
+        </button>
+    </div>
+</div>
+

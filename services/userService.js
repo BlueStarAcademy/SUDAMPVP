@@ -157,6 +157,9 @@ class UserService {
         losses: user.losses,
         draws: user.draws,
         totalGames: (user._count?.gamesAsBlack || 0) + (user._count?.gamesAsWhite || 0),
+        gem: user.gem || 0,
+        avatar: user.avatar || 1,
+        badukMBTI: user.badukMBTI || null,
       };
 
       // Skip Redis cache write (Redis is optional)

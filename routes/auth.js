@@ -2,6 +2,40 @@ const express = require('express');
 const router = express.Router();
 const userService = require('../services/userService');
 
+// 닉네임 검증 함수 (한글 기준 1~6글자)
+function validateNickname(nickname) {
+  if (!nickname || typeof nickname !== 'string') {
+    return { valid: false, error: '닉네임을 입력해주세요.' };
+  }
+  
+  // 한글, 영문, 숫자만 허용
+  const koreanRegex = /^[가-힣a-zA-Z0-9]+$/;
+  if (!koreanRegex.test(nickname)) {
+    return { valid: false, error: '닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.' };
+  }
+  
+  // 한글 기준 길이 계산 (한글 1글자 = 1, 영문/숫자 1글자 = 0.5)
+  let length = 0;
+  for (let i = 0; i < nickname.length; i++) {
+    const char = nickname[i];
+    if (/[가-힣]/.test(char)) {
+      length += 1;
+    } else if (/[a-zA-Z0-9]/.test(char)) {
+      length += 0.5;
+    }
+  }
+  
+  if (length < 1) {
+    return { valid: false, error: '닉네임은 한글 기준 최소 1글자 이상이어야 합니다.' };
+  }
+  
+  if (length > 6) {
+    return { valid: false, error: '닉네임은 한글 기준 최대 6글자까지 가능합니다.' };
+  }
+  
+  return { valid: true };
+}
+
 // Register
 router.post('/register', async (req, res) => {
   try {
@@ -13,7 +47,13 @@ router.post('/register', async (req, res) => {
     console.log('Password provided:', password ? 'Yes' : 'No');
 
     if (!email || !nickname || !password) {
-      return res.status(400).json({ error: 'All fields are required' });
+      return res.status(400).json({ error: 'All fields are required', message: '모든 필드를 입력해주세요.' });
+    }
+
+    // 닉네임 검증
+    const nicknameValidation = validateNickname(nickname);
+    if (!nicknameValidation.valid) {
+      return res.status(400).json({ error: 'Invalid nickname', message: nicknameValidation.error });
     }
 
     // Check if user exists
@@ -138,13 +178,25 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('Password verified, setting session...');
+    
+    // 테스트 계정 체크
+    const isTestAccount = email === 'blue@test.com' || email === 'yellow@test.com';
+    
     // Set session
     req.session.userId = user.id;
     req.session.nickname = user.nickname;
     
+    // 테스트 계정인 경우 세션 만료 시간을 매우 길게 설정 (30일)
+    // 같은 브라우저에서는 하나의 세션만 유지되므로, 시크릿 모드나 다른 브라우저 사용 권장
+    if (isTestAccount) {
+      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+      console.log('Test account: Extended session expiration to 30 days');
+    }
+    
     // 세션 저장 확인 - Promise로 래핑하여 에러 처리 개선
     try {
       await new Promise((resolve, reject) => {
+        // 세션 변경사항을 명시적으로 저장
         req.session.save((err) => {
           if (err) {
             console.error('Session save error:', err);
@@ -171,6 +223,9 @@ router.post('/login', async (req, res) => {
           resolve();
         });
       });
+      
+      // 쿠키가 제대로 설정되었는지 확인하기 위해 세션을 다시 한번 저장
+      // rolling: true로 인해 매 요청마다 쿠키가 갱신됨
       
       res.json({
         success: true,

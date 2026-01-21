@@ -1,0 +1,193 @@
+﻿    <div id="gameRequestModal" class="stats-modal">
+        <div class="stats-modal-content request-modal-content">
+            <div class="stats-modal-header" id="requestModalHeader">
+                <div class="stats-modal-title" id="requestModalTitle">?援??좎껌</div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-secondary" id="viewProfileBtn" style="display: none; padding: 6px 12px; font-size: 12px;" onclick="toggleProfilePanel()">?곷? ?꾨줈??/button>
+                    <button class="close-modal" onclick="closeGameRequestModal()">&times;</button>
+                </div>
+            </div>
+            <div class="request-modal-body">
+                <div class="request-sidebar full-width">
+                    <div class="request-category-title" id="requestCategoryTitle">?꾨왂諛붾몣</div>
+                    <div id="requestModeList" class="request-mode-list"></div>
+                </div>
+                <div class="request-main">
+                    <!-- ?ㅼ젙 ?곸뿭 -->
+                    <div class="request-main-content" id="requestMainContent">
+                        <!-- AI遊??寃??ㅼ젙 (?꾨왂諛붾몣?먮쭔 ?쒖떆) -->
+                        <div class="settings-section ai-only-section" id="aiLevelSection" style="display: none;">
+                            <div class="settings-section-title">AI ?ㅼ젙</div>
+                            <div class="settings-row-grid-two">
+                                <div class="setting-item">
+                                    <label class="ai-battle-label">AI ?쒖씠??/label>
+                                    <select id="aiLevelSelect" class="form-select">
+                                        <option value="1">1?④퀎</option>
+                                        <option value="2">2?④퀎</option>
+                                        <option value="3" selected>3?④퀎</option>
+                                        <option value="4">4?④퀎</option>
+                                        <option value="5">5?④퀎</option>
+                                        <option value="6">6?④퀎</option>
+                                        <option value="7">7?④퀎</option>
+                                        <option value="8">8?④퀎</option>
+                                        <option value="9">9?④퀎</option>
+                                        <option value="10">10?④퀎</option>
+                                    </select>
+                                </div>
+                                <div class="setting-item">
+                                    <label class="ai-battle-label">???됱긽</label>
+                                    <select id="colorSelect" class="form-select">
+                                        <option value="black">??(?좎닔)</option>
+                                        <option value="white">諛?(?꾩닔)</option>
+                                        <option value="random">?쒕뜡</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 湲곕낯 寃뚯엫 ?ㅼ젙 ?뱀뀡 -->
+                        <div class="settings-section" id="basicSettingsSection">
+                            <div class="settings-section-title">湲곕낯 ?ㅼ젙</div>
+                            <div class="settings-row-grid-two" id="basicSettingsRow">
+                                <div class="setting-item" id="boardSizeItem">
+                                    <label class="ai-battle-label">諛붾몣???ш린</label>
+                                    <select id="boardSizeSelect" class="form-select">
+                                        <option value="19" selected>19以?/option>
+                                        <option value="13">13以?/option>
+                                        <option value="9">9以?/option>
+                                    </select>
+                                </div>
+                                <div class="setting-item" id="komiSettingItem" style="display: none;">
+                                    <label class="ai-battle-label">??Komi)</label>
+                                    <select id="komiSelect" class="form-select">
+                                        <option value="6.5" selected>6.5吏?(?쒓뎅/?쇰낯??</option>
+                                        <option value="7.5">7.5吏?(以묎뎅??</option>
+                                        <option value="0.5">0.5吏?(?몄꽑)</option>
+                                    </select>
+                                </div>
+                                <div class="setting-item" id="autoScoringItem" style="display: none;">
+                                    <label class="ai-battle-label">怨꾧?源뚯? ?섏닚</label>
+                                    <select id="autoScoringMoveSelect" class="form-select">
+                                        <!-- ?숈쟻?쇰줈 梨꾩썙吏?-->
+                                    </select>
+                                </div>
+                                <!-- ?쒗븳 ?댁닔 ??ぉ ?쒓굅??(?깃??뚮젅??而⑦뀗痢좎뿉???ъ슜 ?덉젙) -->
+                            </div>
+                        </div>
+                        
+                        <!-- ?쒓컙 ?ㅼ젙 ?뱀뀡 -->
+                        <div class="settings-section" id="timeSettingsSection" style="display: none;">
+                            <div class="settings-section-title">?쒓컙 ?ㅼ젙</div>
+                            <div class="settings-row-grid" id="timeSettingsRow">
+                                <div class="setting-item" id="timeLimitItem" style="display: none;">
+                                    <label class="ai-battle-label">?쒗븳?쒓컙</label>
+                                    <select id="timeLimitSelect" class="form-select">
+                                        <option value="5">5遺?/option>
+                                        <option value="10" selected>10遺?/option>
+                                        <option value="15">15遺?/option>
+                                        <option value="20">20遺?/option>
+                                        <option value="30">30遺?/option>
+                                        <option value="60">60遺?/option>
+                                    </select>
+                                </div>
+                                <div class="setting-item" id="timeIncrementItem" style="display: none;">
+                                    <label class="ai-battle-label">異붽??쒓컙 (?쇱뀛)</label>
+                                    <select id="timeIncrementSelect" class="form-select">
+                                        <option value="5" selected>5珥?/option>
+                                        <option value="10">10珥?/option>
+                                        <option value="15">15珥?/option>
+                                        <option value="20">20珥?/option>
+                                    </select>
+                                </div>
+                                <div class="setting-item" id="byoyomiItem" style="display: none;">
+                                    <label class="ai-battle-label">珥덉씫湲??쒓컙</label>
+                                    <select id="byoyomiSecondsSelect" class="form-select">
+                                        <option value="10">10珥?/option>
+                                        <option value="20">20珥?/option>
+                                        <option value="30" selected>30珥?/option>
+                                        <option value="60">60珥?/option>
+                                    </select>
+                                </div>
+                                <div class="setting-item" id="byoyomiPeriodsItem" style="display: none;">
+                                    <label class="ai-battle-label">珥덉씫湲??잛닔</label>
+                                    <select id="byoyomiPeriodsSelect" class="form-select">
+                                        <option value="3">3??/option>
+                                        <option value="5" selected>5??/option>
+                                        <option value="10">10??/option>
+                                        <option value="20">20??/option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 寃뚯엫 紐⑤뱶蹂??뱀젙 ?ㅼ젙 ?뱀뀡 -->
+                        <div class="settings-section mode-specific-settings-section" id="modeSpecificSettingsSection" style="display: none;">
+                            <div class="settings-section-title" id="modeSpecificSettingsTitle">寃뚯엫 紐⑤뱶 ?ㅼ젙</div>
+                            <div class="request-settings-grid" id="modeSpecificSettings">
+                                <!-- 寃뚯엫 紐⑤뱶蹂??뱀젙 ?ㅼ젙???ш린???숈쟻?쇰줈 異붽??⑸땲??-->
+                            </div>
+                        </div>
+                        
+                        <!-- 誘뱀뒪諛붾몣 洹쒖튃 ?좏깮 ?뱀뀡 (蹂꾨룄 以? -->
+                        <div class="mix-rules-section" id="mixRulesSection" style="display: none;">
+                            <div class="mix-rules-section-title">洹쒖튃 ?좏깮 (2媛??댁긽 ?좏깮)</div>
+                            <div class="mix-rules-grid" id="mixRulesGrid">
+                                <!-- 洹쒖튃 泥댄겕諛뺤뒪?ㅼ씠 ?ш린???숈쟻?쇰줈 異붽??⑸땲??-->
+                            </div>
+                            <div id="mixRuleSettings" style="width: 100%; display: none;">
+                                <!-- ?좏깮??洹쒖튃蹂??ㅼ젙???ш린???숈쟻?쇰줈 異붽??⑸땲??-->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="request-timer-container" id="requestTimerContainer">
+                        <div class="request-timer-bar" id="requestTimerBar"></div>
+                    </div>
+                    <div class="request-timer-text" id="requestTimerText">30s</div>
+                    
+                    <div class="ai-battle-actions">
+                        <div id="senderActionButtons" style="display: flex; gap: 12px; align-items: center;">
+                            <button class="btn btn-primary" id="confirmRequestBtn">?좎껌?섍린</button>
+                            <button class="btn btn-secondary" onclick="closeGameRequestModal()">痍⑥냼</button>
+                        </div>
+                        
+                        <div id="receiverActionButtons" style="display: none; gap: 12px; align-items: center;">
+                            <button class="btn btn-primary" id="acceptRequestBtn">?섎씫</button>
+                            <button class="btn btn-modify" id="modifyRequestBtn" style="display: block;" disabled>?섏젙?쒖븞</button>
+                            <button class="btn btn-danger" id="rejectRequestBtn">嫄곗젅</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="request-right-panel" id="requestRightPanel" style="display: none;">
+                    <div id="targetUserInfo" class="target-user-info">
+                        <div class="user-avatar-small" id="targetUserAvatar" style="cursor: pointer;" onclick="if(selectedTargetUser && selectedTargetUser.id) showProfileModal(selectedTargetUser.id)">?</div>
+                        <div class="target-user-details">
+                            <div id="targetUserNickname" class="target-nickname" style="cursor: pointer;" onclick="if(selectedTargetUser && selectedTargetUser.id) showProfileModal(selectedTargetUser.id)">?곷?諛?/div>
+                            <div id="targetUserRating" class="target-rating">?덉씠?? -</div>
+                            <div id="targetUserManner" class="target-rating" style="margin-top: 4px;">留ㅻ꼫: -</div>
+                            <div class="target-game-stats">
+                                <div class="target-game-stats-title" id="targetGameStatsTitle" style="font-size: 12px; margin-bottom: 10px;">?대옒?앸컮???꾩쟻</div>
+                                <div class="target-game-stats-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                                    <div class="target-stat-item" style="text-align: center;">
+                                        <div class="target-stat-value" id="targetGameWins" style="font-size: 18px; font-weight: 700; color: #667eea;">0</div>
+                                        <div class="target-stat-label" style="font-size: 11px; color: #64748b; margin-top: 4px;">??/div>
+                                    </div>
+                                    <div class="target-stat-item" style="text-align: center;">
+                                        <div class="target-stat-value" id="targetGameLosses" style="font-size: 18px; font-weight: 700; color: #ef4444;">0</div>
+                                        <div class="target-stat-label" style="font-size: 11px; color: #64748b; margin-top: 4px;">??/div>
+                                    </div>
+                                    <div class="target-stat-item" style="text-align: center;">
+                                        <div class="target-stat-value" id="targetGameWinRate" style="font-size: 18px; font-weight: 700; color: #10b981;">0%</div>
+                                        <div class="target-stat-label" style="font-size: 11px; color: #64748b; margin-top: 4px;">?밸쪧</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-modal-options">
+                <label><input type="checkbox" id="requestModalRememberPosition"><span>李??꾩튂 湲곗뼲</span></label>
+            </div>
+        </div>
+    </div>

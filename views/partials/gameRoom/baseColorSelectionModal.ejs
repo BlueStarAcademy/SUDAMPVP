@@ -1,0 +1,48 @@
+<!-- Base Color Selection Modal Template -->
+<div class="base-color-modal-content">
+    <div class="base-komi-modal-header">
+        <div class="base-komi-modal-title">
+            <span>색상 선택</span>
+        </div>
+        <button class="base-komi-close-modal" onclick="document.getElementById('baseColorSelectionModal').style.display='none'">&times;</button>
+    </div>
+    <div class="base-komi-modal-body">
+        <p class="base-komi-description">
+            바둑판에 배치된 베이스돌을 확인하고 원하는 색상을 선택하세요.
+        </p>
+        <div class="base-stone-info">
+            <div class="base-stone-icon">💎</div>
+            <div class="base-stone-text">
+                <strong>베이스돌 안내</strong>
+                <p>베이스돌은 각각 5점의 가치를 가집니다. 베이스돌을 따내면 5점을 획득하고, 계가 시 사석으로 남아있으면 5점으로 계산됩니다.</p>
+            </div>
+        </div>
+        
+        <!-- 색상 선택 -->
+        <div class="base-color-section">
+            <label class="base-section-label">색상 선택</label>
+            <div class="base-color-buttons">
+                <button id="selectBaseColorBlackBtn" class="base-color-btn base-color-black" onclick="selectBaseColor('black')">
+                    <div class="base-color-icon">⚫</div>
+                    <div class="base-color-text">
+                        <div class="base-color-name">흑</div>
+                        <div class="base-color-desc">선수</div>
+                    </div>
+                </button>
+                <button id="selectBaseColorWhiteBtn" class="base-color-btn base-color-white" onclick="selectBaseColor('white')">
+                    <div class="base-color-icon">⚪</div>
+                    <div class="base-color-text">
+                        <div class="base-color-name">백</div>
+                        <div class="base-color-desc">후수</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+        
+        <button id="confirmBaseColorBtn" class="base-confirm-btn" onclick="confirmBaseColorSelection()">
+            <span class="base-confirm-icon">▶</span>
+            <span>다음</span>
+        </button>
+    </div>
+</div>
+

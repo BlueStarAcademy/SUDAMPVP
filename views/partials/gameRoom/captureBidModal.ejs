@@ -1,0 +1,31 @@
+<!-- Capture Bid Modal (덤 설정 모달) -->
+<div class="game-start-modal" id="captureBidModal" style="display: none;">
+    <div class="game-start-modal-content">
+        <div class="game-start-modal-header">
+            <div class="game-start-modal-title">흑 결정을 위한 덤 설정</div>
+            <div class="game-start-modal-subtitle">흑으로 두기 위해 추가로 따낼 돌의 개수를 설정하세요 (0~20개)</div>
+        </div>
+        <div class="game-start-modal-body">
+            <div class="bid-control-section">
+                <div class="bid-slider-container">
+                    <input type="range" id="bidSlider" min="0" max="20" value="0" class="bid-slider">
+                    <div class="bid-value-display">
+                        <span id="bidValueDisplay">0</span>개
+                    </div>
+                </div>
+                <div class="bid-buttons">
+                    <button class="btn btn-secondary" onclick="adjustBid(-5)">-5</button>
+                    <button class="btn btn-secondary" onclick="adjustBid(-1)">-1</button>
+                    <button class="btn btn-secondary" onclick="adjustBid(1)">+1</button>
+                    <button class="btn btn-secondary" onclick="adjustBid(5)">+5</button>
+                    <button class="btn btn-secondary" onclick="adjustBid(0)">초기화</button>
+                </div>
+            </div>
+            <div id="bidStatusInfo">상대방의 입찰을 기다리는 중...</div>
+        </div>
+        <div class="start-button-container">
+            <button class="start-game-button" id="submitBidButton">제시하기</button>
+            <button class="start-game-button" id="startGameButton" style="display: none;">경기 시작</button>
+        </div>
+    </div>
+</div>
