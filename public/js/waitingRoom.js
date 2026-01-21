@@ -1,7 +1,38 @@
 ﻿// WaitingRoom JavaScript
 // Socket.IO는 전역에서 사용 가능해야 함
-(function() {
+    (function() {
     'use strict';
+    
+    // 디버깅: 초기 DOM 상태 확인
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const bodyChildren = Array.from(document.body.children);
+            const container = bodyChildren.find(el => el.classList.contains('container') && el.parentElement === document.body);
+            const waitingRoomGrid = document.querySelector('.waiting-room-grid');
+            
+            console.log('=== Initial DOM Check ===');
+            console.log('Body children count:', bodyChildren.length);
+            console.log('Container in body:', !!container);
+            console.log('Waiting room grid exists:', !!waitingRoomGrid);
+            if (waitingRoomGrid) {
+                console.log('Grid parent:', waitingRoomGrid.parentElement);
+                console.log('Grid parent tag:', waitingRoomGrid.parentElement?.tagName);
+                console.log('Grid parent class:', waitingRoomGrid.parentElement?.className);
+            }
+            
+            // Container가 없고 Grid가 있으면, Grid의 부모를 body로 이동
+            if (!container && waitingRoomGrid) {
+                const gridParent = waitingRoomGrid.parentElement;
+                if (gridParent && gridParent.classList.contains('container')) {
+                    // Container를 찾았지만 body의 직접 자식이 아님
+                    if (gridParent.parentElement !== document.body) {
+                        console.warn('Container found but not as body direct child, moving...');
+                        document.body.appendChild(gridParent);
+                    }
+                }
+            }
+        }, 50);
+    });
     
     // Socket.IO 초기화 (waitingRoom.ejs에서 socket.io.js가 로드되어 있어야 함)
     if (typeof io === 'undefined') {
@@ -482,7 +513,11 @@
                 isSettingsChanged = false;
                 
                 const modal = document.getElementById('gameRequestModal');
-                if (!modal) return;
+                if (!modal) {
+                    console.error('gameRequestModal element not found');
+                    alert('모달을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+                    return;
+                }
                 
                 // 주석
                 const content = modal.querySelector('.stats-modal-content');
@@ -974,7 +1009,7 @@
                 options.forEach((move) => {
                     const option = document.createElement('option');
                     option.value = move;
-                    option.textContent = `${move};
+                    option.textContent = `${move}`;
                     if (currentValue && parseInt(currentValue) === move) {
                         option.selected = true;
                         foundCurrent = true;
@@ -1014,58 +1049,58 @@
             if (!descriptionEl) return;
             
             const descriptions = {
-                'CLASSIC': {
-                    title: '?대옒?앸컮,
-                    text: '?꾪넻?곸씤 붾몣 洹쒖튃?쇰줈 吏꾪뻾?⑸땲 吏?꾩궛듯빐 ?뱁뙣瑜?곗젙?⑸땲 Komi)곸슜?⑸땲'
+                CLASSIC: {
+                    title: 'Classic',
+                    text: 'Standard game with komi applied.',
                 },
-                'CAPTURE': {
-                    title: '?곕궡곕컮,
-                    text: '?곷?뚯쓣 紐⑺몴 媛쒖닔留뚰겮 ?곕궡硫밸━?⑸땲 ?낆같듯빐 좎닔)곗젙?섍퀬 紐⑺몴 媛쒖닔瑜ㅼ젙?⑸땲'
+                CAPTURE: {
+                    title: 'Capture',
+                    text: 'Win by capturing the target number of stones.',
                 },
-                'SPEED': {
-                    title: '?ㅽ뵾?쒕컮,
-                    text: '?쇱뀛 ⑹떇 ?쒓컙?쒕줈 吏꾪뻾?⑸땲 ?뚯쓣 뚮쭏異붽? ?쒓컙?щ릺硫? ?⑥? ?쒓컙?쇰줈 蹂대꼫먯닔瑜띾뱷덉뒿?덈떎.'
+                SPEED: {
+                    title: 'Speed',
+                    text: 'Faster pace with shorter time controls.',
                 },
-                'BASE': {
-                    title: '좎씠?ㅻ컮,
-                    text: '좎씠뚯쓽 紐⑥뼇蹂닿퀬 깆쓣 ?좏깮?섍퀬 ?ㅼ쓣 ?쒖떆?섏꽭 留롮? ?ㅼ쓣 ?쒖떆履쎌씠 ?먰븯됱긽?쇰줈 쎄린덉뒿?덈떎. 좎씠?= 5
+                BASE: {
+                    title: 'Base',
+                    text: 'Place bases to gain points for control.',
                 },
-                'HIDDEN': {
-                    title: '?덈뱺붾몣',
-                    text: '?곷먭쾶 蹂댁씠吏 ?딅뒗 ?덈뱺 李⑹닔瑜덉뒿?덈떎. ?ㅼ틪?쇰줈 ?곷?덈뱺?뚯쓣 ?먯덉쑝硫? ?덈뱺?뚯쓣 ?곕궡硫?蹂대꼫먯닔瑜띾뱷?⑸땲'
+                HIDDEN: {
+                    title: 'Hidden',
+                    text: 'Stones are hidden until revealed by play.',
                 },
-                'MISSILE': {
-                    title: '몄궗?쇰컮,
-                    text: '?먯떊뚯쓣 ?곹븯醫뚯슦 吏곸꽑?쇰줈 ?대룞?쒗궗 덉뒿?덈떎.'
+                MISSILE: {
+                    title: 'Missile',
+                    text: 'Special attacks can remove stones in a line.',
                 },
-                'MIX': {
-                    title: '뱀뒪붾몣',
-                    text: '?щ윭 洹쒖튃議고빀紐⑤뱶?낅땲'
+                MIX: {
+                    title: 'Mix',
+                    text: 'Mixed ruleset combining multiple modes.',
                 },
-                'DICE': {
-                    title: '쇱궗?꾨컮,
-                    text: '3?쇱슫?쒕줈 吏꾪뻾?⑸땲 媛쇱슫?쒕쭏쇱궗?꾨? 援대젮 ?묐룎곗튂?섍퀬, 깅룎곕깄?덈떎. ?곕궦 깅룎 媛쒖닔濡먯닔瑜?꾩궛?⑸땲'
+                DICE: {
+                    title: 'Dice',
+                    text: 'Random effects influence the match.',
                 },
-                'COPS': {
-                    title: '쎌같쇰룄,
-                    text: '?꾨몣(쎌같(? 븷2?쇱슫?쒖뿉 몄퀜 덇컝⑸땲 ?꾨몣? ?댁븘?⑥? ?뚮떦 1 쎌같? ?≪? ?뚮떦 1?먯쓣 ?띾뱷?⑸땲'
+                COPS: {
+                    title: 'Cops',
+                    text: 'Gain points for controlling key areas.',
                 },
-                'OMOK': {
-                    title: '?ㅻぉ',
-                    text: '5媛쒕? ?곗냽?쇰줈 곗튂?섎㈃ ?밸━?⑸땲 3-3 덉?, ?λぉ(6媛댁긽) 덉? 洹쒖튃곸슜덉뒿?덈떎.'
+                OMOK: {
+                    title: 'Omok',
+                    text: 'Win by connecting five in a row.',
                 },
-                'TTAMOK': {
-                    title: '?곕ぉ',
-                    text: '?ㅻぉъ꽦?섍굅紐⑺몴 媛쒖닔瑜곕궡硫밸━?⑸땲 ?곷? 2媛쒓? ?섎?볦씤 쎌슦 ?묒そ留됱븘 ?곕궪 덉뒿?덈떎.'
+                TTAMOK: {
+                    title: 'Ttamok',
+                    text: 'Special capture rules apply in this mode.',
                 },
-                'ALKKAGI': {
-                    title: '?뚭퉴?,
-                    text: '?뺥빐吏?援ъ뿭뚯쓣 곗튂?섍퀬, ?뚯썙 뚯씠吏濡뚯쓣 ?뺢꺼 ?곷? ?뚯쓣 ?쒓굅?⑸땲 ?쇱슫?쒖젣濡?吏꾪뻾?⑸땲'
+                ALKKAGI: {
+                    title: 'Alkkagi',
+                    text: 'Flick stones to knock opponent stones out.',
                 },
-                'CURLING': {
-                    title: '붾몣而щ쭅',
-                    text: '3?쇱슫?쒕줈 吏꾪뻾?⑸땲 媛쇱슫?쒕쭏뺥빐吏?媛쒖닔뚯쓣 ?섏쭛?덈떎. ?섏슦먯닔? ?됱븘먯닔濡뱁뙣瑜?곗젙?⑸땲'
-                }
+                CURLING: {
+                    title: 'Curling',
+                    text: 'Score based on stone positions after rounds.',
+                },
             };
             
             const desc = descriptions[modeId] || { title: '뚯엫', text: '뚯엫 ?ㅻ챸놁뒿?덈떎.' };
@@ -1640,13 +1675,13 @@
                 if (winRateElInline) winRateElInline.textContent = `${winRate}%`;
                 if (statsTitleInline) {
                     const modeNames = {
-                        'CLASSIC': '?대옒?앸컮,
-                        'CAPTURE': '?곕궡곕컮,
-                        'SPEED': '?ㅽ뵾?쒕컮,
-                        'BASE': '좎씠?ㅻ컮,
-                        'HIDDEN': '?덈뱺붾몣',
-                        'MISSILE': '몄궗?쇰컮,
-                        'MIX': '뱀뒪붾몣'
+                        CLASSIC: 'Classic',
+                        CAPTURE: 'Capture',
+                        SPEED: 'Speed',
+                        BASE: 'Base',
+                        HIDDEN: 'Hidden',
+                        MISSILE: 'Missile',
+                        MIX: 'Mix',
                     };
                     statsTitleInline.textContent = `${modeNames[selectedMode] || '뚯엫'} ?꾩쟻`;
                 }
@@ -1690,11 +1725,16 @@
                 });
             }
 
-            // ESC ?ㅻ줈 紐⑤떖 ?リ린
+            // ESC 키로 모달 닫기
             document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && aiBattleModalOpen) {
-                    console.log('ESC key pressed, closing AI Battle modal');
-                    closeGameRequestModal();
+                if (e.key === 'Escape') {
+                    if (aiBattleModalOpen) {
+                        console.log('ESC key pressed, closing AI Battle modal');
+                        closeGameRequestModal();
+                    } else if (statsModalOpen) {
+                        console.log('ESC key pressed, closing Stats modal');
+                        closeStatsModal();
+                    }
                 }
             });
         }
@@ -1783,7 +1823,6 @@
                 saveRequestSettings(settings, true);
                 
                 // 주석
-                let captureTarget = 20;
                 let captureTarget = 20; // 기본값
                 if (settings.mode === 'CAPTURE') {
                     const captureTargetSelect = document.getElementById('captureTargetSelect');
@@ -1887,7 +1926,7 @@
             if (confirmBtn) confirmBtn.disabled = true;
         });
 
-        /* ?댁쟾 以묐났 肄붾뱶?젣 ?꾨즺 */
+        /* 대기실 버튼 클릭 핸들러 */
 
         // 주석
         document.addEventListener('click', (e) => {
@@ -1907,7 +1946,234 @@
             } else if (target.classList.contains('ai-color-btn')) {
                 document.querySelectorAll('.ai-color-btn').forEach(btn => btn.classList.remove('active'));
                 target.classList.add('active');
+            } else if (target.id === 'startMatchingBtn' || target.closest('#startMatchingBtn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                startMatching();
+                return false;
+            } else if (target.id === 'cancelMatchingBtn' || target.closest('#cancelMatchingBtn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                cancelMatching();
+                return false;
+            } else if (target.id === 'watchByRoomNumberBtn' || target.closest('#watchByRoomNumberBtn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                watchByRoomNumber();
+                return false;
+            } else if (target.id === 'chatSendBtn' || target.closest('#chatSendBtn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                sendChatMessageDesktop();
+                return false;
+            } else if (target.id === 'emojiBtn' || target.closest('#emojiBtn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleEmojiPopup();
+                return false;
             }
+        });
+
+        // 매칭 시작 함수
+        function startMatching() {
+            if (isMatching) {
+                alert('이미 매칭 중입니다.');
+                return;
+            }
+            
+            isMatching = true;
+            const startBtn = document.getElementById('startMatchingBtn');
+            const cancelBtn = document.getElementById('cancelMatchingBtn');
+            const matchingStatus = document.getElementById('matchingStatus');
+            
+            if (startBtn) startBtn.style.display = 'none';
+            if (cancelBtn) cancelBtn.style.display = 'block';
+            if (matchingStatus) matchingStatus.textContent = '매칭 중...';
+            
+            socket.emit('start_matching', { roomType: window.WAITING_ROOM_CONFIG?.roomType || 'strategy' });
+        }
+
+        // 매칭 취소 함수
+        function cancelMatching() {
+            if (!isMatching) {
+                return;
+            }
+            
+            isMatching = false;
+            const startBtn = document.getElementById('startMatchingBtn');
+            const cancelBtn = document.getElementById('cancelMatchingBtn');
+            const matchingStatus = document.getElementById('matchingStatus');
+            
+            if (startBtn) startBtn.style.display = 'block';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (matchingStatus) matchingStatus.textContent = '대기 중';
+            
+            socket.emit('cancel_matching');
+        }
+
+        // 관전하기 함수 (방번호 입력)
+        function watchByRoomNumber() {
+            const roomNumberInput = document.getElementById('roomNumberInput');
+            if (!roomNumberInput) {
+                alert('방번호 입력 필드를 찾을 수 없습니다.');
+                return;
+            }
+            
+            const roomNumber = roomNumberInput.value.trim();
+            if (!roomNumber) {
+                alert('방번호를 입력해주세요.');
+                return;
+            }
+            
+            const roomNum = parseInt(roomNumber);
+            if (isNaN(roomNum) || roomNum < 1 || roomNum > 5) {
+                alert('방번호는 1-5 사이의 숫자여야 합니다.');
+                return;
+            }
+            
+            window.location.href = `/api/game/${roomNum}`;
+        }
+
+        // 데스크톱 채팅 전송 함수
+        let lastChatTime = 0;
+        let lastChatMessage = '';
+        const CHAT_COOLDOWN = 3000; // 3초 쿨타임
+
+        function sendChatMessageDesktop() {
+            const chatInput = document.getElementById('chatInput');
+            if (!chatInput || !chatInput.value.trim()) {
+                return;
+            }
+            
+            const message = chatInput.value.trim();
+            const currentTime = Date.now();
+            
+            // 쿨타임 체크
+            if (currentTime - lastChatTime < CHAT_COOLDOWN) {
+                const remaining = Math.ceil((CHAT_COOLDOWN - (currentTime - lastChatTime)) / 1000);
+                const countdown = document.getElementById('chatCountdown');
+                if (countdown) {
+                    countdown.textContent = remaining;
+                    countdown.style.display = 'block';
+                    setTimeout(() => {
+                        if (countdown) countdown.style.display = 'none';
+                    }, 1000);
+                }
+                return;
+            }
+            
+            // 같은 말 2회 연속 방지
+            if (message === lastChatMessage) {
+                alert('같은 메시지를 연속으로 전송할 수 없습니다.');
+                return;
+            }
+            
+            // 서버에 메시지 전송
+            if (typeof socket !== 'undefined' && socket) {
+                socket.emit('chat_message', {
+                    message: message,
+                    timestamp: currentTime
+                });
+            }
+            
+            // 마지막 전송 시간과 메시지 저장
+            lastChatTime = currentTime;
+            lastChatMessage = message;
+            
+            chatInput.value = '';
+            
+            // 이모지 팝업 닫기
+            const emojiPopup = document.getElementById('emojiPopup');
+            if (emojiPopup) {
+                emojiPopup.classList.remove('show');
+            }
+        }
+
+        // 이모지 팝업 토글 함수
+        function toggleEmojiPopup() {
+            const emojiPopup = document.getElementById('emojiPopup');
+            if (emojiPopup) {
+                emojiPopup.classList.toggle('show');
+            }
+        }
+
+        // 채팅 입력 필드 엔터키 이벤트
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        sendChatMessageDesktop();
+                    }
+                });
+            }
+
+            // 이모지 팝업 내부 이모지 클릭 이벤트
+            const emojiItems = document.querySelectorAll('.emoji-item');
+            emojiItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const emoji = item.textContent;
+                    if (chatInput) {
+                        chatInput.value += emoji;
+                        chatInput.focus();
+                    }
+                });
+            });
+
+            // 퀵 메시지 버튼 클릭 이벤트
+            const quickMessageBtns = document.querySelectorAll('.quick-message-btn');
+            quickMessageBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const message = btn.textContent;
+                    if (chatInput) {
+                        chatInput.value = message;
+                        chatInput.focus();
+                    }
+                });
+            });
+
+            // 이모지 팝업 탭 전환
+            const emojiTabs = document.querySelectorAll('.emoji-tab');
+            const emojiSection = document.getElementById('emojiSection');
+            const quickSection = document.getElementById('quickSection');
+            
+            emojiTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // 모든 탭 비활성화
+                    emojiTabs.forEach(t => t.classList.remove('active'));
+                    // 클릭한 탭 활성화
+                    tab.classList.add('active');
+                    
+                    // 모든 섹션 숨기기
+                    if (emojiSection) emojiSection.classList.remove('active');
+                    if (quickSection) quickSection.classList.remove('active');
+                    
+                    // 해당 섹션 표시
+                    if (tabName === 'emoji' && emojiSection) {
+                        emojiSection.classList.add('active');
+                    } else if (tabName === 'quick' && quickSection) {
+                        quickSection.classList.add('active');
+                    }
+                });
+            });
+
+            // 이모지 팝업 외부 클릭시 닫기
+            document.addEventListener('click', (e) => {
+                const emojiPopup = document.getElementById('emojiPopup');
+                const emojiBtn = document.getElementById('emojiBtn');
+                
+                if (emojiPopup && emojiBtn && 
+                    !emojiPopup.contains(e.target) && 
+                    !emojiBtn.contains(e.target)) {
+                    emojiPopup.classList.remove('show');
+                }
+            });
         });
 
         socket.on('connect', () => {
@@ -2122,9 +2388,59 @@
             }
         });
 
+        // 매칭 관련 소켓 이벤트
+        socket.on('matching_found', (data) => {
+            console.log('Matching found:', data);
+            isMatching = false;
+            
+            const startBtn = document.getElementById('startMatchingBtn');
+            const cancelBtn = document.getElementById('cancelMatchingBtn');
+            const matchingStatus = document.getElementById('matchingStatus');
+            
+            if (startBtn) startBtn.style.display = 'block';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (matchingStatus) matchingStatus.textContent = '매칭 성공! 게임으로 이동합니다...';
+            
+            // 게임 시작 이벤트를 기다림 (game_started 이벤트에서 처리)
+        });
+
+        socket.on('matching_cancelled', (data) => {
+            console.log('Matching cancelled:', data);
+            isMatching = false;
+            
+            const startBtn = document.getElementById('startMatchingBtn');
+            const cancelBtn = document.getElementById('cancelMatchingBtn');
+            const matchingStatus = document.getElementById('matchingStatus');
+            
+            if (startBtn) startBtn.style.display = 'block';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (matchingStatus) matchingStatus.textContent = '대기 중';
+        });
+
+        socket.on('matching_error', (data) => {
+            console.error('Matching error:', data);
+            isMatching = false;
+            
+            const startBtn = document.getElementById('startMatchingBtn');
+            const cancelBtn = document.getElementById('cancelMatchingBtn');
+            const matchingStatus = document.getElementById('matchingStatus');
+            
+            if (startBtn) startBtn.style.display = 'block';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (matchingStatus) matchingStatus.textContent = '대기 중';
+            
+            alert(`매칭 오류: ${data.error || '알 수 없는 오류'}`);
+        });
+
         function renderOnlineUsers(users) {
+            console.log('renderOnlineUsers called with:', users);
             const list = document.getElementById('onlineUsersList');
-            if (!list) return;
+            if (!list) {
+                console.warn('onlineUsersList element not found');
+                console.log('Available IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+                return;
+            }
+            console.log('onlineUsersList found:', list, 'parent:', list.parentElement);
 
             // 주석
             const totalCount = users.length + 1; // ?꾩옱 ?ъ슜ы븿
@@ -2137,14 +2453,14 @@
                 <div class="current-user-item">
                     <div class="user-info">
                         <div class="user-avatar">${currentUserNickname.charAt(0).toUpperCase()}</div>
-                        <div class="user-nickname">${currentUserNickname} (</div>
+                        <div class="user-nickname">${currentUserNickname}</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <select class="status-dropdown" id="statusDropdown" onchange="changeStatus(this.value)">
-                            <option value="waiting" ${currentUserStatus === 'waiting' ? 'selected' : ''}>?곗쨷</option>
-                            <option value="resting" ${currentUserStatus === 'resting' ? 'selected' : ''}>?댁떇以?/option>
+                            <option value="waiting" ${currentUserStatus === 'waiting' ? 'selected' : ''}>대기중</option>
+                            <option value="resting" ${currentUserStatus === 'resting' ? 'selected' : ''}>휴식중</option>
                         </select>
-                        <button class="ai-battle-btn" id="aiBattleBtn" style="padding: 6px 12px; font-size: 13px;">AI遊?/button>
+                        <button class="ai-battle-btn" id="aiBattleBtn" style="padding: 6px 12px; font-size: 13px;">AI봇 대결</button>
                     </div>
                 </div>
             `;
@@ -2155,26 +2471,34 @@
                         <div class="user-avatar">${user.nickname.charAt(0).toUpperCase()}</div>
                         <div class="user-details">
                             <div class="user-nickname">${user.nickname}</div>
-                            <div class="user-rating">?덉씠 ${user.rating} | 留ㅻ꼫: ${user.manner || 1500}</div>
+                            <div class="user-rating">레이팅: ${user.rating} | 매너점수: ${user.manner || 1500}</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <div class="user-status-badge status-${user.status || 'waiting'}">${getStatusText(user.status || 'waiting')}</div>
-                        <button class="btn btn-primary" style="font-size: 12px; padding: 4px 8px;" onclick="event.stopPropagation(); openGameRequestModal({id: '${user.id}', nickname: '${user.nickname}', rating: ${user.rating}, manner: ${user.manner || 1500}})">?援?떊泥?/button>
+                        <button class="btn btn-primary" style="font-size: 12px; padding: 4px 8px;" onclick="event.stopPropagation(); openGameRequestModal({id: '${user.id}', nickname: '${user.nickname}', rating: ${user.rating}, manner: ${user.manner || 1500}})">대국신청</button>
                     </div>
                 </div>
             `).join('');
             
             list.innerHTML = html;
+            console.log('renderOnlineUsers: HTML set to list, length:', html.length, 'list element:', list);
+            
+            // 모바일 페이지도 업데이트
+            const mobileList = document.getElementById('mobile-onlineUsersList');
+            if (mobileList) {
+                mobileList.innerHTML = html;
+                console.log('renderOnlineUsers: HTML set to mobile list, length:', html.length);
+            }
         }
 
         function getStatusText(status) {
             const statusMap = {
-                'waiting': '??以?,
-                'resting': '?댁떇 以?,
-                'matching': '留ㅼ묶 以?,
-                'in-game': '?援?以?,
-                'spectating': '愿以?
+                waiting: '대기중',
+                resting: '휴식중',
+                matching: '매칭중',
+                'in-game': '게임중',
+                spectating: '관전중',
             };
             return statusMap[status] || status;
         }
@@ -2196,15 +2520,21 @@
         });
 
         function renderOngoingGames(games) {
+            console.log('renderOngoingGames called with:', games);
             const list = document.getElementById('ongoingGamesList');
-            if (!list) return;
-            if (games.length === 0) {
-                list.innerHTML = '<div class="empty-state">吏꾪뻾 以묒씤 뚯엫놁뒿?덈떎.</div>';
+            if (!list) {
+                console.warn('ongoingGamesList element not found');
+                console.log('Available IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
                 return;
             }
-            list.innerHTML = games.map((game, index) => {
+            console.log('ongoingGamesList found:', list, 'parent:', list.parentElement);
+            if (games.length === 0) {
+                list.innerHTML = '<div class="empty-state">진행중인 대국이 없습니다.</div>';
+                return;
+            }
+            const gamesHtml = games.map((game, index) => {
                 const roomNumber = game.roomNumber || (index + 1);
-                const title = game.title || '?쒕뜡 ??;
+                const title = game.title || 'Untitled Game';
                 const blackPlayer = game.blackPlayer || { nickname: 'Unknown', rating: 0 };
                 const whitePlayer = game.whitePlayer || { nickname: 'Unknown', rating: 0 };
                 
@@ -2216,7 +2546,7 @@
                         </div>
                         <div class="game-players">
                             <div class="player-info">
-                                <div class="player-stone black">/div>
+                                <div class="player-stone black"></div>
                                 <div class="player-details">
                                     <div class="player-name" style="cursor: pointer;" onclick="event.stopPropagation(); showProfileModal('${blackPlayer.id || ''}')" data-user-id="${blackPlayer.id || ''}">${escapeHtml(blackPlayer.nickname)}</div>
                                     <div class="player-rating">${blackPlayer.rating || 0}</div>
@@ -2228,13 +2558,22 @@
                                     <div class="player-name" style="cursor: pointer;" onclick="event.stopPropagation(); showProfileModal('${whitePlayer.id || ''}')" data-user-id="${whitePlayer.id || ''}">${escapeHtml(whitePlayer.nickname)}</div>
                                     <div class="player-rating">${whitePlayer.rating || 0}</div>
                                 </div>
-                                <div class="player-stone white">/div>
+                                <div class="player-stone white"></div>
                             </div>
                         </div>
-                        <button class="watch-btn" onclick="event.stopPropagation(); window.location.href='/api/game/${game.id}'">愿/button>
+                        <button class="watch-btn" onclick="event.stopPropagation(); window.location.href='/api/game/${game.id}'">관전</button>
                     </div>
                 `;
             }).join('');
+            list.innerHTML = gamesHtml;
+            console.log('renderOngoingGames: HTML set to list, length:', gamesHtml.length, 'list element:', list);
+            
+            // 모바일 페이지도 업데이트
+            const mobileList = document.getElementById('mobile-ongoingGamesList');
+            if (mobileList) {
+                mobileList.innerHTML = gamesHtml;
+                console.log('renderOngoingGames: HTML set to mobile list, length:', gamesHtml.length);
+            }
         }
 
 
@@ -2245,13 +2584,40 @@
         const rankingsPerPage = 20; // 덉뿉 異붽?濡쒖떆媛쒖닔
         let isLoadingRankings = false;
 
+        // 티어 계산 함수 (레이팅에 따라)
+        function getTierFromRating(rating) {
+            if (rating < 1300) return 1; // 새싹
+            if (rating < 1400) return 2; // 루키
+            if (rating < 1500) return 3; // 브론즈
+            if (rating < 1700) return 4; // 실버
+            if (rating < 2000) return 5; // 골드
+            if (rating < 2400) return 6; // 플래티넘
+            if (rating < 3000) return 7; // 다이아
+            if (rating < 3500) return 8; // 마스터
+            return 9; // 챌린저
+        }
+
         function renderRankings(rankings) {
+            console.log('renderRankings called with:', rankings);
             const list = document.getElementById('rankingList');
             const mobileList = document.getElementById('mobileMenuRankingList');
             
-            // 주석
+            if (!list && !mobileList) {
+                console.warn('rankingList and mobileMenuRankingList elements not found');
+                console.log('Available IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+                return;
+            }
+            if (list) console.log('rankingList found:', list, 'parent:', list.parentElement);
+            if (mobileList) console.log('mobileMenuRankingList found:', mobileList);
             
             // 주석
+            if (!rankings || !Array.isArray(rankings)) {
+                console.warn('Invalid rankings data:', rankings);
+                return;
+            }
+            
+            // 주석
+            allRankings = rankings;
             const myRanking = allRankings.find(r => r.userId === currentUserId || r.nickname === currentUserNickname);
             const otherRankings = allRankings.filter(r => r.userId !== currentUserId && r.nickname !== currentUserNickname);
             
@@ -2266,28 +2632,41 @@
                 const myRankIndex = allRankings.findIndex(r => r.userId === currentUserId || r.nickname === currentUserNickname);
                 const myTotal = (myRanking.wins || 0) + (myRanking.losses || 0);
                 const myWinRate = myTotal > 0 ? Math.round(((myRanking.wins || 0) / myTotal) * 100) : 0;
+                const myTier = getTierFromRating(myRanking.rating || 0);
+                const myTierImage = `/images/tire${myTier}.webp`;
                 html += `
                     <div class="my-ranking-item">
                         <div class="rank-number">${myRankIndex >= 0 ? myRankIndex + 1 : '-'}</div>
                         <div class="ranking-user-info">
-                            <div class="ranking-nickname">${escapeHtml(myRanking.nickname)} (</div>
-                            <div class="ranking-stats">${myRanking.wins || 0}${myRanking.losses || 0}(${myWinRate}%)</div>
+                            <div class="ranking-nickname">
+                                <img src="${myTierImage}" alt="티어${myTier}" class="tier-mark" onerror="this.style.display='none';">
+                                ${escapeHtml(myRanking.nickname)}
+                            </div>
+                            <div class="ranking-stats">승 ${myRanking.wins || 0} 패 ${myRanking.losses || 0} 승률 ${myWinRate}%</div>
                         </div>
                         <div class="ranking-rating">${myRanking.rating || 0}</div>
                     </div>
                 `;
             } else {
                 // 주석
-                const myTotal = currentUserWins + currentUserLosses;
-                const myWinRate = myTotal > 0 ? Math.round((currentUserWins / myTotal) * 100) : 0;
+                const myWins = 0;
+                const myLosses = 0;
+                const myRating = 0;
+                const myTotal = myWins + myLosses;
+                const myWinRate = myTotal > 0 ? Math.round((myWins / myTotal) * 100) : 0;
+                const myTier = getTierFromRating(myRating);
+                const myTierImage = `/images/tire${myTier}.webp`;
                 html += `
                     <div class="my-ranking-item">
                         <div class="rank-number">-</div>
                         <div class="ranking-user-info">
-                            <div class="ranking-nickname">${escapeHtml(currentUserNickname)} (</div>
-                            <div class="ranking-stats">${currentUserWins}${currentUserLosses}(${myWinRate}%)</div>
+                            <div class="ranking-nickname">
+                                <img src="${myTierImage}" alt="티어${myTier}" class="tier-mark" onerror="this.style.display='none';">
+                                ${escapeHtml(currentUserNickname)}
+                            </div>
+                            <div class="ranking-stats">승 ${myWins} 패 ${myLosses} 승률 ${myWinRate}%</div>
                         </div>
-                        <div class="ranking-rating">${currentUserRating}</div>
+                        <div class="ranking-rating">${myRating}</div>
                     </div>
                 `;
             }
@@ -2307,12 +2686,18 @@
                     const total = (rank.wins || 0) + (rank.losses || 0);
                     const winRate = total > 0 ? Math.round(((rank.wins || 0) / total) * 100) : 0;
                     const rankClass = displayRank <= 3 ? `rank-${displayRank}` : '';
+                    const tier = getTierFromRating(rank.rating || 0);
+                    const tierImage = `/images/tire${tier}.webp`;
+                    const rankDisplay = displayRank <= 3 ? ['🥇', '🥈', '🥉'][displayRank - 1] : `#${displayRank}`;
                     return `
                         <div class="ranking-item ${rankClass}" style="cursor: pointer;" onclick="showProfileModal('${rank.userId || ''}')" data-user-id="${rank.userId || ''}">
-                            <div class="rank-number">${displayRank}</div>
+                            <div class="rank-number">${rankDisplay}</div>
                             <div class="ranking-user-info">
-                                <div class="ranking-nickname">${escapeHtml(rank.nickname || 'Unknown')}</div>
-                                <div class="ranking-stats">${rank.wins || 0}${rank.losses || 0}(${winRate}%)</div>
+                                <div class="ranking-nickname">
+                                    <img src="${tierImage}" alt="티어${tier}" class="tier-mark" onerror="this.style.display='none';">
+                                    ${escapeHtml(rank.nickname || 'Unknown')}
+                                </div>
+                                <div class="ranking-stats">승 ${rank.wins || 0} 패 ${rank.losses || 0} 승률 ${winRate}%</div>
                             </div>
                             <div class="ranking-rating">${rank.rating || 0}</div>
                         </div>
@@ -2322,14 +2707,22 @@
             
             // 주석
             if (displayedRankingsCount < maxRankings.length) {
-                html += `<div id="rankingLoadMore" style="text-align: center; padding: 15px; color: #667eea; cursor: pointer; font-weight: 600;">蹂닿린 (${maxRankings.length - displayedRankingsCount}紐</div>`;
+                html += `<div id="rankingLoadMore" style="text-align: center; padding: 15px; color: #667eea; cursor: pointer; font-weight: 600;">더보기 (${maxRankings.length - displayedRankingsCount}명)</div>`;
             }
             
             // 주석
             if (list) {
                 list.innerHTML = html;
+                console.log('renderRankings: HTML set to list, length:', html.length, 'list element:', list);
                 // 주석
                 setupRankingScroll();
+            }
+            
+            // 모바일 스와이프 페이지의 rankingList도 업데이트
+            const mobileRankingList = document.getElementById('mobile-rankingList');
+            if (mobileRankingList) {
+                mobileRankingList.innerHTML = html;
+                console.log('renderRankings: HTML set to mobile rankingList, length:', html.length);
             }
             
             // 주석
@@ -2342,27 +2735,41 @@
                     const myRankIndex = allRankings.findIndex(r => r.userId === currentUserId || r.nickname === currentUserNickname);
                     const myTotal = (myRanking.wins || 0) + (myRanking.losses || 0);
                     const myWinRate = myTotal > 0 ? Math.round(((myRanking.wins || 0) / myTotal) * 100) : 0;
+                    const myTier = getTierFromRating(myRanking.rating || 0);
+                    const myTierImage = `/images/tire${myTier}.webp`;
                     mobileHtml += `
                         <div class="my-ranking-item">
                             <div class="rank-number">${myRankIndex >= 0 ? myRankIndex + 1 : '-'}</div>
                             <div class="ranking-user-info">
-                                <div class="ranking-nickname">${escapeHtml(myRanking.nickname)} (</div>
-                                <div class="ranking-stats">${myRanking.wins || 0}${myRanking.losses || 0}(${myWinRate}%)</div>
+                                <div class="ranking-nickname">
+                                    <img src="${myTierImage}" alt="티어${myTier}" class="tier-mark" onerror="this.style.display='none';">
+                                    ${escapeHtml(myRanking.nickname)}
+                                </div>
+                                <div class="ranking-stats">승 ${myRanking.wins || 0} 패 ${myRanking.losses || 0} 승률 ${myWinRate}%</div>
                             </div>
                             <div class="ranking-rating">${myRanking.rating || 0}</div>
                         </div>
                     `;
                 } else {
-                    const myTotal = currentUserWins + currentUserLosses;
-                    const myWinRate = myTotal > 0 ? Math.round((currentUserWins / myTotal) * 100) : 0;
+                    // 주석
+                    const myWins = 0;
+                    const myLosses = 0;
+                    const myRating = 0;
+                    const myTotal = myWins + myLosses;
+                    const myWinRate = myTotal > 0 ? Math.round((myWins / myTotal) * 100) : 0;
+                    const myTier = getTierFromRating(myRating);
+                    const myTierImage = `/images/tire${myTier}.webp`;
                     mobileHtml += `
                         <div class="my-ranking-item">
                             <div class="rank-number">-</div>
                             <div class="ranking-user-info">
-                                <div class="ranking-nickname">${escapeHtml(currentUserNickname)} (</div>
-                                <div class="ranking-stats">${currentUserWins}${currentUserLosses}(${myWinRate}%)</div>
+                                <div class="ranking-nickname">
+                                    <img src="${myTierImage}" alt="티어${myTier}" class="tier-mark" onerror="this.style.display='none';">
+                                    ${escapeHtml(currentUserNickname)}
+                                </div>
+                                <div class="ranking-stats">승 ${myWins} 패 ${myLosses} 승률 ${myWinRate}%</div>
                             </div>
-                            <div class="ranking-rating">${currentUserRating}</div>
+                            <div class="ranking-rating">${myRating}</div>
                         </div>
                     `;
                 }
@@ -2378,12 +2785,18 @@
                         const total = (rank.wins || 0) + (rank.losses || 0);
                         const winRate = total > 0 ? Math.round(((rank.wins || 0) / total) * 100) : 0;
                         const rankClass = displayRank <= 3 ? `rank-${displayRank}` : '';
+                        const tier = getTierFromRating(rank.rating || 0);
+                        const tierImage = `/images/tire${tier}.webp`;
+                        const rankDisplay = displayRank <= 3 ? ['🥇', '🥈', '🥉'][displayRank - 1] : `#${displayRank}`;
                         return `
                             <div class="ranking-item ${rankClass}" style="cursor: pointer;" onclick="showProfileModal('${rank.userId || ''}')" data-user-id="${rank.userId || ''}">
-                                <div class="rank-number">${displayRank}</div>
+                                <div class="rank-number">${rankDisplay}</div>
                                 <div class="ranking-user-info">
-                                    <div class="ranking-nickname">${escapeHtml(rank.nickname || 'Unknown')}</div>
-                                    <div class="ranking-stats">${rank.wins || 0}${rank.losses || 0}(${winRate}%)</div>
+                                    <div class="ranking-nickname">
+                                        <img src="${tierImage}" alt="티어${tier}" class="tier-mark" onerror="this.style.display='none';">
+                                        ${escapeHtml(rank.nickname || 'Unknown')}
+                                    </div>
+                                    <div class="ranking-stats">승 ${rank.wins || 0} 패 ${rank.losses || 0} 승률 ${winRate}%</div>
                                 </div>
                                 <div class="ranking-rating">${rank.rating || 0}</div>
                             </div>
@@ -2406,12 +2819,17 @@
                     const myRankIndex = allRankings.findIndex(r => r.userId === currentUserId || r.nickname === currentUserNickname);
                     const myTotal = (myRanking.wins || 0) + (myRanking.losses || 0);
                     const myWinRate = myTotal > 0 ? Math.round(((myRanking.wins || 0) / myTotal) * 100) : 0;
+                    const myTier = getTierFromRating(myRanking.rating || 0);
+                    const myTierImage = `/images/tire${myTier}.webp`;
                     sidebarHtml += `
                         <div class="my-ranking-item">
                             <div class="rank-number">${myRankIndex >= 0 ? myRankIndex + 1 : '-'}</div>
                             <div class="ranking-user-info">
-                                <div class="ranking-nickname">${escapeHtml(myRanking.nickname)} (</div>
-                                <div class="ranking-stats">${myRanking.wins || 0}${myRanking.losses || 0}(${myWinRate}%)</div>
+                                <div class="ranking-nickname">
+                                    <img src="${myTierImage}" alt="티어${myTier}" class="tier-mark" onerror="this.style.display='none';">
+                                    ${escapeHtml(myRanking.nickname)}
+                                </div>
+                                <div class="ranking-stats">승 ${myRanking.wins || 0} 패 ${myRanking.losses || 0} 승률 ${myWinRate}%</div>
                             </div>
                             <div class="ranking-rating">${myRanking.rating || 0}</div>
                         </div>
@@ -2419,12 +2837,17 @@
                 } else {
                     const myTotal = currentUserWins + currentUserLosses;
                     const myWinRate = myTotal > 0 ? Math.round((currentUserWins / myTotal) * 100) : 0;
+                    const myTier = getTierFromRating(currentUserRating || 0);
+                    const myTierImage = `/images/tire${myTier}.webp`;
                     sidebarHtml += `
                         <div class="my-ranking-item">
                             <div class="rank-number">-</div>
                             <div class="ranking-user-info">
-                                <div class="ranking-nickname">${escapeHtml(currentUserNickname)} (</div>
-                                <div class="ranking-stats">${currentUserWins}${currentUserLosses}(${myWinRate}%)</div>
+                                <div class="ranking-nickname">
+                                    <img src="${myTierImage}" alt="티어${myTier}" class="tier-mark" onerror="this.style.display='none';">
+                                    ${escapeHtml(currentUserNickname)}
+                                </div>
+                                <div class="ranking-stats">승 ${currentUserWins} 패 ${currentUserLosses} 승률 ${myWinRate}%</div>
                             </div>
                             <div class="ranking-rating">${currentUserRating}</div>
                         </div>
@@ -2442,12 +2865,18 @@
                         const total = (rank.wins || 0) + (rank.losses || 0);
                         const winRate = total > 0 ? Math.round(((rank.wins || 0) / total) * 100) : 0;
                         const rankClass = displayRank <= 3 ? `rank-${displayRank}` : '';
+                        const tier = getTierFromRating(rank.rating || 0);
+                        const tierImage = `/images/tire${tier}.webp`;
+                        const rankDisplay = displayRank <= 3 ? ['🥇', '🥈', '🥉'][displayRank - 1] : `#${displayRank}`;
                         return `
                             <div class="ranking-item ${rankClass}" style="cursor: pointer;" onclick="showProfileModal('${rank.userId || ''}')" data-user-id="${rank.userId || ''}">
-                                <div class="rank-number">${displayRank}</div>
+                                <div class="rank-number">${rankDisplay}</div>
                                 <div class="ranking-user-info">
-                                    <div class="ranking-nickname">${escapeHtml(rank.nickname || 'Unknown')}</div>
-                                    <div class="ranking-stats">${rank.wins || 0}${rank.losses || 0}(${winRate}%)</div>
+                                    <div class="ranking-nickname">
+                                        <img src="${tierImage}" alt="티어${tier}" class="tier-mark" onerror="this.style.display='none';">
+                                        ${escapeHtml(rank.nickname || 'Unknown')}
+                                    </div>
+                                    <div class="ranking-stats">승 ${rank.wins || 0} 패 ${rank.losses || 0} 승률 ${winRate}%</div>
                                 </div>
                                 <div class="ranking-rating">${rank.rating || 0}</div>
                             </div>
@@ -2507,21 +2936,26 @@
         function showStatsModal() {
             const modal = document.getElementById('statsModal');
             if (modal) {
+                modal.style.setProperty('display', 'flex', 'important');
+                modal.style.setProperty('visibility', 'visible', 'important');
+                modal.style.setProperty('opacity', '1', 'important');
                 modal.classList.add('show');
                 statsModalOpen = true;
                 document.body.style.overflow = 'hidden';
                 
-                // ?꾩튂 濡쒕뱶
+                // 위치 로드
                 loadModalPosition('statsModal', 'rememberPositionCheckbox');
                 
                 // 주석
                 updateGemPriceColors();
+            } else {
+                console.error('statsModal element not found');
             }
         }
 
         // 주석
         function updateGemPriceColors() {
-            const userGem = <%= user.gem || 0 %>;
+            const userGem = window.WAITING_ROOM_CONFIG?.userGem ?? 0;
             
             // 주석
             const resetAllBtn = document.getElementById('resetAllStatsBtn');
@@ -2778,24 +3212,286 @@
             const modal = document.getElementById('statsModal');
             if (modal) {
                 modal.classList.remove('show');
+                modal.style.setProperty('display', 'none', 'important');
+                modal.style.setProperty('visibility', 'hidden', 'important');
+                modal.style.setProperty('opacity', '0', 'important');
                 statsModalOpen = false;
                 document.body.style.overflow = '';
             }
         }
 
-        document.getElementById('closeStatsModalBtn')?.addEventListener('click', closeStatsModal);
-        
-        // Tab switching
-        function switchStatsTab(tabName) {
-            document.querySelectorAll('.stats-tab').forEach(t => t.classList.toggle('active', t.textContent.includes(tabName === 'strategy' ? '?꾨왂' : '?)));
-            document.querySelectorAll('.stats-tab-content').forEach(c => c.classList.toggle('active', c.id === tabName + 'Tab'));
+        // 모달 닫기 버튼 이벤트 리스너 설정
+        function setupStatsModalListeners() {
+            const closeBtn = document.getElementById('closeStatsModalBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeStatsModal);
+            }
+            
+            // 모달 배경 클릭 시 닫기
+            const modal = document.getElementById('statsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal || e.target.id === 'statsModal') {
+                        closeStatsModal();
+                    }
+                });
+            }
+            
+            // ESC 키로 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && statsModalOpen) {
+                    closeStatsModal();
+                }
+            });
         }
+
+        // DOMContentLoaded 또는 즉시 실행
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupStatsModalListeners);
+        } else {
+            setupStatsModalListeners();
+        }
+        
+        // Tab switching - 전역 스코프에 노출
+        window.switchStatsTab = function(tabName) {
+            const tabs = document.querySelectorAll('.stats-tab');
+            tabs.forEach((t) => {
+                t.classList.remove('active');
+            });
+            
+            // 활성화할 탭 찾기
+            tabs.forEach((t) => {
+                if (tabName === 'strategy' && t.textContent.includes('전략바둑')) {
+                    t.classList.add('active');
+                } else if (tabName === 'casual' && t.textContent.includes('놀이바둑')) {
+                    t.classList.add('active');
+                }
+            });
+            
+            // 탭 컨텐츠 전환
+            document.querySelectorAll('.stats-tab-content').forEach((c) => {
+                c.classList.remove('active');
+                if (c.id === `${tabName}Tab`) {
+                    c.classList.add('active');
+                }
+            });
+            
+            // 젬 가격 색상 업데이트
+            updateGemPriceColors();
+        };
+        
+        // 전체 전적 초기화 - 전역 스코프에 노출
+        window.resetAllStats = async function() {
+            if (!confirm('전체 전적을 초기화하시겠습니까? (300젬 소모)')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/reset-all-stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    return;
+                }
+                
+                alert(data.message || '전체 전적이 초기화되었습니다.');
+                
+                // 젬 업데이트
+                if (window.WAITING_ROOM_CONFIG) {
+                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 300;
+                }
+                
+                // 전적 새로고침
+                location.reload();
+            } catch (error) {
+                console.error('Reset all stats error:', error);
+                alert('전적 초기화 중 오류가 발생했습니다.');
+            }
+        };
+        
+        // 전략바둑 전적 초기화 - 전역 스코프에 노출
+        window.resetStrategyStats = async function() {
+            if (!confirm('전략바둑 전적을 초기화하시겠습니까? (200젬 소모)')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/reset-strategy-stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    return;
+                }
+                
+                alert(data.message || '전략바둑 전적이 초기화되었습니다.');
+                
+                // 젬 업데이트
+                if (window.WAITING_ROOM_CONFIG) {
+                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 200;
+                }
+                
+                // 전적 새로고침
+                location.reload();
+            } catch (error) {
+                console.error('Reset strategy stats error:', error);
+                alert('전적 초기화 중 오류가 발생했습니다.');
+            }
+        };
+        
+        // 놀이바둑 전적 초기화 - 전역 스코프에 노출
+        window.resetCasualStats = async function() {
+            if (!confirm('놀이바둑 전적을 초기화하시겠습니까? (200젬 소모)')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/reset-casual-stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    return;
+                }
+                
+                alert(data.message || '놀이바둑 전적이 초기화되었습니다.');
+                
+                // 젬 업데이트
+                if (window.WAITING_ROOM_CONFIG) {
+                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 200;
+                }
+                
+                // 전적 새로고침
+                location.reload();
+            } catch (error) {
+                console.error('Reset casual stats error:', error);
+                alert('전적 초기화 중 오류가 발생했습니다.');
+            }
+        };
+        
+        // 부분 전적 초기화 - 전역 스코프에 노출
+        window.resetPartialStats = async function(mode) {
+            const modeNames = {
+                'CLASSIC': '클래식바둑',
+                'CAPTURE': '포획바둑',
+                'SPEED': '스피드바둑',
+                'BASE': '베이스바둑',
+                'HIDDEN': '히든바둑',
+                'MISSILE': '미사일바둑',
+                'MIX': '믹스바둑',
+                'DICE': '주사위바둑',
+                'COPS': '경찰도둑바둑',
+                'OMOK': '오목',
+                'TTAK': '딱지',
+                'ALKKAGI': '알까기',
+                'CURLING': '바둑컬링'
+            };
+            
+            const modeName = modeNames[mode] || mode || '선택한 모드';
+            
+            if (!confirm(`${modeName}의 부분 전적을 초기화하시겠습니까? (100젬 소모, 최근 10게임 제외)`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/user/reset-partial-stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ mode })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    return;
+                }
+                
+                alert(data.message || `${modeName} 부분 전적이 초기화되었습니다.`);
+                
+                // 젬 업데이트
+                if (window.WAITING_ROOM_CONFIG) {
+                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 100;
+                }
+                
+                // 전적 새로고침
+                location.reload();
+            } catch (error) {
+                console.error('Reset partial stats error:', error);
+                alert('전적 초기화 중 오류가 발생했습니다.');
+            }
+        };
 
         // 주석
         let isScaling = false;
         function scaleLayout() {
-            const container = document.querySelector('.container');
-            if (!container || isScaling) return;
+            // 대기실의 메인 container만 선택 (stats-modal 안의 container 제외)
+            // body의 직접 자식인 container 찾기
+            const bodyChildren = Array.from(document.body.children);
+            let container = bodyChildren.find(el => {
+                // container 클래스를 가지고 있고
+                if (!el.classList.contains('container')) return false;
+                // stats-modal 안에 있지 않고
+                if (el.closest('.stats-modal')) return false;
+                // 다른 모달 안에 있지 않고
+                if (el.closest('[class*="modal"]')) return false;
+                // body의 직접 자식이어야 함
+                return el.parentElement === document.body;
+            });
+            
+            // 찾지 못하면 모든 container를 확인하여 body의 직접 자식인 것 찾기
+            if (!container) {
+                const allContainers = document.querySelectorAll('.container');
+                for (const c of allContainers) {
+                    if (c.parentElement === document.body && !c.closest('.stats-modal') && !c.closest('[class*="modal"]')) {
+                        container = c;
+                        break;
+                    }
+                }
+            }
+            
+            // Container를 찾지 못하면 .waiting-room-grid의 부모를 찾기
+            if (!container) {
+                const waitingRoomGrid = document.querySelector('.waiting-room-grid');
+                if (waitingRoomGrid) {
+                    const gridContainer = waitingRoomGrid.closest('.container');
+                    // stats-modal 안에 있지 않은 container만 사용
+                    if (gridContainer && !gridContainer.closest('.stats-modal') && gridContainer.parentElement === document.body) {
+                        container = gridContainer;
+                    }
+                }
+            }
+            
+            // 여전히 찾지 못하면 함수 종료
+            if (!container || isScaling) {
+                console.warn('Waiting room container not found, skipping scaleLayout');
+                return;
+            }
             
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
@@ -2821,7 +3517,24 @@
             
             // 주석
             const scaleX = availableWidth / baseWidth;
-            const scaleY = availableHeight / (container.scrollHeight || 800);
+            
+            // Container의 실제 높이를 강제로 계산
+            // Grid가 없으면 최소 높이 사용
+            const grid = container.querySelector('.waiting-room-grid');
+            let containerHeight = 800; // 기본 높이
+            
+            if (grid) {
+                // Grid의 computed height 사용
+                const gridComputedHeight = parseInt(window.getComputedStyle(grid).height) || 600;
+                containerHeight = Math.max(gridComputedHeight, 600);
+            }
+            
+            // Container의 scrollHeight도 확인
+            if (container.scrollHeight > 0) {
+                containerHeight = Math.max(container.scrollHeight, containerHeight);
+            }
+            
+            const scaleY = availableHeight / containerHeight;
             
             // 주석
             const minScale = Math.max(0.5, Math.min(scaleX, scaleY));
@@ -2831,9 +3544,10 @@
             container.style.transform = `scale(${finalScale})`;
             container.style.transformOrigin = 'top center';
             container.style.width = `${baseWidth}px`;
+            container.style.minHeight = `${containerHeight}px`;
             
             // 주석
-            const scaledHeight = (container.scrollHeight || 800) * finalScale;
+            const scaledHeight = containerHeight * finalScale;
             document.body.style.minHeight = `${scaledHeight + headerHeight + 100}px`;
             
             isScaling = false;
@@ -2875,8 +3589,17 @@
             clearTimeout(window.scaleTimeout);
             window.scaleTimeout = setTimeout(scaleLayout, 100);
         });
-        window.addEventListener('load', scaleLayout);
-        scaleLayout();
+        window.addEventListener('load', () => {
+            setTimeout(scaleLayout, 100);
+        });
+        // DOMContentLoaded 후에도 실행
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(scaleLayout, 100);
+            });
+        } else {
+            setTimeout(scaleLayout, 100);
+        }
 
         // 주석
         function initMobileSidebar() {
@@ -2924,13 +3647,12 @@
                     const clonedChat = chatPanel.cloneNode(true);
                     clonedChat.style.display = 'flex';
                     clonedChat.style.flexDirection = 'column';
-                    // 주석
-                        if (el.id) {
-                            if (el.id === 'chatMessages') {
-                                el.id = 'mobileSidebarChatMessages';
-                            } else {
-                                el.id = 'mobileSidebar' + el.id.charAt(0).toUpperCase() + el.id.slice(1);
-                            }
+                    const mainChatMessages = document.getElementById('chatMessages');
+                    clonedChat.querySelectorAll('[id]').forEach((el) => {
+                        if (el.id === 'chatMessages') {
+                            el.id = 'mobileSidebarChatMessages';
+                        } else {
+                            el.id = 'mobileSidebar' + el.id.charAt(0).toUpperCase() + el.id.slice(1);
                         }
                     });
                     mobileSidebarWrapperLeft.appendChild(clonedChat);
@@ -3020,11 +3742,9 @@
                         emojiTabs.forEach(t => t.classList.remove('active'));
                         document.querySelectorAll('.mobile-sidebar-wrapper .emoji-section').forEach(s => s.classList.remove('active'));
                         this.classList.add('active');
-                        // ID濡?李얘린
+                        // ID로 찾기
                         const section = tabName === 'emoji' 
-                            // 설정
-                            document.getElementById('mobileSidebarEmojiSection')
-
+                            ? document.getElementById('mobileSidebarEmojiSection')
                             : document.getElementById('mobileSidebarQuickSection');
                         if (section) section.classList.add('active');
                     });
@@ -3052,19 +3772,18 @@
                     });
                 });
 
-
             // 모바일 사이드바 채팅 쿨타임 관리
-                let mobileLastChatTime = 0;
-                let mobileLastChatMessage = '';
-                let mobileChatCooldownInterval = null;
-                const MOBILE_CHAT_COOLDOWN = 3000;
-        3?
-                // 주석
-        function startMobileChatCooldown() {
-                    let countdownEl = document.getElementById('mobileSidebarChatCountdown');
-                    if (!countdownEl) {
-                        // 주석
-                        const wrapper = newChatInput?.parentElement;
+            let mobileLastChatTime = 0;
+            let mobileLastChatMessage = '';
+            let mobileChatCooldownInterval = null;
+            const MOBILE_CHAT_COOLDOWN = 3000;
+            
+            // 주석
+            function startMobileChatCooldown() {
+                let countdownEl = document.getElementById('mobileSidebarChatCountdown');
+                if (!countdownEl) {
+                    // 주석
+                    const wrapper = newChatInput?.parentElement;
                         if (wrapper) {
                             countdownEl = wrapper.querySelector('.chat-countdown');
                             if (!countdownEl) {
@@ -3109,8 +3828,8 @@
                 }
 
                 // 硫붿떆吏 ?꾩넚
-                function sendChatMessage() {
-                    if (!newChatInput || !newChatInput.value.trim()) {
+            function sendChatMessage() {
+                if (!newChatInput || !newChatInput.value.trim()) {
                         return;
                     }
                     
@@ -3236,6 +3955,7 @@
             }
             
             // 주석
+            if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initSidebarContent);
             } else {
                 initSidebarContent();
@@ -3305,6 +4025,7 @@
                 });
                 
                 // 주석
+                setTimeout(() => {
                     populatePageContent(currentPage);
                 }, 100);
             }
@@ -3390,3 +4111,11 @@
             
             function prevPage() {
                 if (currentPage > 0) {
+                    updatePage(currentPage - 1, true);
+                }
+            }
+        }
+        
+        // 주석
+        initMobileSwipePages();
+    })();
