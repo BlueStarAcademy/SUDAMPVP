@@ -212,7 +212,7 @@ class GoGame {
             // 베이스바둑: 게임 준비가 완료되지 않았으면 수순 금지
             if (gameMode === 'BASE' && !isGameReady) {
                 if (!window.baseBadukWarningShown) {
-                    alert('베이스바둑: 색상 선택 및 덤 설정을 완료해주세요.');
+                    showAlertModal('베이스바둑: 색상 선택 및 덤 설정을 완료해주세요.', '안내', 'warning');
                     window.baseBadukWarningShown = true;
                     setTimeout(() => {
                         window.baseBadukWarningShown = false;

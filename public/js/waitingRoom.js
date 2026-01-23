@@ -42,7 +42,12 @@
     
     const socket = io({
         withCredentials: true,
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+        timeout: 20000
     });
     
     // EJS 변수는 waitingRoom.ejs에서 window 객체로 전달됨
@@ -108,10 +113,10 @@
         // 시간 초과 처리
         function handleRequestTimeout() {
             if (isIncomingRequest) {
-                alert('대국 신청 응답 시간이 초과되어 거절 처리되었습니다.');
+                showAlertModal('대국 신청 응답 시간이 초과되어 거절 처리되었습니다.', '안내', 'warning');
                 rejectIncomingRequest();
             } else {
-                alert('상대방이 응답이 없어 대국 신청이 취소되었습니다.');
+                showAlertModal('상대방이 응답이 없어 대국 신청이 취소되었습니다.', '안내', 'warning');
                 closeGameRequestModal();
             }
         }
@@ -216,7 +221,7 @@
 
         const STRATEGY_MODES = [
             { id: 'CLASSIC', name: '일반바둑' },
-            { id: 'CAPTURE', name: '따내기바둑' },
+            { id: 'CAPTURE', name: '캡쳐바둑' },
             { id: 'SPEED', name: '스피드바둑' },
             { id: 'BASE', name: '베이스바둑' },
             { id: 'HIDDEN', name: '히든바둑' },
@@ -226,7 +231,7 @@
 
         const CASUAL_MODES = [
             { id: 'DICE', name: '주사위바둑' },
-            { id: 'COPS', name: '경찰과도둑' },
+            { id: 'COPS', name: '주사위바둑2' },
             { id: 'OMOK', name: '오목' },
             { id: 'TTAMOK', name: '따목' },
             { id: 'ALKKAGI', name: '알까기' },
@@ -395,8 +400,9 @@
                 const autoScoringMoveSelect = document.getElementById('autoScoringMoveSelect');
                 if (autoScoringMoveSelect && autoScoringMoveSelect.style.display !== 'none') {
                     const value = parseInt(autoScoringMoveSelect.value);
-                    if (!isNaN(value) && value > 0) {
-                        settings.autoScoringMove = value;
+                    if (!isNaN(value) && value >= 0) {
+                        // 0은 제한없음(서로패스시까지)를 의미
+                        settings.autoScoringMove = value === 0 ? null : value;
                     }
                 }
             }
@@ -515,7 +521,7 @@
                 const modal = document.getElementById('gameRequestModal');
                 if (!modal) {
                     console.error('gameRequestModal element not found');
-                    alert('모달을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+                    showAlertModal('모달을 찾을 수 없습니다. 페이지를 새로고침해주세요.', '오류', 'error');
                     return;
                 }
                 
@@ -672,6 +678,25 @@
                     // 주석
                     updateAutoScoringOptions();
                 }
+                
+                // 덤 옵션 동적 생성 (0.5집부터 20.5집까지 0.5집 단위, 정수 제외)
+                const komiSelect = document.getElementById('komiSelect');
+                if (komiSelect) {
+                    komiSelect.innerHTML = '';
+                    for (let i = 0; i <= 40; i++) {
+                        const value = 0.5 + (i * 0.5);
+                        // 정수 값 제외 (무승부 방지)
+                        if (value % 1 !== 0) {
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = `${value}집`;
+                            if (value === 6.5) {
+                                option.selected = true;
+                            }
+                            komiSelect.appendChild(option);
+                        }
+                    }
+                }
 
                 modal.style.setProperty('display', 'flex', 'important');
                 modal.style.setProperty('visibility', 'visible', 'important');
@@ -722,8 +747,9 @@
                 
                 // 주석
                 const autoScoringMoveSelect = document.getElementById('autoScoringMoveSelect');
-                if (autoScoringMoveSelect && data.autoScoringMove) {
-                    autoScoringMoveSelect.value = data.autoScoringMove;
+                if (autoScoringMoveSelect && data.autoScoringMove !== undefined && data.autoScoringMove !== null) {
+                    // null이면 0으로 설정 (제한없음)
+                    autoScoringMoveSelect.value = data.autoScoringMove === null ? '0' : data.autoScoringMove;
                 }
                 
                 if (data.mode === 'MIX' && data.mixRules) {
@@ -865,6 +891,25 @@
                     timeSettingsRow.style.display = 'grid';
                     timeSettingsRow.style.gridTemplateColumns = 'repeat(3, 1fr)';
                 }
+                
+                // 캡쳐바둑 모드에서는 바둑판 크기를 9줄, 13줄만 허용 (19줄 제외)
+                const boardSizeSelect = document.getElementById('boardSizeSelect');
+                if (boardSizeSelect) {
+                    const currentValue = boardSizeSelect.value;
+                    boardSizeSelect.innerHTML = '';
+                    
+                    const option9 = document.createElement('option');
+                    option9.value = '9';
+                    option9.textContent = '9줄';
+                    if (currentValue === '9') option9.selected = true;
+                    boardSizeSelect.appendChild(option9);
+                    
+                    const option13 = document.createElement('option');
+                    option13.value = '13';
+                    option13.textContent = '13줄';
+                    if (currentValue === '13' || currentValue === '19') option13.selected = true; // 19줄이 선택되어 있으면 13줄로 변경
+                    boardSizeSelect.appendChild(option13);
+                }
             } else if (modeId !== 'MIX') {
                 // 주석
                 const casualModes = ['DICE', 'COPS', 'OMOK', 'TTAMOK', 'ALKKAGI', 'CURLING'];
@@ -1004,6 +1049,15 @@
                 // 주석
                 autoScoringMoveSelect.innerHTML = '';
                 
+                // 제한없음(서로패스시까지) 옵션 추가
+                const unlimitedOption = document.createElement('option');
+                unlimitedOption.value = '0';
+                unlimitedOption.textContent = '제한없음(서로패스시까지)';
+                if (currentValue === '0' || currentValue === '' || currentValue === null) {
+                    unlimitedOption.selected = true;
+                }
+                autoScoringMoveSelect.appendChild(unlimitedOption);
+                
                 // 주석
                 let foundCurrent = false;
                 options.forEach((move) => {
@@ -1020,7 +1074,7 @@
                 });
                 
                 // 주석
-                if (currentValue && !foundCurrent) {
+                if (currentValue && !foundCurrent && currentValue !== '0') {
                     autoScoringMoveSelect.selectedIndex = 0;
                 }
             } else {
@@ -1181,15 +1235,15 @@
                         modeSpecificSectionCapture.style.display = 'block';
                     }
                     if (modeSpecificTitleCapture) {
-                        modeSpecificTitleCapture.textContent = '?곕궡곕컮ㅼ젙';
+                        modeSpecificTitleCapture.textContent = '캡쳐바둑 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">紐⑺몴 媛쒖닔</label>
+                            <label class="ai-battle-label">따낼 개수</label>
                             <select id="captureTargetSelect" class="form-select">
                                 ${Array.from({length: 10}, (_, i) => {
                                     const value = 5 + (i * 5);
-                                    return `<option value="${value}" ${value === 20 ? 'selected' : ''}>${value}媛?/option>`;
+                                    return `<option value="${value}" ${value === 20 ? 'selected' : ''}>${value}개</option>`;
                                 }).join('')}
                             </select>
                         </div>
@@ -1197,7 +1251,7 @@
                     settingsContainer.style.display = 'block';
                     break;
                 case 'SPEED':
-                    // ?ㅽ뵾?쒕컮?묒? ?듯빀 洹몃━?쒖뿉 ?쒖떆
+                    // 스피드바둑 모드의 시간 설정에 표시
                     const timeLimitItemSpeed = document.getElementById('timeLimitItem');
                     const timeIncrementItemSpeed = document.getElementById('timeIncrementItem');
                     const byoyomiItemSpeed = document.getElementById('byoyomiItem');
@@ -1215,15 +1269,15 @@
                         modeSpecificSectionBase.style.display = 'block';
                     }
                     if (modeSpecificTitleBase) {
-                        modeSpecificTitleBase.textContent = '좎씠?ㅻ컮ㅼ젙';
+                        modeSpecificTitleBase.textContent = '베이스바둑 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">좎씠媛쒖닔</label>
+                            <label class="ai-battle-label">베이스 개수</label>
                             <select id="baseCountSelect" class="form-select">
                                 ${Array.from({length: 8}, (_, i) => {
                                     const value = 3 + i;
-                                    return `<option value="${value}" ${value === 4 ? 'selected' : ''}>${value}媛?/option>`;
+                                    return `<option value="${value}" ${value === 4 ? 'selected' : ''}>${value}개</option>`;
                                 }).join('')}
                             </select>
                         </div>
@@ -1237,24 +1291,24 @@
                         modeSpecificSection.style.display = 'block';
                     }
                     if (modeSpecificTitle) {
-                        modeSpecificTitle.textContent = '?덈뱺붾몣 ?ㅼ젙';
+                        modeSpecificTitle.textContent = '히든바둑 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">?덈뱺 媛쒖닔</label>
+                            <label class="ai-battle-label">히든 개수</label>
                             <select id="hiddenCountSelect" class="form-select">
                                 ${Array.from({length: 5}, (_, i) => {
                                     const value = 1 + i;
-                                    return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}媛?/option>`;
+                                    return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}개</option>`;
                                 }).join('')}
                             </select>
                         </div>
                         <div class="setting-item">
-                            <label class="ai-battle-label">?ㅼ틪 ?잛닔</label>
+                            <label class="ai-battle-label">스캔 횟수</label>
                             <select id="scanCountSelect" class="form-select">
                                 ${Array.from({length: 10}, (_, i) => {
                                     const value = 1 + i;
-                                    return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}/option>`;
+                                    return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}회</option>`;
                                 }).join('')}
                             </select>
                         </div>
@@ -1268,15 +1322,15 @@
                         modeSpecificSectionMissile.style.display = 'block';
                     }
                     if (modeSpecificTitleMissile) {
-                        modeSpecificTitleMissile.textContent = '몄궗?쇰컮ㅼ젙';
+                        modeSpecificTitleMissile.textContent = '미사일바둑 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">몄궗대룞 ?잛닔</label>
+                            <label class="ai-battle-label">미사일아이템 개수</label>
                             <select id="missileMoveLimitSelect" class="form-select">
                                 ${Array.from({length: 20}, (_, i) => {
                                     const value = 1 + i;
-                                    return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}/option>`;
+                                    return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}회</option>`;
                                 }).join('')}
                             </select>
                         </div>
@@ -1290,23 +1344,23 @@
                             mixRulesGrid.innerHTML = `
                                 <label class="mix-rule-checkbox">
                                     <input type="checkbox" id="mixRuleCapture" value="CAPTURE">
-                                    <span>?곕궡곕컮/span>
+                                    <span>캡쳐바둑</span>
                                 </label>
                                 <label class="mix-rule-checkbox">
                                     <input type="checkbox" id="mixRuleSpeed" value="SPEED">
-                                    <span>?ㅽ뵾?쒕컮/span>
+                                    <span>스피드바둑</span>
                                 </label>
                                 <label class="mix-rule-checkbox">
                                     <input type="checkbox" id="mixRuleBase" value="BASE">
-                                    <span>좎씠?ㅻ컮/span>
+                                    <span>베이스바둑</span>
                                 </label>
                                 <label class="mix-rule-checkbox">
                                     <input type="checkbox" id="mixRuleHidden" value="HIDDEN">
-                                    <span>?덈뱺붾몣</span>
+                                    <span>히든바둑</span>
                                 </label>
                                 <label class="mix-rule-checkbox">
                                     <input type="checkbox" id="mixRuleMissile" value="MISSILE">
-                                    <span>몄궗?쇰컮/span>
+                                    <span>미사일바둑</span>
                                 </label>
                             `;
                             
@@ -1349,14 +1403,14 @@
                         modeSpecificSectionDice.style.display = 'block';
                     }
                     if (modeSpecificTitleDice) {
-                        modeSpecificTitleDice.textContent = '쇱궗?꾨컮ㅼ젙';
+                        modeSpecificTitleDice.textContent = '주사위바둑 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">?쇱슫?/label>
+                            <label class="ai-battle-label">라운드</label>
                             <select id="diceRoundsSelect" class="form-select">
-                                <option value="3" selected>3?쇱슫/option>
-                                <option value="5">5?쇱슫/option>
+                                <option value="3" selected>3라운드</option>
+                                <option value="5">5라운드</option>
                             </select>
                         </div>
                     `;
@@ -1369,14 +1423,14 @@
                         modeSpecificSectionCops.style.display = 'block';
                     }
                     if (modeSpecificTitleCops) {
-                        modeSpecificTitleCops.textContent = '쎌같쇰룄ㅼ젙';
+                        modeSpecificTitleCops.textContent = '주사위바둑2 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">?쇱슫?/label>
+                            <label class="ai-battle-label">라운드</label>
                             <select id="copsRoundsSelect" class="form-select">
-                                <option value="2" selected>2?쇱슫/option>
-                                <option value="3">3?쇱슫/option>
+                                <option value="2" selected>2라운드</option>
+                                <option value="3">3라운드</option>
                             </select>
                         </div>
                     `;
@@ -1389,14 +1443,14 @@
                         modeSpecificSectionOmok.style.display = 'block';
                     }
                     if (modeSpecificTitleOmok) {
-                        modeSpecificTitleOmok.textContent = '?ㅻぉ ?ㅼ젙';
+                        modeSpecificTitleOmok.textContent = '오목 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">붾몣ш린</label>
+                            <label class="ai-battle-label">바둑판 크기</label>
                             <select id="omokBoardSizeSelect" class="form-select">
-                                <option value="15" selected>15以?/option>
-                                <option value="19">19以?/option>
+                                <option value="15" selected>15줄</option>
+                                <option value="19">19줄</option>
                             </select>
                         </div>
                     `;
@@ -1409,15 +1463,15 @@
                         modeSpecificSectionTtak.style.display = 'block';
                     }
                     if (modeSpecificTitleTtak) {
-                        modeSpecificTitleTtak.textContent = '?곕ぉ ?ㅼ젙';
+                        modeSpecificTitleTtak.textContent = '따목 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">紐⑺몴 媛쒖닔</label>
+                            <label class="ai-battle-label">따낼 개수</label>
                             <select id="ttakTargetSelect" class="form-select">
                                 ${Array.from({length: 10}, (_, i) => {
                                     const value = 5 + (i * 5);
-                                    return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}媛?/option>`;
+                                    return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}개</option>`;
                                 }).join('')}
                             </select>
                         </div>
@@ -1431,22 +1485,22 @@
                         modeSpecificSectionAlkkagi.style.display = 'block';
                     }
                     if (modeSpecificTitleAlkkagi) {
-                        modeSpecificTitleAlkkagi.textContent = '?뚭퉴ㅼ젙';
+                        modeSpecificTitleAlkkagi.textContent = '알까기 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">?쇱슫?/label>
+                            <label class="ai-battle-label">라운드</label>
                             <select id="alkkagiRoundsSelect" class="form-select">
-                                <option value="3" selected>3?쇱슫/option>
-                                <option value="5">5?쇱슫/option>
+                                <option value="3" selected>3라운드</option>
+                                <option value="5">5라운드</option>
                             </select>
                         </div>
                         <div class="setting-item">
-                            <label class="ai-battle-label">媛쒖닔</label>
+                            <label class="ai-battle-label">개수</label>
                             <select id="alkkagiStonesSelect" class="form-select">
                                 ${Array.from({length: 8}, (_, i) => {
                                     const value = 3 + i;
-                                    return `<option value="${value}" ${value === 5 ? 'selected' : ''}>${value}媛?/option>`;
+                                    return `<option value="${value}" ${value === 5 ? 'selected' : ''}>${value}개</option>`;
                                 }).join('')}
                             </select>
                         </div>
@@ -1460,15 +1514,15 @@
                         modeSpecificSectionCurling.style.display = 'block';
                     }
                     if (modeSpecificTitleCurling) {
-                        modeSpecificTitleCurling.textContent = '붾몣而щ쭅 ?ㅼ젙';
+                        modeSpecificTitleCurling.textContent = '바둑컬링 설정';
                     }
                     settingsHTML = `
                         <div class="setting-item">
-                            <label class="ai-battle-label">媛쒖닔</label>
+                            <label class="ai-battle-label">개수</label>
                             <select id="curlingStonesSelect" class="form-select">
                                 ${Array.from({length: 5}, (_, i) => {
                                     const value = 6 + (i * 2);
-                                    return `<option value="${value}" ${value === 8 ? 'selected' : ''}>${value}媛?/option>`;
+                                    return `<option value="${value}" ${value === 8 ? 'selected' : ''}>${value}개</option>`;
                                 }).join('')}
                             </select>
                         </div>
@@ -1551,18 +1605,18 @@
             }
 
             mixSettingsContainer.style.display = 'block';
-            let settingsHTML = '<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;"><div class="settings-section-title">?좏깮洹쒖튃 ?ㅼ젙</div><div class="settings-row-grid">';
+            let settingsHTML = '<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;"><div class="settings-section-title">선택규칙 설정</div><div class="settings-row-grid">';
 
             selectedRules.forEach(rule => {
                 switch(rule) {
                     case 'CAPTURE':
                         settingsHTML += `
                             <div class="setting-item">
-                                <label class="ai-battle-label">?곕궡곕컮- 紐⑺몴 媛쒖닔</label>
+                                <label class="ai-battle-label">캡쳐바둑- 따낼 개수</label>
                                 <select id="mixCaptureTargetSelect" class="form-select">
                                     ${Array.from({length: 10}, (_, i) => {
                                         const value = 5 + (i * 5);
-                                        return `<option value="${value}" ${value === 20 ? 'selected' : ''}>${value}媛?/option>`;
+                                        return `<option value="${value}" ${value === 20 ? 'selected' : ''}>${value}개</option>`;
                                     }).join('')}
                                 </select>
                             </div>
@@ -1571,23 +1625,23 @@
                     case 'SPEED':
                         settingsHTML += `
                             <div class="setting-item">
-                                <label class="ai-battle-label">?ㅽ뵾?쒕컮- ?쒓컙 ?쒗븳</label>
+                                <label class="ai-battle-label">스피드바둑- 시간 제한</label>
                                 <select id="mixTimeLimitSelect" class="form-select">
-                                    <option value="1">1?/option>
-                                    <option value="3">3?/option>
-                                    <option value="5">5?/option>
-                                    <option value="10" selected>10?(?쒖?)</option>
-                                    <option value="20">20?/option>
-                                    <option value="30">30?/option>
+                                    <option value="1">1분</option>
+                                    <option value="3">3분</option>
+                                    <option value="5">5분</option>
+                                    <option value="10" selected>10분(기본)</option>
+                                    <option value="20">20분</option>
+                                    <option value="30">30분</option>
                                 </select>
                             </div>
                             <div class="setting-item">
-                                <label class="ai-battle-label">異붽? ?쒓컙 (?쇱뀛)</label>
+                                <label class="ai-battle-label">추가 시간 (초당)</label>
                                 <select id="mixTimeIncrementSelect" class="form-select">
-                                    <option value="5" selected>5?/option>
-                                    <option value="10">10?/option>
-                                    <option value="15">15?/option>
-                                    <option value="20">20?/option>
+                                    <option value="5" selected>5초</option>
+                                    <option value="10">10초</option>
+                                    <option value="15">15초</option>
+                                    <option value="20">20초</option>
                                 </select>
                             </div>
                         `;
@@ -1595,11 +1649,11 @@
                     case 'BASE':
                         settingsHTML += `
                             <div class="setting-item">
-                                <label class="ai-battle-label">좎씠?ㅻ컮- 좎씠媛쒖닔</label>
+                                <label class="ai-battle-label">베이스바둑- 베이스 개수</label>
                                 <select id="mixBaseCountSelect" class="form-select">
                                     ${Array.from({length: 8}, (_, i) => {
                                         const value = 3 + i;
-                                        return `<option value="${value}" ${value === 4 ? 'selected' : ''}>${value}媛?/option>`;
+                                        return `<option value="${value}" ${value === 4 ? 'selected' : ''}>${value}개</option>`;
                                     }).join('')}
                                 </select>
                             </div>
@@ -1608,20 +1662,20 @@
                     case 'HIDDEN':
                         settingsHTML += `
                             <div class="setting-item">
-                                <label class="ai-battle-label">?덈뱺붾몣 - ?덈뱺 媛쒖닔</label>
+                                <label class="ai-battle-label">히든바둑 - 히든 개수</label>
                                 <select id="mixHiddenCountSelect" class="form-select">
                                     ${Array.from({length: 5}, (_, i) => {
                                         const value = 1 + i;
-                                        return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}媛?/option>`;
+                                        return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}개</option>`;
                                     }).join('')}
                                 </select>
                             </div>
                             <div class="setting-item">
-                                <label class="ai-battle-label">?ㅼ틪 ?잛닔</label>
+                                <label class="ai-battle-label">스캔 횟수</label>
                                 <select id="mixScanCountSelect" class="form-select">
                                     ${Array.from({length: 10}, (_, i) => {
                                         const value = 1 + i;
-                                        return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}/option>`;
+                                        return `<option value="${value}" ${value === 3 ? 'selected' : ''}>${value}회</option>`;
                                     }).join('')}
                                 </select>
                             </div>
@@ -1630,11 +1684,11 @@
                     case 'MISSILE':
                         settingsHTML += `
                             <div class="setting-item">
-                                <label class="ai-battle-label">몄궗?쇰컮- ?대룞 ?잛닔</label>
+                                <label class="ai-battle-label">미사일바둑- 아이템 개수</label>
                                 <select id="mixMissileMoveLimitSelect" class="form-select">
                                     ${Array.from({length: 20}, (_, i) => {
                                         const value = 1 + i;
-                                        return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}/option>`;
+                                        return `<option value="${value}" ${value === 10 ? 'selected' : ''}>${value}회</option>`;
                                     }).join('')}
                                 </select>
                             </div>
@@ -1711,6 +1765,11 @@
                 document.body.style.overflow = '';
             }
         }
+        
+        // selectRequestMode 함수를 전역에 노출 (버튼 onclick에서 사용)
+        window.selectRequestMode = selectRequestMode;
+        // closeGameRequestModal 함수를 전역에 노출 (버튼 onclick에서 사용)
+        window.closeGameRequestModal = closeGameRequestModal;
 
         // 주석
         function setupModalEventListeners() {
@@ -1812,7 +1871,8 @@
         });
 
         document.getElementById('confirmRequestBtn')?.addEventListener('click', () => {
-            const currentRoomType = '<%= typeof roomType !== "undefined" ? roomType : "strategy" %>';
+            const currentRoomType = window.WAITING_ROOM_CONFIG?.roomType || 'strategy';
+            console.log('[Client] confirmRequestBtn clicked, selectedTargetUser:', selectedTargetUser, 'currentRoomType:', currentRoomType);
             if (!selectedTargetUser && currentRoomType === 'strategy') {
                 // AI 대결 시작 - socket 이벤트로 전송
                 const settings = getRequestSettings();
@@ -1866,8 +1926,16 @@
                     settingsCaptureTargetType: typeof settings.captureTarget
                 });
                 
-                socket.emit('start_ai_game', aiGameData);
-                closeGameRequestModal();
+                console.log('[Client] About to emit start_ai_game, socket connected:', socket?.connected);
+                if (socket && socket.connected) {
+                    socket.emit('start_ai_game', aiGameData);
+                    console.log('[Client] start_ai_game event emitted successfully');
+                    // 모달은 서버 응답을 기다린 후 닫기
+                    // closeGameRequestModal();
+                } else {
+                    console.error('[Client] Socket is not connected!');
+                    showAlertModal('서버에 연결되지 않았습니다. 페이지를 새로고침해주세요.', '오류', 'error');
+                }
                 return;
             }
 
@@ -1977,7 +2045,7 @@
         // 매칭 시작 함수
         function startMatching() {
             if (isMatching) {
-                alert('이미 매칭 중입니다.');
+                showAlertModal('이미 매칭 중입니다.', '안내', 'info');
                 return;
             }
             
@@ -2015,19 +2083,19 @@
         function watchByRoomNumber() {
             const roomNumberInput = document.getElementById('roomNumberInput');
             if (!roomNumberInput) {
-                alert('방번호 입력 필드를 찾을 수 없습니다.');
+                showAlertModal('방번호 입력 필드를 찾을 수 없습니다.', '오류', 'error');
                 return;
             }
             
             const roomNumber = roomNumberInput.value.trim();
             if (!roomNumber) {
-                alert('방번호를 입력해주세요.');
+                showAlertModal('방번호를 입력해주세요.', '안내', 'warning');
                 return;
             }
             
             const roomNum = parseInt(roomNumber);
             if (isNaN(roomNum) || roomNum < 1 || roomNum > 5) {
-                alert('방번호는 1-5 사이의 숫자여야 합니다.');
+                showAlertModal('방번호는 1-5 사이의 숫자여야 합니다.', '안내', 'warning');
                 return;
             }
             
@@ -2064,16 +2132,21 @@
             
             // 같은 말 2회 연속 방지
             if (message === lastChatMessage) {
-                alert('같은 메시지를 연속으로 전송할 수 없습니다.');
+                showAlertModal('같은 메시지를 연속으로 전송할 수 없습니다.', '안내', 'warning');
                 return;
             }
             
             // 서버에 메시지 전송
             if (typeof socket !== 'undefined' && socket) {
+                console.log('Sending chat message:', message);
+                console.log('[Client] Sending chat message:', message);
                 socket.emit('chat_message', {
                     message: message,
                     timestamp: currentTime
                 });
+                console.log('[Client] Chat message emitted');
+            } else {
+                console.error('Socket is not available');
             }
             
             // 마지막 전송 시간과 메시지 저장
@@ -2093,7 +2166,28 @@
         function toggleEmojiPopup() {
             const emojiPopup = document.getElementById('emojiPopup');
             if (emojiPopup) {
+                const isShowing = emojiPopup.classList.contains('show');
                 emojiPopup.classList.toggle('show');
+                
+                // 팝업이 열릴 때 탭을 초기 상태로 리셋
+                if (!isShowing) {
+                    const emojiTabs = emojiPopup.querySelectorAll('.emoji-tab');
+                    const emojiSection = document.getElementById('emojiSection');
+                    const quickSection = document.getElementById('quickSection');
+                    
+                    // 이모지 탭을 활성화
+                    emojiTabs.forEach(tab => {
+                        if (tab.getAttribute('data-tab') === 'emoji') {
+                            tab.classList.add('active');
+                        } else {
+                            tab.classList.remove('active');
+                        }
+                    });
+                    
+                    // 이모지 섹션 표시, 퀵 메시지 섹션 숨기기
+                    if (emojiSection) emojiSection.classList.add('active');
+                    if (quickSection) quickSection.classList.remove('active');
+                }
             }
         }
 
@@ -2177,11 +2271,35 @@
         });
 
         socket.on('connect', () => {
+            console.log('[Client] Socket connected, socket.id:', socket.id);
             const roomType = window.WAITING_ROOM_CONFIG?.roomType || 'strategy';
+            console.log('[Client] Joining waiting room:', roomType);
             socket.emit('join_waiting_room', roomType);
+            console.log('[Client] join_waiting_room event emitted');
             socket.emit('get_user_list', roomType);
             socket.emit('get_ongoing_games');
             socket.emit('get_rankings');
+        });
+        
+        socket.on('disconnect', (reason) => {
+            console.log('[Client] Socket disconnected, reason:', reason);
+            if (reason === 'io server disconnect') {
+                // 서버가 연결을 끊은 경우 (인증 오류 등) 재연결 시도
+                console.log('[Client] Server disconnected, attempting to reconnect...');
+                socket.connect();
+            }
+        });
+        
+        socket.on('connect_error', (error) => {
+            console.error('[Client] Socket connection error:', error);
+            if (error.message === 'Authentication required') {
+                // 인증 오류인 경우 페이지 새로고침 (세션 복구 시도)
+                console.warn('[Client] Authentication error, refreshing page in 1 second...');
+                showAlertModal('인증 오류가 발생했습니다. 페이지를 새로고침합니다.', '오류', 'error');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
         });
 
         socket.on('user_list_update', (users) => {
@@ -2248,7 +2366,7 @@
         });
 
         socket.on('game_request_rejected', (data) => {
-            alert(`${data.nickname}님이 대국 신청을 거절했습니다.`);
+            showAlertModal(`${data.nickname}님이 대국 신청을 거절했습니다.`, '안내', 'info');
             stopRequestTimer();
             closeGameRequestModal();
         });
@@ -2306,7 +2424,7 @@
                 window.location.href = `/api/game/${data.gameId}`;
             } else {
                 console.error('[Client] Invalid game_started data:', data);
-                alert('뚯엫 ?쒖옉 ?뺣낫瑜?쏆? 紐삵뻽?듬땲 ?ㅼ떆 ?쒕룄?댁＜?몄슂.');
+                showAlertModal('AI 게임 시작 정보를 받지 못했습니다. 다시 시도해주세요.', '오류', 'error');
             }
         });
 
@@ -2334,6 +2452,7 @@
         }
 
         function addChatMessage(user, message, timestamp, roomType) {
+            console.log('[Client] addChatMessage called:', { user, message, timestamp, roomType });
             const list = document.getElementById('chatMessages');
             const mobileList = document.getElementById('mobileSidebarChatMessages');
             const roomTypeText = roomType === 'casual' ? '[?' : '[?꾨왂]';
@@ -2347,14 +2466,18 @@
                 </div>
             `;
             
-            // 硫붿씤 梨꾪똿李쎌뿉 異붽?
+            // 데스크톱 채팅창에 추가
             if (list) {
+                console.log('[Client] Adding message to desktop chat list');
                 list.appendChild(messageDiv.cloneNode(true));
                 list.scrollTop = list.scrollHeight;
+            } else {
+                console.warn('[Client] chatMessages element not found');
             }
             
-            // 주석
+            // 모바일 사이드바 채팅창에 추가
             if (mobileList) {
+                console.log('[Client] Adding message to mobile sidebar chat list');
                 mobileList.appendChild(messageDiv.cloneNode(true));
                 mobileList.scrollTop = mobileList.scrollHeight;
             }
@@ -2362,18 +2485,42 @@
             // 모바일 메뉴 채팅창에 추가
             const mobileMenuList = document.getElementById('mobileMenuChatMessages');
             if (mobileMenuList) {
+                console.log('[Client] Adding message to mobile menu chat list');
                 mobileMenuList.appendChild(messageDiv.cloneNode(true));
                 mobileMenuList.scrollTop = mobileMenuList.scrollHeight;
             }
         }
 
         socket.on('ai_game_started', (data) => {
-            console.log('[Client] AI game started, redirecting to:', `/api/game/${data.gameId}`);
+            console.log('[Client] AI game started event received:', data);
+            console.log('[Client] Data type check:', typeof data, 'gameId:', data?.gameId, 'gameId type:', typeof data?.gameId);
+            
             if (data && data.gameId) {
-                window.location.href = `/api/game/${data.gameId}`;
+                const gameId = data.gameId;
+                console.log('[Client] Valid gameId received:', gameId);
+                
+                // 모달이 열려있으면 닫기
+                const gameRequestModal = document.getElementById('gameRequestModal');
+                if (gameRequestModal) {
+                    const isModalOpen = gameRequestModal.style.display !== 'none' || 
+                                       gameRequestModal.classList.contains('show') ||
+                                       window.getComputedStyle(gameRequestModal).display !== 'none';
+                    if (isModalOpen) {
+                        console.log('[Client] Closing game request modal');
+                        closeGameRequestModal();
+                    }
+                }
+                
+                // 리다이렉트 (모달 닫기 애니메이션 완료 대기)
+                console.log('[Client] Redirecting to game room:', `/api/game/${gameId}`);
+                setTimeout(() => {
+                    console.log('[Client] Executing redirect now');
+                    window.location.href = `/api/game/${gameId}`;
+                }, 200);
             } else {
                 console.error('[Client] Invalid ai_game_started data:', data);
-                alert('뚯엫 ?쒖옉 ?뺣낫瑜?쏆? 紐삵뻽?듬땲 ?ㅼ떆 ?쒕룄?댁＜?몄슂.');
+                console.error('[Client] Data structure:', JSON.stringify(data, null, 2));
+                showAlertModal('AI 게임 시작 정보를 받지 못했습니다. 다시 시도해주세요.', '오류', 'error');
             }
         });
 
@@ -2382,9 +2529,18 @@
             alert(`뚯엫 ?쒖옉 以ㅻ쪟媛 쒖깮?덉뒿?덈떎: ${data.error || '녿뒗 ?ㅻ쪟'}`);
         });
 
+        socket.on('room_joined', (data) => {
+            console.log('[Client] Room joined confirmation:', data);
+        });
+        
         socket.on('chat_message', (data) => {
+            console.log('[Client] Received chat message:', data);
+            console.log('[Client] Current room type:', window.WAITING_ROOM_CONFIG?.roomType);
             if (data && data.user && data.message) {
+                console.log('[Client] Adding chat message to UI');
                 addChatMessage(data.user, data.message, data.timestamp, data.roomType);
+            } else {
+                console.warn('[Client] Invalid chat message data:', data);
             }
         });
 
@@ -2429,7 +2585,7 @@
             if (cancelBtn) cancelBtn.style.display = 'none';
             if (matchingStatus) matchingStatus.textContent = '대기 중';
             
-            alert(`매칭 오류: ${data.error || '알 수 없는 오류'}`);
+            showAlertModal(`매칭 오류: ${data.error || '알 수 없는 오류'}`, '오류', 'error');
         });
 
         function renderOnlineUsers(users) {
@@ -3298,11 +3454,11 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
                     return;
                 }
                 
-                alert(data.message || '전체 전적이 초기화되었습니다.');
+                showAlertModal(data.message || '전체 전적이 초기화되었습니다.', '성공', 'success');
                 
                 // 젬 업데이트
                 if (window.WAITING_ROOM_CONFIG) {
@@ -3313,7 +3469,7 @@
                 location.reload();
             } catch (error) {
                 console.error('Reset all stats error:', error);
-                alert('전적 초기화 중 오류가 발생했습니다.');
+                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
             }
         };
         
@@ -3335,11 +3491,11 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
                     return;
                 }
                 
-                alert(data.message || '전략바둑 전적이 초기화되었습니다.');
+                showAlertModal(data.message || '전략바둑 전적이 초기화되었습니다.', '성공', 'success');
                 
                 // 젬 업데이트
                 if (window.WAITING_ROOM_CONFIG) {
@@ -3350,7 +3506,7 @@
                 location.reload();
             } catch (error) {
                 console.error('Reset strategy stats error:', error);
-                alert('전적 초기화 중 오류가 발생했습니다.');
+                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
             }
         };
         
@@ -3372,11 +3528,11 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
                     return;
                 }
                 
-                alert(data.message || '놀이바둑 전적이 초기화되었습니다.');
+                showAlertModal(data.message || '놀이바둑 전적이 초기화되었습니다.', '성공', 'success');
                 
                 // 젬 업데이트
                 if (window.WAITING_ROOM_CONFIG) {
@@ -3387,7 +3543,7 @@
                 location.reload();
             } catch (error) {
                 console.error('Reset casual stats error:', error);
-                alert('전적 초기화 중 오류가 발생했습니다.');
+                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
             }
         };
         
@@ -3395,16 +3551,16 @@
         window.resetPartialStats = async function(mode) {
             const modeNames = {
                 'CLASSIC': '클래식바둑',
-                'CAPTURE': '포획바둑',
+                'CAPTURE': '캡쳐바둑',
                 'SPEED': '스피드바둑',
                 'BASE': '베이스바둑',
                 'HIDDEN': '히든바둑',
                 'MISSILE': '미사일바둑',
                 'MIX': '믹스바둑',
                 'DICE': '주사위바둑',
-                'COPS': '경찰도둑바둑',
+                'COPS': '주사위바둑2',
                 'OMOK': '오목',
-                'TTAK': '딱지',
+                'TTAK': '따목',
                 'ALKKAGI': '알까기',
                 'CURLING': '바둑컬링'
             };
@@ -3428,11 +3584,11 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    alert(data.error || '전적 초기화에 실패했습니다.');
+                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
                     return;
                 }
                 
-                alert(data.message || `${modeName} 부분 전적이 초기화되었습니다.`);
+                showAlertModal(data.message || `${modeName} 부분 전적이 초기화되었습니다.`, '성공', 'success');
                 
                 // 젬 업데이트
                 if (window.WAITING_ROOM_CONFIG) {
@@ -3443,7 +3599,7 @@
                 location.reload();
             } catch (error) {
                 console.error('Reset partial stats error:', error);
-                alert('전적 초기화 중 오류가 발생했습니다.');
+                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
             }
         };
 
@@ -3858,6 +4014,7 @@
                     
                     // 주석
                     if (typeof socket !== 'undefined' && socket) {
+                        console.log('Sending mobile chat message:', message);
                         socket.emit('chat_message', {
                             message: message,
                             timestamp: currentTime

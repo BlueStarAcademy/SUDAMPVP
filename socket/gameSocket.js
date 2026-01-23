@@ -795,18 +795,23 @@ class GameSocket {
                         return;
                     } else if (moveResult.isDoublePass) {
                         // 일반 게임: 양쪽 통과 시 계가 진행
+                        // move_made 이벤트는 이미 위에서 emit되었으므로, 바로 계가 시작
                         console.log('[GameSocket] Game ended by double pass, starting scoring');
-                        this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
                         
-                        const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                        
-                        // 계가 결과 전송
-                        this.io.to(`game-${gameId}`).emit('game_ended', {
-                            result,
-                            score,
-                            rewards,
-                            game: endGameData
-                        });
+                        // 잠시 대기 후 계가 시작 (클라이언트가 패스를 표시할 시간을 줌)
+                        setTimeout(async () => {
+                            this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
+                            
+                            const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                            
+                            // 계가 결과 전송
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result,
+                                score,
+                                rewards,
+                                game: endGameData
+                            });
+                        }, 500);
                         return;
                     } else if (moveResult.isMaxMovesReached) {
                         // 클래식 바둑: 제한 턴수 도달 시 계가 진행

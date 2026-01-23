@@ -489,14 +489,14 @@ router.post('/reset-partial-stats', requireAuth, async (req, res) => {
 
     const modeNames = {
       'CLASSIC': '클래식바둑',
-      'CAPTURE': '따내기바둑',
+      'CAPTURE': '캡쳐바둑',
       'SPEED': '스피드바둑',
       'BASE': '베이스바둑',
       'HIDDEN': '히든바둑',
       'MISSILE': '미사일바둑',
       'MIX': '믹스룰바둑',
       'DICE': '주사위바둑',
-      'COPS': '경찰과도둑',
+      'COPS': '주사위바둑2',
       'OMOK': '오목',
       'TTAK': '따목',
       'ALKKAGI': '알까기',

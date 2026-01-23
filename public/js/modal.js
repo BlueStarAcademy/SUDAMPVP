@@ -219,3 +219,57 @@ class Modal {
 // Create global instance
 window.Modal = new Modal();
 
+// 안내 모달 함수 (alert 대체용)
+window.showAlertModal = function(message, title = '안내', type = 'info') {
+    const modalId = 'alert-modal-' + Date.now();
+    const iconMap = {
+        'info': 'ℹ️',
+        'success': '✅',
+        'warning': '⚠️',
+        'error': '❌'
+    };
+    const icon = iconMap[type] || iconMap['info'];
+    
+    const content = `
+        <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">${icon}</div>
+            <div style="font-size: 16px; line-height: 1.6; color: #374151; white-space: pre-wrap;">${escapeHtml(message)}</div>
+        </div>
+    `;
+    
+    const footer = `
+        <button class="modal-btn modal-btn-primary" onclick="window.Modal.close('${modalId}')" style="min-width: 100px;">확인</button>
+    `;
+    
+    window.Modal.open(modalId, content, {
+        title: `${icon} ${title}`,
+        width: '400px',
+        footer: footer,
+        showClose: true
+    });
+    
+    // ESC 키로 닫기
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            window.Modal.close(modalId);
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // 모달이 닫힐 때 이벤트 리스너 제거
+    const originalClose = window.Modal.close.bind(window.Modal);
+    window.Modal.close = function(id) {
+        if (id === modalId) {
+            document.removeEventListener('keydown', handleEscape);
+        }
+        originalClose(id);
+    };
+};
+
+// HTML 이스케이프 함수
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

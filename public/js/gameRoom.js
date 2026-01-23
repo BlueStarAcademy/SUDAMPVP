@@ -43,7 +43,7 @@
     if (!gameId || gameId === '' || gameId === 'undefined' || gameId === 'null') {
         console.error('[Client] gameId is missing or invalid from config:', config);
         console.error('[Client] Current URL:', window.location.pathname);
-        alert('게임 ID가 없습니다. 대기실로 돌아갑니다.');
+        showAlertModal('게임 ID가 없습니다. 대기실로 돌아갑니다.', '오류', 'error');
         window.location.href = '/waiting-room';
         return;
     }
@@ -1625,6 +1625,29 @@
             }
             
             updateTurnIndicator(data.move.moveNumber || window.game.moveNumber, nextColor);
+            
+            // 더블 패스 감지: 양쪽이 모두 통과하면 계가 진행
+            if (data.isDoublePass) {
+                console.log('[Client] Double pass detected in move_made, starting scoring');
+                // 계가중 오버레이 표시
+                if (typeof showScoringOverlay === 'function') {
+                    showScoringOverlay();
+                }
+                // 게임 종료 플래그 설정
+                if (window.game) {
+                    window.game.isMyTurn = false;
+                    window.game.isScoring = true;
+                }
+                // scoring_started 이벤트를 기다림 (서버에서 emit됨)
+            }
+            
+            // 게임 종료 처리
+            if (data.isGameOver) {
+                console.log('[Client] Game over detected in move_made');
+                if (window.game) {
+                    window.game.isMyTurn = false;
+                }
+            }
         });
         
         // ai_move 이벤트 핸들러: AI가 수를 둔 후 처리 (move_made와 동일한 로직)

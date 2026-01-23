@@ -83,11 +83,16 @@ class WaitingRoomSocket {
 
         // Handle room join
         socket.on('join_waiting_room', (roomType) => {
-            console.log('User joining room:', userId, roomType);
+            console.log('[Server] User joining room:', userId, roomType);
             const finalRoomType = roomType || 'strategy';
             this.userRoomType.set(userId, finalRoomType);
             // 실제로 소켓 룸에 조인
-            socket.join(`waiting-room-${finalRoomType}`);
+            const roomName = `waiting-room-${finalRoomType}`;
+            socket.join(roomName);
+            console.log('[Server] User', userId, 'joined room:', roomName, 'socket.id:', socket.id);
+            
+            // 조인 확인을 위해 클라이언트에 알림
+            socket.emit('room_joined', { roomType: finalRoomType });
         });
 
         // Send current user list
@@ -269,17 +274,21 @@ class WaitingRoomSocket {
                 
                 console.log('Broadcasting chat message:', chatData);
                 
-                // Broadcast to all users in waiting room
-                this.io.emit('chat_message', chatData);
+                // Broadcast to all users in the specific waiting room
+                const targetRoom = `waiting-room-${roomType}`;
+                this.io.to(targetRoom).emit('chat_message', chatData);
             } catch (error) {
                 console.error('Error handling chat message:', error);
                 // Fallback to using the provided user name
+                const roomType = this.userRoomType.get(userId) || 'strategy';
                 const chatData = {
                     user: data.user || 'Unknown',
                     message: data.message || '',
-                    timestamp: data.timestamp || Date.now()
+                    timestamp: data.timestamp || Date.now(),
+                    roomType: roomType
                 };
-                this.io.emit('chat_message', chatData);
+                const targetRoom = `waiting-room-${roomType}`;
+                this.io.to(targetRoom).emit('chat_message', chatData);
             }
         });
 
@@ -1024,11 +1033,24 @@ class WaitingRoomSocket {
             
             const game = await gameService.createAiGame(userId, level, color, gameOptions);
             
+            console.log('[WaitingRoomSocket] AI game created successfully:', {
+                gameId: game.id,
+                gameIdType: typeof game.id,
+                game: {
+                    id: game.id,
+                    mode: game.mode,
+                    isAiGame: game.isAiGame
+                }
+            });
+            
             await this.updateUserStatus(userId, 'in-game');
             this.publishUserStatusChanged(userId, 'in-game');
             
-            console.log('[WaitingRoomSocket] AI game created successfully:', game.id);
-            socket.emit('ai_game_started', { gameId: game.id });
+            // 게임 ID를 명시적으로 문자열로 변환하여 전송
+            const gameId = String(game.id);
+            console.log('[WaitingRoomSocket] Emitting ai_game_started with gameId:', gameId, 'type:', typeof gameId);
+            socket.emit('ai_game_started', { gameId: gameId });
+            console.log('[WaitingRoomSocket] ai_game_started event emitted');
         } catch (error) {
             console.error('[WaitingRoomSocket] Start AI game error:', error);
             console.error('[WaitingRoomSocket] Error stack:', error.stack);

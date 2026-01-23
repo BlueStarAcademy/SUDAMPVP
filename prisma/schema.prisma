@@ -11,26 +11,26 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  email             String   @unique
-  nickname          String   @unique
-  password          String
-  rating            Int      @default(1500)
-  mannerScore       Int      @default(1500)
-  wins              Int      @default(0)
-  losses            Int      @default(0)
-  draws             Int      @default(0)
-  gold              Int      @default(1000)
-  gem               Int      @default(0)
-  avatar            Int?     @default(1)
-  badukMBTI         String?
-  strategyTickets   Int      @default(10)
-  casualTickets     Int      @default(10)
-  strategyTicketMax Int      @default(10)
-  casualTicketMax   Int      @default(10)
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  nickname           String   @unique
+  password           String
+  rating             Int      @default(1500)
+  mannerScore        Int      @default(1500)
+  wins               Int      @default(0)
+  losses             Int      @default(0)
+  draws              Int      @default(0)
+  gold               Int      @default(1000)
+  gem                Int      @default(0)
+  avatar             Int?     @default(1)
+  badukMBTI          String?
+  strategyTickets    Int      @default(10)
+  casualTickets      Int      @default(10)
+  strategyTicketMax  Int      @default(10)
+  casualTicketMax    Int      @default(10)
   lastTicketRecovery DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   gamesAsBlack Game[] @relation("BlackPlayer")
   gamesAsWhite Game[] @relation("WhitePlayer")
@@ -38,24 +38,24 @@ model User {
 }
 
 model Game {
-  id          String   @id @default(uuid())
-  blackId     String?
-  whiteId     String?
-  blackRating Int
-  whiteRating Int
-  matchType   String   @default("RANKED") // "RANKED", "FRIENDLY"
-  mode        String   @default("CLASSIC") // CLASSIC, CAPTURE, etc.
-  komi        Float    @default(6.5)
-  capturedBlack Int    @default(0)
-  capturedWhite Int    @default(0)
-  result      String?  // "black_win", "white_win", "draw"
-  sgfData     String?  // SGF format game data
-  isAiGame    Boolean  @default(false)
-  aiLevel     Int?
-  aiColor     String?  // "black" or "white"
-  startedAt   DateTime? // nullable: 경기 준비 모달 후에만 설정됨
-  endedAt     DateTime?
-  createdAt   DateTime @default(now())
+  id            String   @id @default(uuid())
+  blackId       String?
+  whiteId       String?
+  blackRating   Int
+  whiteRating   Int
+  matchType     String   @default("RANKED") // "RANKED", "FRIENDLY"
+  mode          String   @default("CLASSIC") // CLASSIC, CAPTURE, etc.
+  komi          Float    @default(6.5)
+  capturedBlack Int      @default(0)
+  capturedWhite Int      @default(0)
+  result        String?  // "black_win", "white_win", "draw"
+  sgfData       String?  // SGF format game data
+  isAiGame      Boolean  @default(false)
+  aiLevel       Int?
+  aiColor       String?  // "black" or "white"
+  startedAt     DateTime? // nullable: 경기 준비 모달 후에만 설정됨
+  endedAt       DateTime?
+  createdAt     DateTime @default(now())
 
   blackPlayer User?     @relation("BlackPlayer", fields: [blackId], references: [id])
   whitePlayer User?     @relation("WhitePlayer", fields: [whiteId], references: [id])
