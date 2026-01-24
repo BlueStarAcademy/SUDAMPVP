@@ -25,8 +25,8 @@ class AIService {
                 
                 // moveNumber와 autoScoringMove 체크: autoScoringMove를 초과한 경우에만 수를 두지 않음
                 // moveNumber <= autoScoringMove이면 수를 둘 수 있음 (마지막 수 포함)
-                if (gameState.autoScoringMove && gameState.moveNumber > gameState.autoScoringMove) {
-                    console.log(`[AIService] Move number ${gameState.moveNumber} exceeds autoScoringMove ${gameState.autoScoringMove} in queue, skipping AI move`);
+                if (gameState.autoScoringMove && gameState.moveNumber >= gameState.autoScoringMove) {
+                    console.log(`[AIService] Move number ${gameState.moveNumber} has reached/exceeded autoScoringMove ${gameState.autoScoringMove} in queue, skipping AI move`);
                     return { isPass: true, gameEnded: true };
                 }
                 
@@ -150,9 +150,9 @@ class AIService {
             
             // moveNumber가 autoScoringMove보다 작거나 같으면 수를 둘 수 있음
             // 예: moveNumber = 59, autoScoringMove = 60이면 AI는 60번째 수를 두어야 함 (계가 직전 마지막 수)
-            if (gameState.autoScoringMove && gameState.moveNumber > gameState.autoScoringMove) {
-                console.log(`[AIService] Move number ${gameState.moveNumber} exceeds autoScoringMove ${gameState.autoScoringMove}, should not make move`);
-                // 이미 autoScoringMove를 초과했다면 수를 두지 않음
+            if (gameState.autoScoringMove && gameState.moveNumber >= gameState.autoScoringMove) {
+                console.log(`[AIService] Move number ${gameState.moveNumber} has reached/exceeded autoScoringMove ${gameState.autoScoringMove}, should not make move`);
+                // 이미 autoScoringMove에 도달했다면 수를 두지 않음
                 return null;
             }
             
@@ -500,42 +500,6 @@ class AIService {
                 const gameState = await gameService.getGameState(gameId);
                 const updatedTimer = await timerService.getTimer(gameId);
                 
-                // Check if game ended
-                if (moveResult.isGameOver) {
-                    const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                    
-                    // Determine win reason based on score
-                    let winReason = 'score';
-                    if (score && score.areaScore) {
-                        const blackScore = score.areaScore.black || 0;
-                        const whiteScore = score.areaScore.white || 0;
-                        const scoreDiff = Math.abs(blackScore - whiteScore);
-                        if (result === 'black_win') {
-                            winReason = `score_black_${scoreDiff.toFixed(1)}`;
-                        } else if (result === 'white_win') {
-                            winReason = `score_white_${scoreDiff.toFixed(1)}`;
-                        }
-                    }
-                    
-                    io.to(`game-${gameId}`).emit('game_ended', { 
-                        result, 
-                        score, 
-                        rewards: {
-                            black: {
-                                ...rewards.black,
-                                currentRating: rewards.black.currentRating || endGameData.blackRating
-                            },
-                            white: {
-                                ...rewards.white,
-                                currentRating: rewards.white.currentRating || endGameData.whiteRating
-                            }
-                        },
-                        reason: winReason,
-                        game: endGameData
-                    });
-                    return moveResult;
-                }
-                
                 // AI 착수 후 게임 상태도 함께 전송
                 const gameStateAfterMove = await gameService.getGameState(gameId);
                 
@@ -587,6 +551,25 @@ class AIService {
                 
                 // move_made 이벤트 emit (클라이언트에서 동일한 방식으로 처리)
                 io.to(gameRoom).emit('move_made', moveMadePayload);
+
+                // Pass Notification for AI
+                if (moveResult.isPass) {
+                    const passColor = moveResult.color === 'black' ? '흑' : '백';
+                    let passMessage = `${passColor}이(가) 통과했습니다.`;
+                    
+                    if (moveResult.isDoublePass) {
+                         passMessage += ' 서로 통과하여 계가(집계산)가 진행됩니다.';
+                    } else {
+                         passMessage += ' 서로 통과하면 계가(집계산)이 진행됩니다.';
+                    }
+                    
+                    io.to(gameRoom).emit('chat_message', {
+                        user: 'System',
+                        message: passMessage,
+                        timestamp: Date.now(),
+                        isSystem: true
+                    });
+                }
                 
                 console.log(`[AIService] move_made event emitted successfully to ${roomSockets.length} socket(s) in room ${gameRoom}`);
                 
@@ -629,6 +612,122 @@ class AIService {
                         boardSize: gameStateAfterMove.boardSize
                     }
                 });
+                
+                // Check if game ended
+                if (moveResult.isGameOver) {
+                    // 자동 계가인 경우 지연 처리
+                    if (moveResult.autoScoring) {
+                        console.log('[AIService] Game ended by auto scoring, delaying game_ended event');
+                        setTimeout(async () => {
+                            io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
+                            
+                            const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                            
+                            // Determine win reason based on score
+                            let winReason = 'score';
+                            if (score && score.areaScore) {
+                                const blackScore = score.areaScore.black || 0;
+                                const whiteScore = score.areaScore.white || 0;
+                                const scoreDiff = Math.abs(blackScore - whiteScore);
+                                if (result === 'black_win') {
+                                    winReason = `score_black_${scoreDiff.toFixed(1)}`;
+                                } else if (result === 'white_win') {
+                                    winReason = `score_white_${scoreDiff.toFixed(1)}`;
+                                }
+                            }
+                            
+                            io.to(`game-${gameId}`).emit('game_ended', { 
+                                result, 
+                                score, 
+                                rewards: {
+                                    black: {
+                                        ...rewards.black,
+                                        currentRating: rewards.black.currentRating || endGameData.blackRating
+                                    },
+                                    white: {
+                                        ...rewards.white,
+                                        currentRating: rewards.white.currentRating || endGameData.whiteRating
+                                    }
+                                },
+                                reason: winReason,
+                                game: endGameData
+                            });
+                        }, 1500); // 1.5초 지연
+                    } else if (moveResult.isDoublePass) {
+                        // 더블 패스인 경우에도 지연 처리 (클라이언트가 마지막 패스를 표시할 시간 확보)
+                         console.log('[AIService] Game ended by double pass, delaying scoring');
+                         setTimeout(async () => {
+                            io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
+                            
+                            const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                            
+                            // Determine win reason based on score
+                            let winReason = 'score';
+                            if (score && score.areaScore) {
+                                const blackScore = score.areaScore.black || 0;
+                                const whiteScore = score.areaScore.white || 0;
+                                const scoreDiff = Math.abs(blackScore - whiteScore);
+                                if (result === 'black_win') {
+                                    winReason = `score_black_${scoreDiff.toFixed(1)}`;
+                                } else if (result === 'white_win') {
+                                    winReason = `score_white_${scoreDiff.toFixed(1)}`;
+                                }
+                            }
+                            
+                            io.to(`game-${gameId}`).emit('game_ended', { 
+                                result, 
+                                score, 
+                                rewards: {
+                                    black: {
+                                        ...rewards.black,
+                                        currentRating: rewards.black.currentRating || endGameData.blackRating
+                                    },
+                                    white: {
+                                        ...rewards.white,
+                                        currentRating: rewards.white.currentRating || endGameData.whiteRating
+                                    }
+                                },
+                                reason: winReason,
+                                game: endGameData
+                            });
+                         }, 500); // 0.5초 지연
+                    } else {
+                        // 즉시 종료 (기타 사유)
+                        const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                        
+                        // Determine win reason based on score
+                        let winReason = 'score';
+                        if (score && score.areaScore) {
+                            const blackScore = score.areaScore.black || 0;
+                            const whiteScore = score.areaScore.white || 0;
+                            const scoreDiff = Math.abs(blackScore - whiteScore);
+                            if (result === 'black_win') {
+                                winReason = `score_black_${scoreDiff.toFixed(1)}`;
+                            } else if (result === 'white_win') {
+                                winReason = `score_white_${scoreDiff.toFixed(1)}`;
+                            }
+                        }
+                        
+                        io.to(`game-${gameId}`).emit('game_ended', { 
+                            result, 
+                            score, 
+                            rewards: {
+                                black: {
+                                    ...rewards.black,
+                                    currentRating: rewards.black.currentRating || endGameData.blackRating
+                                },
+                                white: {
+                                    ...rewards.white,
+                                    currentRating: rewards.white.currentRating || endGameData.whiteRating
+                                }
+                            },
+                            reason: winReason,
+                            game: endGameData
+                        });
+                    }
+                    
+                    return moveResult;
+                }
                 
                 // move_made 후 game_state 전송하여 클라이언트가 턴과 타이머를 업데이트할 수 있도록 함
                 // gameSocket 인스턴스를 전역에서 가져오거나 require로 가져오기
@@ -1000,19 +1099,12 @@ class AIService {
                     
                     // GTP 좌표 변환: A=0, B=1, ..., I=8 (9줄), J=9, ..., T=19 (19줄)
                     // 9줄 바둑판: A1~I9, 19줄 바둑판: A1~T19
-                    // 주의: GTP 표기법에서 I는 8번째 열 (A=0, I=8)이므로 9줄 바둑판에서 I까지 사용
-                    const x = String.fromCharCode(65 + move.x); // A=65, I=73 (8+65)
+                    // 주의: 표준 GTP 표기법에서는 I를 건너뛰고 J를 사용합니다 (A, B, C, D, E, F, G, H, J, K...)
+                    // 따라서 index 8은 J가 되어야 합니다.
+                    const colChar = String.fromCharCode(65 + move.x + (move.x >= 8 ? 1 : 0));
                     const y = (move.y + 1).toString(); // 1-based (1~9 for 9줄)
                     
-                    // GTP 좌표 범위 검증: A-I (9줄), A-T (19줄)
-                    const maxLetter = String.fromCharCode(65 + boardSize - 1);
-                    if (x.charCodeAt(0) > 65 + boardSize - 1) {
-                        console.error(`[AIService] Invalid GTP x coordinate for ${boardSize}x${boardSize}: ${x} (move.x=${move.x}, expected A-${maxLetter})`);
-                        skippedMoves++;
-                        return;
-                    }
-                    
-                    const gtpCommand = `play ${move.color === 'black' ? 'B' : 'W'} ${x}${y}\n`;
+                    const gtpCommand = `play ${move.color === 'black' ? 'B' : 'W'} ${colChar}${y}\n`;
                     gnugo.stdin.write(gtpCommand);
                     validMovesSent++;
                 } else if (move.isPass) {
@@ -1082,7 +1174,9 @@ class AIService {
                     console.log(`[AIService] GnuGo returned pass`);
                     resolve({ isPass: true });
                 } else {
-                    const x = moveMatch[1].charCodeAt(0) - 65;
+                    let x = moveMatch[1].toUpperCase().charCodeAt(0) - 65;
+                    if (x >= 9) x--; // I(8) is skipped in GTP. J(9) becomes 8.
+                    
                     const y = parseInt(moveMatch[2]) - 1;
                     const gtpCoord = `${moveMatch[1]}${moveMatch[2]}`;
                     console.log(`[AIService] GnuGo returned move: ${gtpCoord} (parsed: x=${x}, y=${y}) for board size ${boardSize}`);
@@ -1338,74 +1432,152 @@ class AIService {
             // 모델 파일 경로
             const modelPath = process.env.KATAGO_MODEL || path.join(katagoDir, 'kata1-b28c512nbt-s9853922560-d5031756885.bin.gz');
             
-            // 설정 파일 경로 (temp_analysis_config.cfg 또는 default_gtp.cfg 사용)
-            const configPath = process.env.KATAGO_CONFIG || path.join(katagoDir, 'temp_analysis_config.cfg');
+            // 설정 파일 경로 (default_gtp.cfg 사용 권장)
+            const configPath = process.env.KATAGO_CONFIG || path.join(katagoDir, 'default_gtp.cfg');
             
             console.log(`[AIService] Using local Katago: ${katagoPath}`);
             console.log(`[AIService] Model: ${modelPath}`);
             console.log(`[AIService] Config: ${configPath}`);
             
+            // GTP 모드로 실행
             const katago = spawn(katagoPath, [
-                'analysis',
+                'gtp',
                 '-model', modelPath,
                 '-config', configPath
             ], {
-                cwd: katagoDir // 작업 디렉토리를 katago 폴더로 설정
+                cwd: katagoDir,
+                stdio: ['pipe', 'pipe', 'pipe']
             });
 
-            // Convert game state to SGF
-            const sgf = this.gameStateToSGF(gameState);
-
             let output = '';
-
-            katago.stdin.write(sgf);
-            katago.stdin.end();
+            let errorOutput = '';
 
             katago.stdout.on('data', (data) => {
-                output += data.toString();
+                const chunk = data.toString();
+                output += chunk;
+                checkOutput();
             });
 
             katago.stderr.on('data', (data) => {
-                console.error(`Katago error: ${data}`);
+                errorOutput += data.toString();
             });
+
+            // Send GTP commands
+            const boardSize = gameState.boardSize || 19;
+            const komi = gameState.komi || 6.5;
+
+            try {
+                katago.stdin.write(`boardsize ${boardSize}\n`);
+                katago.stdin.write(`komi ${komi}\n`);
+                katago.stdin.write('clear_board\n');
+
+                // Replay moves
+                gameState.moves.forEach(move => {
+                    if (move.isPass) {
+                        katago.stdin.write(`play ${move.color === 'black' ? 'B' : 'W'} pass\n`);
+                    } else if (move.x !== undefined && move.y !== undefined) {
+                        // GTP 좌표 변환: A-T (I 제외)
+                        const colChar = String.fromCharCode(65 + move.x + (move.x >= 8 ? 1 : 0));
+                        // Y 좌표: 1이 아래쪽 (GTP 표준), move.y는 0이 위쪽 -> 변환
+                        const rowNum = boardSize - move.y;
+                        
+                        katago.stdin.write(`play ${move.color === 'black' ? 'B' : 'W'} ${colChar}${rowNum}\n`);
+                    }
+                });
+
+                // 점수 계산 요청
+                katago.stdin.write('final_score\n');
+            } catch (err) {
+                if (!katago.killed) katago.kill();
+                reject(new Error(`Failed to write to KataGo: ${err.message}`));
+                return;
+            }
+
+            // Simple parser for GTP response
+            // We look for the response to final_score
+            // Response format: "= B+10.5" or "= W+5.5" or "= 0"
+            // We need to handle the stream properly.
+            
+            let isResultFound = false;
+
+            // 출력 처리 함수
+            const checkOutput = () => {
+                if (isResultFound) return;
+
+                const lines = output.split('\n');
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    const line = lines[i].trim();
+                    if (line.startsWith('=')) {
+                        const match = line.match(/^=\s*([BW]\+[\d.]+|0|Draw)/i);
+                        if (match) {
+                            const scoreStr = match[1].toUpperCase();
+                            let blackScore = 0;
+                            let whiteScore = 0;
+                            let winner = 'draw';
+                            let scoreDiff = 0;
+
+                            if (scoreStr === '0' || scoreStr === 'DRAW') {
+                                winner = 'draw';
+                            } else if (scoreStr.startsWith('B+')) {
+                                scoreDiff = parseFloat(scoreStr.substring(2));
+                                winner = 'black';
+                                blackScore = scoreDiff;
+                                whiteScore = 0;
+                            } else if (scoreStr.startsWith('W+')) {
+                                scoreDiff = parseFloat(scoreStr.substring(2));
+                                winner = 'white';
+                                blackScore = 0;
+                                whiteScore = scoreDiff;
+                            }
+
+                            console.log(`[AIService] Local KataGo score result: ${scoreStr}`);
+                            
+                            isResultFound = true;
+                            if (!katago.killed) katago.kill();
+                            
+                            resolve({
+                                areaScore: {
+                                    black: blackScore,
+                                    white: whiteScore
+                                },
+                                score: winner === 'black' ? scoreDiff : -scoreDiff,
+                                winner: winner,
+                                method: 'local_katago'
+                            });
+                            return;
+                        }
+                    } else if (line.startsWith('?')) {
+                        console.error(`[AIService] KataGo returned error: ${line}`);
+                    }
+                }
+            };
 
             katago.on('close', (code) => {
-                if (code !== 0) {
-                    reject(new Error(`Katago exited with code ${code}`));
-                    return;
+                if (!isResultFound) {
+                    // Try checking output one last time
+                    if (!checkOutput()) {
+                        console.error('[AIService] Katago closed without score. Output:', output);
+                        console.error('[AIService] Katago Stderr:', errorOutput);
+                        reject(new Error(`Katago exited with code ${code} without returning score`));
+                    }
                 }
-
-                // Parse score from output
-                // This is a simplified parser - actual Katago output format may vary
-                const scoreMatch = output.match(/Score:.*?([\d.]+)/);
-                if (!scoreMatch) {
-                    reject(new Error('Failed to parse Katago score'));
-                    return;
-                }
-
-                const score = parseFloat(scoreMatch[1]);
-                const blackScore = score > 0 ? score : 0;
-                const whiteScore = score < 0 ? Math.abs(score) : 0;
-                const winner = score > 0 ? 'black' : (score < 0 ? 'white' : 'draw');
-
-                resolve({
-                    areaScore: {
-                        black: blackScore,
-                        white: whiteScore
-                    },
-                    winner: winner
-                });
             });
 
-            katago.on('error', (error) => {
-                reject(new Error(`Failed to start Katago: ${error.message}`));
-            });
+            // Polling for result (since stream might come in chunks)
+            const interval = setInterval(() => {
+                if (checkOutput()) {
+                    clearInterval(interval);
+                }
+            }, 100);
 
-            // Timeout
+            // Timeout (120초)
             setTimeout(() => {
-                katago.kill();
-                reject(new Error('Katago timeout'));
-            }, 60000);
+                clearInterval(interval);
+                if (!isResultFound) {
+                    if (!katago.killed) katago.kill();
+                    reject(new Error('Katago scoring timeout (120s)'));
+                }
+            }, 120000);
         });
     }
 

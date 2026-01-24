@@ -669,6 +669,14 @@
                         input.removeEventListener('change', saveSettingsOnChange);
                         input.addEventListener('change', saveSettingsOnChange);
                     });
+
+                    // 제한시간 0분 설정 시 초읽기 횟수 최소값 제어
+                    const timeLimitSelect = document.getElementById('timeLimitSelect');
+                    if (timeLimitSelect) {
+                        timeLimitSelect.addEventListener('change', updateByoyomiPeriodsOptions);
+                        // 초기 로드시에도 체크
+                        updateByoyomiPeriodsOptions();
+                    }
                 }, 500);
 
                 // 주석
@@ -1627,6 +1635,7 @@
                             <div class="setting-item">
                                 <label class="ai-battle-label">스피드바둑- 시간 제한</label>
                                 <select id="mixTimeLimitSelect" class="form-select">
+                                    <option value="0">0분(초읽기)</option>
                                     <option value="1">1분</option>
                                     <option value="3">3분</option>
                                     <option value="5">5분</option>

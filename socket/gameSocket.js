@@ -380,6 +380,29 @@ class GameSocket {
                 if (timer.isPaused === false) {
                     const updatedTimer = await timerService.updateTimer(gameId);
                     if (updatedTimer) {
+                        // 시간 초과 확인
+                        if (updatedTimer.timeExpired) {
+                            console.log(`[GameSocket] Time expired for ${updatedTimer.expiredColor} in game ${gameId}`);
+                            gameEnded = true;
+                            clearInterval(timerUpdateInterval);
+                            
+                            // 시간패 처리
+                            const { result, rewards } = await gameService.handleTimeExpired(gameId, updatedTimer.expiredColor);
+                            const endedGame = await gameService.getGame(gameId);
+                            
+                            // 종료 이유 설정 (시간패)
+                            const reason = updatedTimer.expiredColor === 'black' ? 'time_loss_black' : 'time_loss_white';
+                            
+                            // 게임 종료 이벤트 전송
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result,
+                                rewards,
+                                game: endedGame,
+                                reason: reason
+                            });
+                            return;
+                        }
+
                         this.io.to(`game-${gameId}`).emit('timer_update', {
                             blackTime: updatedTimer.blackTime,
                             whiteTime: updatedTimer.whiteTime,
@@ -722,6 +745,25 @@ class GameSocket {
                 
                 this.io.to(gameRoom).emit('move_made', moveMadePayload);
                 
+                // Pass Notification
+                if (moveResult.isPass) {
+                    const passColor = moveResult.color === 'black' ? '흑' : '백';
+                    let passMessage = `${passColor}이(가) 통과했습니다.`;
+                    
+                    if (moveResult.isDoublePass) {
+                         passMessage += ' 서로 통과하여 계가(집계산)가 진행됩니다.';
+                    } else {
+                         passMessage += ' 서로 통과하면 계가(집계산)이 진행됩니다.';
+                    }
+                    
+                    this.io.to(gameRoom).emit('chat_message', {
+                        user: 'System',
+                        message: passMessage,
+                        timestamp: Date.now(),
+                        isSystem: true
+                    });
+                }
+                
                 console.log(`[GameSocket] move_made event emitted successfully to ${roomSockets.length} socket(s) in room ${gameRoom}`);
                 
                 // move_made 후 game_state 전송하여 클라이언트가 턴과 타이머를 업데이트할 수 있도록 함
@@ -780,18 +822,22 @@ class GameSocket {
                     } else if (moveResult.autoScoring) {
                         // AI 대국 자동 계가: 설정된 수순에 도달하여 자동 계가 진행
                         console.log('[GameSocket] Game ended by auto scoring at move', moveResult.moveNumber);
-                        this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
                         
-                        const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                        
-                        // 계가 결과 전송
-                        this.io.to(`game-${gameId}`).emit('game_ended', {
-                            result,
-                            score,
-                            rewards,
-                            game: endGameData,
-                            reason: `자동 계가 (${moveResult.moveNumber}수)`
-                        });
+                        // 마지막 수가 두어지는 것을 보여주기 위해 약간의 지연 후 계가 진행
+                        setTimeout(async () => {
+                            this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
+                            
+                            const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                            
+                            // 계가 결과 전송
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result,
+                                score,
+                                rewards,
+                                game: endGameData,
+                                reason: `자동 계가 (${moveResult.moveNumber}수)`
+                            });
+                        }, 1500); // 1.5초 지연
                         return;
                     } else if (moveResult.isDoublePass) {
                         // 일반 게임: 양쪽 통과 시 계가 진행

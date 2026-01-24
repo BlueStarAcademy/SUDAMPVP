@@ -1815,60 +1815,78 @@
     function updateTimerBar(color, timeLeft, totalTime, byoyomiTime = null, inByoyomi = false, byoyomiSeconds = 30) {
         const barId = color === 'black' ? 'blackTimerBar' : 'whiteTimerBar';
         const timerId = color === 'black' ? 'blackTimer' : 'whiteTimer';
-        const bar = document.getElementById(barId);
+        const barElement = document.getElementById(barId);
         const timer = document.getElementById(timerId);
         
-        if (!bar || !timer) {
+        if (!barElement || !timer) {
             console.warn(`[Client] updateTimerBar: Element not found for ${color}`, {
                 barId,
                 timerId,
-                barExists: !!bar,
+                barExists: !!barElement,
                 timerExists: !!timer
             });
             return;
         }
         
-        // 게임 시작 후 타이머 바 표시
-        bar.style.display = 'block';
-        
-        // initialTotalTime이 설정되어 있으면 그것을 사용, 없으면 현재 totalTime 사용
-        // window.initialTotalTime을 우선 사용 (게임 시작 시 설정된 최대 시간)
-        const displayTotal = (typeof window !== 'undefined' && window.initialTotalTime) 
-            ? window.initialTotalTime 
-            : (initialTotalTime || totalTime);
-        
-        // 타이머 바는 항상 제한시간(timeLeft) 기준으로 표시
-        // 중요: 제한시간은 절대 리셋되지 않음 - 초읽기 모드일 때도 제한시간은 유지됨
-        // 초읽기 모드일 때는 제한시간이 0이므로 0% 표시 (초읽기는 별도 표시)
-        const displayTime = Math.max(0, timeLeft);
-        const percent = Math.max(0, Math.min(100, (displayTime / displayTotal) * 100));
-        
-        const barFill = bar.querySelector('.timer-bar-fill');
+        // barElement가 timer-bar-fill 클래스를 가지고 있으면 그 자체가 fill 요소임 (EJS 구조상)
+        // 그렇지 않으면 내부에서 찾음
+        let barFill = barElement;
+        if (!barElement.classList.contains('timer-bar-fill')) {
+            barFill = barElement.querySelector('.timer-bar-fill');
+        }
+
         if (!barFill) {
             console.error(`[Client] updateTimerBar: barFill element not found for ${color}`, {
                 barId,
-                bar,
-                barExists: !!bar
+                barElement,
+                barElementClasses: barElement.className
             });
             return;
         }
         
+        // 상위 요소(컨테이너) 표시
+        if (barFill.parentElement && barFill.parentElement.classList.contains('timer-bar')) {
+            barFill.parentElement.style.display = 'block';
+        }
+        
+        // initialTotalTime이 설정되어 있으면 그것을 사용, 없으면 현재 totalTime 사용
+        // window.initialTotalTime을 우선 사용 (게임 시작 시 설정된 최대 시간)
+        const initialTotal = (typeof window !== 'undefined' && window.initialTotalTime) 
+            ? window.initialTotalTime 
+            : (initialTotalTime || totalTime);
+        
+        let displayTotalVal, displayTime;
+
+        if (inByoyomi) {
+            // 초읽기 모드: 막대 그래프가 초읽기 시간을 표시 (꽉 찼다가 줄어듦)
+            displayTotalVal = byoyomiSeconds; 
+            displayTime = byoyomiTime !== null ? byoyomiTime : byoyomiSeconds;
+        } else {
+            // 일반 모드: 막대 그래프가 전체 제한 시간을 표시
+            displayTotalVal = initialTotal;
+            displayTime = Math.max(0, timeLeft);
+        }
+        
+        const percent = Math.max(0, Math.min(100, (displayTime / displayTotalVal) * 100));
+        
         // 타이머 바가 표시되도록 보장
-        bar.style.display = 'block';
-        bar.style.visibility = 'visible';
-        bar.style.opacity = '1';
         barFill.style.display = 'block';
         barFill.style.visibility = 'visible';
         barFill.style.opacity = '1';
         
-        // 너비 설정 (최소 1px 보장)
+        // 너비 설정 (최소 1px 보장, 0이면 0)
         const finalWidth = Math.max(percent, percent > 0 ? 1 : 0);
         barFill.style.width = finalWidth + '%';
         
         // 초읽기 모드일 때는 바 색상을 다르게 표시
         if (inByoyomi) {
             barFill.classList.add('byoyomi-mode');
-            barFill.style.background = 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)';
+            // 초읽기 시간이 얼마 안 남았을 때 색상 변경 (긴박함 표시)
+            if (displayTime <= 10) {
+                barFill.style.background = 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)'; // 빨간색
+            } else {
+                barFill.style.background = 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)'; // 노란색
+            }
         } else {
             barFill.classList.remove('byoyomi-mode');
             if (timeLeft <= 60) {
@@ -1880,25 +1898,10 @@
             }
         }
         
-        console.log(`[Client] updateTimerBar for ${color}:`, {
-            timeLeft,
-            displayTotal,
-            percent,
-            finalWidth,
-            inByoyomi,
-            byoyomiTime,
-            displayTime,
-            barExists: !!bar,
-            barFillExists: !!barFill,
-            barDisplay: bar.style.display,
-            barFillDisplay: barFill.style.display,
-            barFillWidth: barFill.style.width
-        });
-        
         // 경고 상태 설정 (제한시간 기준)
         if (inByoyomi) {
             // 초읽기 모드: 초읽기 시간으로 경고 상태 결정
-            const currentByoyomiTime = byoyomiTime || byoyomiSeconds;
+            const currentByoyomiTime = byoyomiTime !== null ? byoyomiTime : byoyomiSeconds;
             if (currentByoyomiTime <= 10) {
                 timer.classList.add('danger');
                 timer.classList.remove('warning');
@@ -1920,15 +1923,6 @@
                 timer.classList.remove('warning', 'danger');
             }
         }
-        
-        console.log(`[Client] updateTimerBar for ${color}:`, {
-            timeLeft,
-            displayTotal,
-            percent,
-            inByoyomi,
-            byoyomiTime,
-            displayTime
-        });
     }
 
     // 초읽기 표시 업데이트 함수 (항상 표시, 초읽기 모드일 때는 강조)
@@ -6094,6 +6088,57 @@
                             <div class="stat-value">${capturedWhite}개</div>
                         </div>
                     </div>
+                    
+                    ${data.score ? `
+                        <div class="result-score-section" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;">
+                            <div class="result-score-title" style="font-weight: bold; margin-bottom: 10px; text-align: center;">계가 결과</div>
+                            ${data.score.scoreDetails ? `
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                                    <tr style="background-color: #f5f5f5;">
+                                        <th style="padding: 5px; text-align: center;">구분</th>
+                                        <th style="padding: 5px; text-align: center;">흑</th>
+                                        <th style="padding: 5px; text-align: center;">백</th>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; text-align: center;">집</td>
+                                        <td style="padding: 5px; text-align: center;">${(data.score.scoreDetails.black.territory || 0).toFixed(1)}</td>
+                                        <td style="padding: 5px; text-align: center;">${(data.score.scoreDetails.white.territory || 0).toFixed(1)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; text-align: center;">사석</td>
+                                        <td style="padding: 5px; text-align: center;">${data.score.scoreDetails.black.captured || 0}</td>
+                                        <td style="padding: 5px; text-align: center;">${data.score.scoreDetails.white.captured || 0}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; text-align: center;">덤</td>
+                                        <td style="padding: 5px; text-align: center;">-</td>
+                                        <td style="padding: 5px; text-align: center;">${data.score.scoreDetails.white.komi || 0}</td>
+                                    </tr>
+                                    <tr style="border-top: 1px solid #ddd; font-weight: bold;">
+                                        <td style="padding: 5px; text-align: center;">총점</td>
+                                        <td style="padding: 5px; text-align: center;">${(data.score.areaScore.black || 0).toFixed(1)}</td>
+                                        <td style="padding: 5px; text-align: center;">${(data.score.areaScore.white || 0).toFixed(1)}</td>
+                                    </tr>
+                                </table>
+                            ` : `
+                                <div style="display: flex; justify-content: space-around; text-align: center;">
+                                    <div>
+                                        <div style="font-size: 0.8em; color: #666;">흑 총점</div>
+                                        <div style="font-weight: bold;">${(data.score.areaScore.black || 0).toFixed(1)}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.8em; color: #666;">백 총점</div>
+                                        <div style="font-weight: bold;">${(data.score.areaScore.white || 0).toFixed(1)}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.8em; color: #666;">차이</div>
+                                        <div style="font-weight: bold; color: #d32f2f;">${Math.abs((data.score.areaScore.black || 0) - (data.score.areaScore.white || 0)).toFixed(1)}집</div>
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    ` : ''}
+
                     ${isRanked && hasRatingChange ? `
                         <div class="rating-change-section">
                             <div class="rating-change-label">레이팅 변화</div>

@@ -13,11 +13,11 @@ class TimerService {
             currentTurn: 'black',
             blackInByoyomi: false,
             whiteInByoyomi: false,
-            blackByoyomiPeriods: options.byoyomiPeriods || 5,
-            whiteByoyomiPeriods: options.byoyomiPeriods || 5,
-            blackByoyomiTime: options.byoyomiSeconds || 30,
-            whiteByoyomiTime: options.byoyomiSeconds || 30,
-            byoyomiSeconds: options.byoyomiSeconds || 30,
+            blackByoyomiPeriods: options.byoyomiPeriods !== undefined ? options.byoyomiPeriods : 5,
+            whiteByoyomiPeriods: options.byoyomiPeriods !== undefined ? options.byoyomiPeriods : 5,
+            blackByoyomiTime: options.byoyomiSeconds !== undefined ? options.byoyomiSeconds : 30,
+            whiteByoyomiTime: options.byoyomiSeconds !== undefined ? options.byoyomiSeconds : 30,
+            byoyomiSeconds: options.byoyomiSeconds !== undefined ? options.byoyomiSeconds : 30,
             isFischer: options.isFischer || false,
             fischerIncrement: options.fischerIncrement || 5,
             isPaused: true, // 초기화 시 일시정지 상태로 시작
@@ -75,9 +75,9 @@ class TimerService {
             const timePerPlayer = (memorySettings.timeLimit || 30) * 60; // 분을 초로 변환
             const defaultTimer = await this.initializeTimer(gameId, timePerPlayer, {
                 isFischer: false,
-                fischerIncrement: memorySettings.timeIncrement || 5,
-                byoyomiSeconds: memorySettings.byoyomiSeconds || 30,
-                byoyomiPeriods: memorySettings.byoyomiPeriods || 5
+                fischerIncrement: memorySettings.timeIncrement !== undefined ? memorySettings.timeIncrement : 5,
+                byoyomiSeconds: memorySettings.byoyomiSeconds !== undefined ? memorySettings.byoyomiSeconds : 30,
+                byoyomiPeriods: memorySettings.byoyomiPeriods !== undefined ? memorySettings.byoyomiPeriods : 5
             });
             return defaultTimer;
         } else {
@@ -214,41 +214,73 @@ class TimerService {
             return timer;
         }
         
+        let timeExpired = false;
+        let expiredColor = null;
+
         if (timer.currentTurn === 'black') {
-            if (timer.blackInByoyomi) {
-                timer.blackByoyomiTime = Math.max(0, timer.blackByoyomiTime - delta);
-                if (timer.blackByoyomiTime <= 0) {
-                    timer.blackByoyomiPeriods = Math.max(0, timer.blackByoyomiPeriods - 1);
-                    if (timer.blackByoyomiPeriods > 0) {
-                        timer.blackByoyomiTime = timer.byoyomiSeconds;
+                if (timer.blackInByoyomi) {
+                    timer.blackByoyomiTime = Math.max(0, timer.blackByoyomiTime - delta);
+                    if (timer.blackByoyomiTime <= 0) {
+                        timer.blackByoyomiPeriods = Math.max(0, timer.blackByoyomiPeriods - 1);
+                        if (timer.blackByoyomiPeriods > 0) {
+                            timer.blackByoyomiTime = timer.byoyomiSeconds;
+                        } else {
+                            // 시간 초과 (초읽기까지 모두 소진)
+                            timeExpired = true;
+                            expiredColor = 'black';
+                        }
+                    }
+                } else {
+                    timer.blackTime = Math.max(0, timer.blackTime - delta);
+                    if (timer.blackTime <= 0) {
+                        if (timer.blackByoyomiPeriods > 0) {
+                            console.log(`[TimerService] Black entered byoyomi in game ${gameId}`);
+                            timer.blackInByoyomi = true;
+                            timer.blackByoyomiTime = timer.byoyomiSeconds;
+                        } else {
+                             // 시간 초과 (초읽기 없음)
+                            console.log(`[TimerService] Black time expired (no byoyomi) in game ${gameId}`);
+                            timeExpired = true;
+                            expiredColor = 'black';
+                        }
                     }
                 }
             } else {
-                timer.blackTime = Math.max(0, timer.blackTime - delta);
-                if (timer.blackTime <= 0 && timer.blackByoyomiPeriods > 0) {
-                    timer.blackInByoyomi = true;
-                    timer.blackByoyomiTime = timer.byoyomiSeconds;
-                }
-            }
-        } else {
-            if (timer.whiteInByoyomi) {
-                timer.whiteByoyomiTime = Math.max(0, timer.whiteByoyomiTime - delta);
-                if (timer.whiteByoyomiTime <= 0) {
-                    timer.whiteByoyomiPeriods = Math.max(0, timer.whiteByoyomiPeriods - 1);
-                    if (timer.whiteByoyomiPeriods > 0) {
-                        timer.whiteByoyomiTime = timer.byoyomiSeconds;
+                if (timer.whiteInByoyomi) {
+                    timer.whiteByoyomiTime = Math.max(0, timer.whiteByoyomiTime - delta);
+                    if (timer.whiteByoyomiTime <= 0) {
+                        timer.whiteByoyomiPeriods = Math.max(0, timer.whiteByoyomiPeriods - 1);
+                        if (timer.whiteByoyomiPeriods > 0) {
+                            timer.whiteByoyomiTime = timer.byoyomiSeconds;
+                        } else {
+                            // 시간 초과 (초읽기까지 모두 소진)
+                            timeExpired = true;
+                            expiredColor = 'white';
+                        }
+                    }
+                } else {
+                    timer.whiteTime = Math.max(0, timer.whiteTime - delta);
+                    if (timer.whiteTime <= 0) {
+                        if (timer.whiteByoyomiPeriods > 0) {
+                            console.log(`[TimerService] White entered byoyomi in game ${gameId}`);
+                            timer.whiteInByoyomi = true;
+                            timer.whiteByoyomiTime = timer.byoyomiSeconds;
+                        } else {
+                            // 시간 초과 (초읽기 없음)
+                            console.log(`[TimerService] White time expired (no byoyomi) in game ${gameId}`);
+                            timeExpired = true;
+                            expiredColor = 'white';
+                        }
                     }
                 }
-            } else {
-                timer.whiteTime = Math.max(0, timer.whiteTime - delta);
-                if (timer.whiteTime <= 0 && timer.whiteByoyomiPeriods > 0) {
-                    timer.whiteInByoyomi = true;
-                    timer.whiteByoyomiTime = timer.byoyomiSeconds;
-                }
             }
-        }
         
         timer.lastUpdate = now;
+        
+        // 시간 초과 시 상태 반환
+        if (timeExpired) {
+            return { ...timer, timeExpired: true, expiredColor };
+        }
         
         // Redis에 저장
         const redis = getRedisClient();
