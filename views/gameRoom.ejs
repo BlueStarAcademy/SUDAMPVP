@@ -45,11 +45,14 @@ if (game && game.mode) {
 
         <!-- 우측 사이드바 -->
         <div class="sidebar">
-            <!-- 게임 정보 패널 -->
-            <%- include('partials/gameRoom/gameInfoPanel') %>
+            <!-- 게임 정보 및 수순 패널 (같은 줄에 배치) -->
+            <div class="info-panels-row">
+                <!-- 게임 정보 패널 -->
+                <%- include('partials/gameRoom/gameInfoPanel') %>
 
-            <!-- 수순 패널 -->
-            <%- include('partials/gameRoom/turnIndicatorPanel') %>
+                <!-- 수순 패널 -->
+                <%- include('partials/gameRoom/turnIndicatorPanel') %>
+            </div>
 
             <!-- 유저 목록 패널 -->
             <%- include('partials/gameRoom/userListPanel', { blackPlayer: blackPlayer, whitePlayer: whitePlayer, user: user }) %>

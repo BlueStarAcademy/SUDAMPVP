@@ -59,20 +59,20 @@
             display: grid;
             grid-template-columns: 1fr 400px;
             grid-template-rows: 1fr;
-            gap: 20px;
-            padding: 30px;
-            max-width: 1500px;
-            margin: auto;
-            width: 95%;
-            aspect-ratio: 16 / 9;
-            max-height: calc(100vh - 100px);
+            gap: clamp(12px, 2vw, 20px);
+            padding: clamp(12px, 2vw, 30px);
+            max-width: 100%;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
             min-height: 0;
             overflow: hidden;
             box-sizing: border-box;
             position: relative;
             /* 배경이 선명하게 보이도록 블러 제거 및 투명도 조정 */
             background: rgba(0, 0, 0, 0.45);
-            border-radius: 24px;
+            border-radius: clamp(12px, 2vw, 24px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
             z-index: 1;
@@ -174,27 +174,72 @@
             margin-top: 4px;
         }
 
-        /* 사이드바용 수순 표시 - 한 줄 가로 배치 */
-        .turn-indicator-sidebar {
+        /* 수순 패널 스타일 */
+        .turn-indicator-panel {
+            padding: clamp(8px, 1.5vw, 12px) !important;
             display: flex;
-            flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            padding: 12px 16px;
+        }
+
+        .turn-indicator-panel .panel-title {
+            display: none; /* 제목 숨기기 */
+        }
+
+        /* 사이드바용 수순 표시 - 세로 배치 (흑/백 위, 숫자 아래) */
+        .turn-indicator-sidebar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(8px, 1.5vw, 12px);
+            padding: clamp(8px, 1.5vw, 12px);
             min-height: auto;
+            width: 100%;
         }
 
         .turn-indicator-sidebar .turn-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(156, 163, 175, 1);
-            margin: 0;
+            display: none; /* 라벨 숨기기 */
+        }
+
+        /* 흑/백 바둑돌 이미지 */
+        .turn-color-stone {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: clamp(32px, 4vw, 48px);
+            height: clamp(32px, 4vw, 48px);
+        }
+
+        .turn-color-stone .stone-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        .turn-color-stone .stone-image.black-stone.show,
+        .turn-color-stone .stone-image.white-stone.show {
+            display: block;
+        }
+
+        .turn-color-stone .stone-fallback {
+            font-size: clamp(24px, 3vw, 36px);
+            line-height: 1;
+        }
+
+        .turn-color-stone .stone-fallback.black {
+            color: #000;
+        }
+
+        .turn-color-stone .stone-fallback.white {
+            color: #fff;
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
         }
 
         .turn-indicator-sidebar .turn-number {
             font-family: 'Courier New', monospace;
-            font-size: 1.8rem;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
             font-weight: 700;
             color: #fbbf24;
             line-height: 1;
@@ -202,10 +247,7 @@
         }
 
         .turn-indicator-sidebar .turn-color {
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(209, 213, 219, 1);
-            margin: 0;
+            display: none; /* 기존 텍스트 숨기기 */
         }
 
         .player-info-section {
@@ -995,27 +1037,41 @@
             fill: currentColor;
         }
 
+        /* 게임 정보 및 수순 패널을 같은 줄에 배치 */
+        .info-panels-row {
+            display: flex;
+            gap: clamp(6px, 1vw, 8px);
+            flex-shrink: 0;
+        }
+
         .info-panel {
             background: rgba(31, 41, 55, 0.8);
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: clamp(6px, 1vw, 8px);
+            padding: clamp(8px, 1.5vw, 12px);
             flex-shrink: 0;
             border: 1px solid rgba(75, 85, 99, 0.5);
-            max-height: 200px;
             overflow-y: auto;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 수순 패널은 더 작게 */
+        .info-panels-row .info-panel:last-child {
+            flex: 0 0 auto;
+            min-width: fit-content;
         }
 
         .panel-title {
-            font-size: 16px;
+            font-size: clamp(12px, 1.5vw, 16px);
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: clamp(8px, 1vw, 12px);
             color: #fbbf24;
-            padding-bottom: 8px;
+            padding-bottom: clamp(6px, 0.8vw, 8px);
             border-bottom: 1px solid rgba(75, 85, 99, 0.7);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: clamp(6px, 0.8vw, 8px);
         }
         
         .panel-title-with-settings {
@@ -1043,19 +1099,21 @@
         .game-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap-x: 12px;
-            gap-y: 4px;
-            font-size: 12px;
+            gap-x: clamp(8px, 1vw, 12px);
+            gap-y: clamp(3px, 0.5vw, 4px);
+            font-size: clamp(10px, 1.2vw, 12px);
         }
 
         .game-info-label {
             font-weight: 600;
             color: rgba(156, 163, 175, 1);
+            font-size: clamp(10px, 1.2vw, 12px);
         }
 
         .game-info-value {
             color: rgba(209, 213, 219, 1);
             white-space: nowrap;
+            font-size: clamp(10px, 1.2vw, 12px);
         }
 
         .user-list {
@@ -1144,7 +1202,7 @@
         }
 
         .user-name {
-            font-size: 14px;
+            font-size: clamp(12px, 1.4vw, 14px);
             font-weight: 600;
             color: rgba(209, 213, 219, 1);
             flex-grow: 1;
@@ -1154,7 +1212,7 @@
         }
 
         .user-role {
-            font-size: 12px;
+            font-size: clamp(10px, 1.2vw, 12px);
             color: rgba(156, 163, 175, 1);
             flex-shrink: 0;
         }
@@ -1166,9 +1224,11 @@
             min-height: 250px;
             margin-bottom: auto;
             background: rgba(31, 41, 55, 0.8);
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: clamp(6px, 1vw, 8px);
+            padding: clamp(8px, 1.5vw, 12px);
             border: 1px solid rgba(75, 85, 99, 0.5);
+            min-width: 0;
+            overflow: hidden;
         }
 
         .chat-tabs {
@@ -1182,9 +1242,9 @@
 
         .chat-tab {
             flex: 1;
-            padding: 6px 8px;
+            padding: clamp(5px, 0.8vw, 6px) clamp(6px, 1vw, 8px);
             text-align: center;
-            font-size: 12px;
+            font-size: clamp(10px, 1.2vw, 12px);
             font-weight: 600;
             border-radius: 4px;
             cursor: pointer;
@@ -1201,11 +1261,13 @@
             flex: 1;
             overflow-y: auto;
             space-y: 4px;
-            margin-bottom: 12px;
+            margin-bottom: clamp(8px, 1.5vw, 12px);
             background: rgba(17, 24, 39, 0.4);
-            padding: 6px 8px;
-            border-radius: 6px;
+            padding: clamp(5px, 1vw, 6px) clamp(6px, 1.5vw, 8px);
+            border-radius: clamp(4px, 0.8vw, 6px);
             min-height: 180px;
+            min-width: 0;
+            box-sizing: border-box;
         }
 
         .chat-messages::-webkit-scrollbar {
@@ -1223,12 +1285,40 @@
         }
 
         .chat-message {
-            font-size: 12px;
-            margin-bottom: 4px;
+            font-size: clamp(10px, 1.2vw, 12px);
+            margin-bottom: clamp(3px, 0.5vw, 4px);
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            word-wrap: break-word;
         }
 
         .chat-message-system {
             color: #fbbf24;
+        }
+
+        .chat-username {
+            font-weight: 600;
+            color: rgba(156, 163, 175, 1);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .chat-username:hover {
+            text-decoration: underline;
+        }
+
+        .chat-text {
+            color: rgba(209, 213, 219, 1);
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .chat-time {
+            color: rgba(107, 114, 128, 0.7);
+            font-size: clamp(9px, 1vw, 10px);
+            flex-shrink: 0;
+            margin-left: auto;
         }
 
         .chat-message-user {
@@ -1247,23 +1337,32 @@
 
         .chat-input-container {
             display: flex;
-            gap: 8px;
+            gap: clamp(6px, 1vw, 8px);
             flex-shrink: 0;
             position: relative;
             z-index: 10;
+            width: 100%;
+            box-sizing: border-box;
+            align-items: center;
         }
 
         .emoji-btn {
-            padding: 8px 12px;
+            padding: clamp(6px, 1vw, 8px) clamp(10px, 1.5vw, 12px);
             background: #667eea;
             border: 2px solid #5568d3;
             color: white;
-            border-radius: 6px;
-            font-size: 18px;
+            border-radius: clamp(4px, 0.8vw, 6px);
+            font-size: clamp(14px, 2vw, 18px);
             cursor: pointer;
             transition: all 0.3s;
             flex-shrink: 0;
             border: none;
+            min-width: clamp(36px, 5vw, 44px);
+            height: clamp(36px, 5vw, 44px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
         }
 
         .emoji-btn:hover {
@@ -1275,16 +1374,18 @@
             flex: 1;
             position: relative;
             min-width: 0;
+            box-sizing: border-box;
         }
 
         .chat-input {
             width: 100%;
-            padding: 8px 40px 8px 12px;
+            padding: clamp(6px, 1vw, 8px) clamp(36px, 4vw, 40px) clamp(6px, 1vw, 8px) clamp(10px, 1.5vw, 12px);
             background: rgba(17, 24, 39, 0.8);
             border: 1px solid rgba(75, 85, 99, 0.6);
-            border-radius: 6px;
+            border-radius: clamp(4px, 0.8vw, 6px);
             color: rgba(209, 213, 219, 1);
-            font-size: 12px;
+            font-size: clamp(10px, 1.2vw, 12px);
+            box-sizing: border-box;
         }
 
         .chat-input:focus {
@@ -1309,15 +1410,18 @@
         }
 
         .chat-send-btn {
-            padding: 8px 16px;
+            padding: clamp(6px, 1vw, 8px) clamp(12px, 2vw, 16px);
             background: #3b82f6;
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 12px;
+            border-radius: clamp(4px, 0.8vw, 6px);
+            font-size: clamp(10px, 1.2vw, 12px);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            flex-shrink: 0;
+            white-space: nowrap;
+            box-sizing: border-box;
         }
 
         .chat-send-btn:hover {
@@ -1564,10 +1668,10 @@
 
         .leave-button {
             width: 100%;
-            padding: 12px 20px;
+            padding: clamp(10px, 1.5vw, 12px) clamp(16px, 2vw, 20px);
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: clamp(6px, 1vw, 8px);
+            font-size: clamp(12px, 1.4vw, 14px);
             margin-top: auto;
             flex-shrink: 0;
             font-weight: 600;
@@ -1593,10 +1697,10 @@
 
         .pause-button {
             width: 100%;
-            padding: 12px 20px;
+            padding: clamp(10px, 1.5vw, 12px) clamp(16px, 2vw, 20px);
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: clamp(6px, 1vw, 8px);
+            font-size: clamp(12px, 1.4vw, 14px);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -1709,9 +1813,18 @@
                 padding: clamp(8px, 1.5vw, 12px);
                 box-sizing: border-box;
             }
+
+            /* 작은 화면에서는 info-panels-row를 세로로 배치 */
+            .info-panels-row {
+                flex-direction: column;
+            }
         }
 
         @media (max-width: 1200px) {
+            /* 중간 화면에서도 info-panels-row를 세로로 배치 */
+            .info-panels-row {
+                flex-direction: column;
+            }
             .game-container {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto 1fr;
@@ -1785,6 +1898,11 @@
                 gap: clamp(6px, 1vw, 8px);
                 box-sizing: border-box;
                 min-height: 0;
+            }
+
+            /* 작은 화면에서는 info-panels-row를 세로로 배치 */
+            .info-panels-row {
+                flex-direction: column;
             }
 
             .player-panel-container {

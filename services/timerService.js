@@ -125,10 +125,8 @@ class TimerService {
                         if (timer.blackByoyomiPeriods > 0) {
                             timer.blackByoyomiTime = timer.byoyomiSeconds;
                         }
-                    } else {
-                        // 초읽기 시간 안에 수를 두었으므로 초읽기 시간 회복
-                        timer.blackByoyomiTime = timer.byoyomiSeconds;
                     }
+                    // 초읽기 시간이 0보다 크면 리셋하지 않음 (시간이 남아있으면 그대로 유지)
                 } else {
                     timer.blackTime = Math.max(0, timer.blackTime - elapsed);
                     if (timer.blackTime <= 0 && !timer.blackInByoyomi && timer.blackByoyomiPeriods > 0) {
@@ -150,10 +148,8 @@ class TimerService {
                         if (timer.whiteByoyomiPeriods > 0) {
                             timer.whiteByoyomiTime = timer.byoyomiSeconds;
                         }
-                    } else {
-                        // 초읽기 시간 안에 수를 두었으므로 초읽기 시간 회복
-                        timer.whiteByoyomiTime = timer.byoyomiSeconds;
                     }
+                    // 초읽기 시간이 0보다 크면 리셋하지 않음 (시간이 남아있으면 그대로 유지)
                 } else {
                     timer.whiteTime = Math.max(0, timer.whiteTime - elapsed);
                     if (timer.whiteTime <= 0 && !timer.whiteInByoyomi && timer.whiteByoyomiPeriods > 0) {

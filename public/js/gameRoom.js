@@ -2113,7 +2113,30 @@
             console.log('[Client] updateTurnIndicator: Player panel:', currentMove);
         }
         
-        turnColorEl.textContent = currentColor === 'black' ? '흑' : '백';
+        // 사이드바 수순 패널의 경우 바둑돌 이미지로 표시
+        if (turnIndicator && turnIndicator.classList.contains('turn-indicator-sidebar')) {
+            const turnColorStone = document.getElementById('turnColor');
+            if (turnColorStone) {
+                const blackStone = turnColorStone.querySelector('.black-stone');
+                const whiteStone = turnColorStone.querySelector('.white-stone');
+                
+                if (blackStone && whiteStone) {
+                    if (currentColor === 'black') {
+                        blackStone.classList.add('show');
+                        whiteStone.classList.remove('show');
+                    } else {
+                        whiteStone.classList.add('show');
+                        blackStone.classList.remove('show');
+                    }
+                } else {
+                    // 이미지가 없으면 폴백 텍스트 사용
+                    turnColorStone.textContent = currentColor === 'black' ? '●' : '○';
+                }
+            }
+        } else {
+            // 플레이어 패널의 경우 기존대로 텍스트 표시
+            turnColorEl.textContent = currentColor === 'black' ? '흑' : '백';
+        }
         
         // 계가까지 남은 수 표시 (플레이어 패널용)
         if (turnIndicator && !turnIndicator.classList.contains('turn-indicator-sidebar')) {
@@ -2159,12 +2182,29 @@
         // 통과 버튼 활성화/비활성화
         const passBtn = document.getElementById('passBtn');
         if (passBtn) {
-            if (window.game && window.game.isMyTurn) {
+            const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
+            const isMyTurn = window.game && window.game.isMyTurn;
+            if (gameReady && isMyTurn && !gameEnded) {
                 passBtn.disabled = false;
                 passBtn.style.cursor = 'pointer';
+                passBtn.style.display = '';
             } else {
                 passBtn.disabled = true;
                 passBtn.style.cursor = 'not-allowed';
+            }
+        }
+        
+        // 기권 버튼 활성화/비활성화
+        const resignBtn = document.getElementById('resignBtn');
+        if (resignBtn) {
+            const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
+            if (gameReady && !gameEnded) {
+                resignBtn.disabled = false;
+                resignBtn.style.cursor = 'pointer';
+                resignBtn.style.display = '';
+            } else {
+                resignBtn.disabled = true;
+                resignBtn.style.cursor = 'not-allowed';
             }
         }
         }
@@ -6736,7 +6776,24 @@
     const gameChatMessages = [];
     const globalChatMessages = [];
 
-    function addChatMessage(username, message, isSystem = false, tab = null) {
+    // KST 시간 포맷 함수
+    function formatTime(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        
+        // KST는 UTC+9 (한국 표준시)
+        const kstOffset = 9;
+        const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const kstDate = new Date(utc + (kstOffset * 60000));
+        
+        // 시간 형식: HH:MM
+        const hours = String(kstDate.getHours()).padStart(2, '0');
+        const minutes = String(kstDate.getMinutes()).padStart(2, '0');
+        
+        return `${hours}:${minutes}`;
+    }
+
+    function addChatMessage(username, message, isSystem = false, tab = null, timestamp = null) {
         if (!chatMessages) return;
         
         // 탭이 지정되지 않으면 현재 활성 탭 사용
@@ -6746,7 +6803,7 @@
             username,
             message,
             isSystem,
-            timestamp: Date.now()
+            timestamp: timestamp || Date.now()
         };
         
         // 탭별로 메시지 저장
@@ -6771,7 +6828,8 @@
         if (messageData.isSystem) {
             messageDiv.textContent = messageData.message;
         } else {
-            messageDiv.innerHTML = `<span class="chat-username">${escapeHtml(messageData.username)}:</span> <span class="chat-text">${escapeHtml(messageData.message)}</span>`;
+            const timeStr = formatTime(messageData.timestamp);
+            messageDiv.innerHTML = `<span class="chat-username">${escapeHtml(messageData.username)}:</span> <span class="chat-text">${escapeHtml(messageData.message)}</span><span class="chat-time">${timeStr}</span>`;
         }
         
         chatMessages.appendChild(messageDiv);
@@ -6908,7 +6966,8 @@
     socket.on('game_chat', (data) => {
         if (typeof addChatMessage === 'function' && data.message) {
             const username = data.nickname || data.user || 'Unknown';
-            addChatMessage(username, data.message, false, 'game');
+            const timestamp = data.timestamp || Date.now();
+            addChatMessage(username, data.message, false, 'game', timestamp);
         }
         });
 
@@ -6917,7 +6976,8 @@
         if (typeof addChatMessage === 'function' && data.message) {
             const username = data.user || data.nickname || 'Unknown';
             const isSystem = data.isSystem || false;
-            addChatMessage(username, data.message, isSystem, 'global');
+            const timestamp = data.timestamp || Date.now();
+            addChatMessage(username, data.message, isSystem, 'global', timestamp);
         }
         });
     
@@ -7076,8 +7136,26 @@
         const confirmPassBtn = modal.querySelector('#confirmPassBtn');
         if (confirmPassBtn) {
             confirmPassBtn.addEventListener('click', () => {
-                if (typeof socket !== 'undefined' && socket) {
+                // 게임이 시작되지 않았거나 종료되었으면 작동하지 않음
+                const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
+                const isMyTurn = window.game && window.game.isMyTurn;
+                if (!gameReady || !isMyTurn || gameEnded) {
+                    alert('통과할 수 없습니다. 게임이 시작되지 않았거나 내 차례가 아닙니다.');
+                    modal.remove();
+                    return;
+                }
+                
+                if (typeof socket !== 'undefined' && socket && socket.connected) {
                     socket.emit('make_move', { move: { isPass: true } });
+                    console.log('[Client] Pass move emitted from modal');
+                    // 통과 버튼 비활성화 (중복 요청 방지)
+                    const passBtn = document.getElementById('passBtn');
+                    if (passBtn) {
+                        passBtn.disabled = true;
+                    }
+                } else {
+                    console.error('[Client] Socket not available for pass');
+                    alert('서버에 연결되지 않았습니다.');
                 }
                 modal.remove();
             });
@@ -7318,18 +7396,32 @@
             const newResignBtn = resignBtn.cloneNode(true);
             resignBtn.parentNode.replaceChild(newResignBtn, resignBtn);
             
-            newResignBtn.addEventListener('click', () => {
-                if (confirm('정말 기권하시겠습니까?')) {
-                    if (typeof socket !== 'undefined' && socket) {
+            newResignBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 게임이 시작되지 않았거나 종료되었으면 작동하지 않음
+                const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
+                if (!gameReady || gameEnded) {
+                    console.log('[Client] Cannot resign: game not ready or ended');
+                    return;
+                }
+                
+                if (confirm('정말 기권하시겠습니까? 기권하면 패배 처리됩니다.')) {
+                    if (typeof socket !== 'undefined' && socket && socket.connected) {
                         socket.emit('resign');
                         console.log('[Client] Resign event emitted');
+                        // 버튼 비활성화 (중복 요청 방지)
+                        newResignBtn.disabled = true;
+                    } else {
+                        console.error('[Client] Socket not available for resign');
+                        alert('서버에 연결되지 않았습니다.');
                     }
                 }
             });
             console.log('[Client] Resign button event listener added');
         }
     }
-    setupResignButton();
 
     // 통과 버튼 설정
     function setupPassButton() {
@@ -7339,15 +7431,31 @@
             const newPassBtn = passBtn.cloneNode(true);
             passBtn.parentNode.replaceChild(newPassBtn, passBtn);
             
-            newPassBtn.addEventListener('click', () => {
+            newPassBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 게임이 시작되지 않았거나 종료되었으면 작동하지 않음
+                const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
+                const isMyTurn = window.game && window.game.isMyTurn;
+                if (!gameReady || !isMyTurn || gameEnded) {
+                    console.log('[Client] Cannot pass: game not ready, not my turn, or ended');
+                    return;
+                }
+                
                 if (typeof showPassConfirmModal === 'function') {
                     showPassConfirmModal();
                 } else {
                     // showPassConfirmModal이 없으면 직접 확인
-                    if (confirm('정말 통과하시겠습니까?')) {
-                        if (typeof socket !== 'undefined' && socket) {
+                    if (confirm('정말 통과하시겠습니까? 상대방도 통과하면 계가(집계산)가 진행됩니다.')) {
+                        if (typeof socket !== 'undefined' && socket && socket.connected) {
                             socket.emit('make_move', { move: { isPass: true } });
                             console.log('[Client] Pass move emitted');
+                            // 버튼 비활성화 (중복 요청 방지)
+                            newPassBtn.disabled = true;
+                        } else {
+                            console.error('[Client] Socket not available for pass');
+                            alert('서버에 연결되지 않았습니다.');
                         }
                     }
                 }
@@ -7355,7 +7463,6 @@
             console.log('[Client] Pass button event listener added');
         }
     }
-    setupPassButton();
 
     // 초기 설정
     updateSpecialButtons('standard'); // 기본 모드로 시작, 게임 상태 받으면 업데이트
