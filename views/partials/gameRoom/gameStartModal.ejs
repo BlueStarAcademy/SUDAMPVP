@@ -2,53 +2,50 @@
 <div class="game-start-modal" id="gameStartModal" style="display: none;">
     <div class="game-start-modal-content">
         <div class="game-start-modal-header">
-            <div class="game-start-modal-icon">⚫</div>
-            <div class="game-start-modal-title">대국 준비</div>
-            <div class="game-start-modal-subtitle">게임 설정을 확인하고 준비하세요</div>
+            <!-- 드래그를 위한 헤더 영역 (텍스트 없음) -->
         </div>
         
         <div class="game-start-modal-body">
-            <!-- 왼쪽: 게임 설명 및 정보 -->
-            <div class="modal-left-section">
-                <div class="game-description-section" id="gameDescriptionSection">
-                    <!-- 게임 설명이 여기에 동적으로 추가됩니다 -->
+            <!-- 맨 윗줄: 대국자 정보 (흑/백) 가로로 표시 -->
+            <div class="players-info-section">
+                <div class="player-info-item">
+                    <div class="player-info-label">
+                        <span class="stone-icon black-stone">⚫</span>
+                        <span>흑 (선수)</span>
+                    </div>
+                    <div class="player-info-nickname" id="blackReadyNickname">-</div>
+                    <div class="player-info-indicator" id="blackReadyIndicator">
+                        <span class="indicator-text">대기중</span>
+                    </div>
                 </div>
-                <div class="game-info-section" id="gameInfoSection">
-                    <!-- 게임 정보가 여기에 동적으로 추가됩니다 -->
+                <div class="player-info-item">
+                    <div class="player-info-label">
+                        <span class="stone-icon white-stone">⚪</span>
+                        <span>백 (후수)</span>
+                    </div>
+                    <div class="player-info-nickname" id="whiteReadyNickname">-</div>
+                    <div class="player-info-indicator" id="whiteReadyIndicator">
+                        <span class="indicator-text">대기중</span>
+                    </div>
                 </div>
             </div>
             
-            <!-- 오른쪽: 준비 상태 및 카운트다운 -->
-            <div class="modal-right-section">
-                <div class="countdown-section" id="countdownSection">
-                    <div class="countdown-text">자동 시작까지</div>
-                    <div class="countdown-bar-container">
-                        <div class="countdown-bar" id="countdownBar"></div>
-                        <div class="countdown-time" id="countdownTime">30</div>
-                    </div>
-                </div>
-                
-                <div class="ready-status-section">
-                    <div class="ready-status-item">
-                        <div class="ready-status-label">
-                            <span class="stone-icon black-stone">⚫</span>
-                            <span>흑 (선수)</span>
-                        </div>
-                        <div class="ready-status-nickname" id="blackReadyNickname">-</div>
-                        <div class="ready-status-indicator" id="blackReadyIndicator">
-                            <span class="indicator-text">대기중</span>
-                        </div>
-                    </div>
-                    <div class="ready-status-item">
-                        <div class="ready-status-label">
-                            <span class="stone-icon white-stone">⚪</span>
-                            <span>백 (후수)</span>
-                        </div>
-                        <div class="ready-status-nickname" id="whiteReadyNickname">-</div>
-                        <div class="ready-status-indicator" id="whiteReadyIndicator">
-                            <span class="indicator-text">대기중</span>
-                        </div>
-                    </div>
+            <!-- 방법 설명 가로로 길게 -->
+            <div class="game-description-section" id="gameDescriptionSection">
+                <!-- 게임 설명이 여기에 동적으로 추가됩니다 -->
+            </div>
+            
+            <!-- 대국 정보 -->
+            <div class="game-info-section" id="gameInfoSection">
+                <!-- 게임 정보가 여기에 동적으로 추가됩니다 -->
+            </div>
+            
+            <!-- 카운트다운 섹션 -->
+            <div class="countdown-section" id="countdownSection">
+                <div class="countdown-text">자동 시작까지</div>
+                <div class="countdown-bar-container">
+                    <div class="countdown-bar" id="countdownBar"></div>
+                    <div class="countdown-time" id="countdownTime">30</div>
                 </div>
             </div>
         </div>

@@ -2885,16 +2885,22 @@ class GameService {
             throw new Error('Game not found');
         }
 
-        // Verify it's the player's turn
-        const state = await this.getGameState(gameId);
-        if (state.ended) {
+        // 게임이 실제로 종료되었는지 확인 (endedAt이 설정되어 있고, 게임이 시작된 경우에만)
+        if (game.endedAt !== null) {
             throw new Error('Game already ended');
         }
-        
+
         // 클래식 모드: 게임 준비 상태 확인 (startedAt이 설정되어야 게임 진행 가능)
         const isGameReady = game.startedAt !== null;
         if (game.mode === 'CLASSIC' && !isGameReady) {
             throw new Error('Game is not ready. Please wait for both players to be ready.');
+        }
+
+        // Verify it's the player's turn
+        const state = await this.getGameState(gameId);
+        // state.ended는 game.endedAt을 기반으로 하므로, 이미 위에서 확인했지만 다시 한 번 확인
+        if (state.ended) {
+            throw new Error('Game already ended');
         }
         
         // 베이스바둑: 색상 선택 및 덤 설정이 완료되기 전까지 수순 금지
@@ -3196,12 +3202,13 @@ class GameService {
         state.lastPass = false;
         
         // 클래식 바둑: 제한 턴수 체크
+        // 주의: endGame은 gameSocket.js에서 호출하므로 여기서는 플래그만 설정
         if (isClassicMode && state.maxMoves !== null && state.maxMoves !== undefined) {
             if (state.moveNumber >= state.maxMoves) {
                 console.log('[GameService] Classic mode: Max moves reached, ending game');
                 state.ended = true;
                 await this.cacheGameState(gameId, state);
-                const endGameResult = await this.endGame(gameId, state);
+                // endGame은 gameSocket.js에서 호출하므로 여기서는 호출하지 않음
                 
                 return {
                     x: move.x,
@@ -3332,6 +3339,7 @@ class GameService {
         
         // AI 대국 자동 계가 체크 (설정된 수순에 도달하면 자동 계가) - 클래식 모드에서도 작동
         // autoScoringMove에 도달하면 계가 시작 (>= 사용하여 정확히 도달했을 때 계가)
+        // 주의: endGame은 gameSocket.js에서 호출하므로 여기서는 플래그만 설정
         if (game.isAiGame && state.autoScoringMove && state.moveNumber >= state.autoScoringMove) {
             // CAPTURE 모드나 MIX 모드의 CAPTURE에서는 자동 계가 불필요 (목표 따내기 점수로 승부 결정)
             const activeModeForScoring = !isClassicMode && state.mode === 'MIX' ? (state.currentMixMode || 'CLASSIC') : state.mode;
@@ -3339,7 +3347,7 @@ class GameService {
                 console.log(`[GameService] Auto scoring triggered at move ${state.moveNumber} (target: ${state.autoScoringMove})`);
                 state.ended = true;
                 await this.cacheGameState(gameId, state);
-                const endGameResult = await this.endGame(gameId, state);
+                // endGame은 gameSocket.js에서 호출하므로 여기서는 호출하지 않음
                 return {
                     x: move.x,
                     y: move.y,
@@ -3475,6 +3483,42 @@ class GameService {
     }
 
     async endGame(gameId, state) {
+        // 게임이 이미 종료되었는지 확인
+        const game = await this.getGame(gameId);
+        if (game.endedAt) {
+            console.log(`[GameService] Game ${gameId} already ended at ${game.endedAt}, returning existing game data`);
+            // 이미 종료된 게임인 경우 기존 데이터 반환
+            // rewards는 이미 계산되었을 수 있으므로 기본값 사용
+            const rewards = {
+                black: {
+                    currentRating: game.blackRating || 0,
+                    previousRating: game.blackRating || 0,
+                    ratingChange: 0,
+                    gold: 0
+                },
+                white: {
+                    currentRating: game.whiteRating || 0,
+                    previousRating: game.whiteRating || 0,
+                    ratingChange: 0,
+                    gold: 0
+                }
+            };
+            
+            // 점수 정보 재구성 (이미 계산된 경우)
+            let score = null;
+            // state에서 점수 정보가 있으면 사용
+            if (state && state.score) {
+                score = state.score;
+            }
+            
+            return { 
+                result: game.result, 
+                score, 
+                rewards, 
+                game 
+            };
+        }
+        
         // 클래식 모드: 계가 진행 (영역 + 따낸 돌 + 덤으로 승부 결정)
         // CAPTURE 모드나 MIX 모드의 CAPTURE에서는 계가 불필요 (목표 따내기 점수로 승부 결정)
         const isCaptureMode = state.mode === 'CAPTURE';
@@ -3488,7 +3532,13 @@ class GameService {
             // 클래식 모드 및 일반 모드: 영역 계산 또는 AI 서비스를 통한 정확한 계가
             const aiService = require('./aiService');
             try {
-                score = await aiService.calculateScore(gameId);
+                // 타임아웃 추가: 40초 내에 계가가 완료되지 않으면 폴백 사용
+                score = await Promise.race([
+                    aiService.calculateScore(gameId),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Score calculation timeout after 40 seconds')), 40000)
+                    )
+                ]);
                 // score 형식이 일관되도록 보장
                 if (score && !score.areaScore) {
                     // 구 형식 (blackScore, whiteScore)을 새 형식으로 변환
@@ -3520,7 +3570,7 @@ class GameService {
                 score.scoreDetails.white.captured = capturedWhite;
                 score.scoreDetails.white.komi = komi;
             } catch (error) {
-                console.error('[GameService] Score calculation failed:', error);
+                console.error('[GameService] Score calculation failed or timed out:', error);
                 // 폴백: 간단한 점수 계산
                 const komi = state.komi || 6.5;
                 const capturedBlack = state.capturedBlack || 0;
@@ -3678,10 +3728,11 @@ class GameService {
         
         // CAPTURE 모드나 MIX 모드의 CAPTURE에서는 이미 finishGame에서 result가 설정됨
         // isCaptureMode, isMixMode, currentMixMode, isMixCapture는 함수 상단에서 이미 선언됨
+        // game 변수는 함수 시작 부분에서 이미 선언되었으므로 재사용
         let result;
         
         if (isCaptureMode || isMixCapture) {
-            const game = await this.getGame(gameId);
+            // game 변수는 이미 함수 시작 부분에서 선언되었으므로 재사용
             result = game.result || (score.winner === 'black' ? 'black_win' : 'white_win');
         } else {
             result = score.winner === 'black' ? 'black_win' : 'white_win';
@@ -3702,13 +3753,15 @@ class GameService {
         const rewards = await rankingService.updateRatings(gameId, result);
 
         // Update user statuses to waiting
-        const game = await this.getGame(gameId);
+        // game 변수는 이미 함수 시작 부분에서 선언되었으므로 재사용
+        // 게임 정보를 최신 상태로 업데이트
+        const updatedGame = await this.getGame(gameId);
         if (global.waitingRoomSocket) {
-            if (game.blackId) await global.waitingRoomSocket.setUserWaiting(game.blackId);
-            if (game.whiteId) await global.waitingRoomSocket.setUserWaiting(game.whiteId);
+            if (updatedGame.blackId) await global.waitingRoomSocket.setUserWaiting(updatedGame.blackId);
+            if (updatedGame.whiteId) await global.waitingRoomSocket.setUserWaiting(updatedGame.whiteId);
         }
 
-        return { result, score, rewards, game };
+        return { result, score, rewards, game: updatedGame };
     }
 
     findCapturedStones(board, lastX, lastY, opponentColor) {

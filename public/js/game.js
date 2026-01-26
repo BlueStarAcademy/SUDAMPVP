@@ -227,6 +227,14 @@ class GoGame {
                 return;
             }
             
+            // 게임이 종료되었는지 확인 (경쟁 조건 방지)
+            const isGameEnded = typeof gameEnded !== 'undefined' ? gameEnded : 
+                               (window.gameState && window.gameState.game && window.gameState.game.endedAt !== null);
+            if (isGameEnded) {
+                console.log('[GoGame] Game already ended, ignoring move attempt');
+                return;
+            }
+            
             // 게임 준비 상태 확인 (디버깅)
             console.log('[GoGame] Move attempt check:', {
                 boardX,
@@ -236,7 +244,8 @@ class GoGame {
                 gameMode,
                 currentColor: this.currentColor,
                 startedAt: window.gameState?.game?.startedAt,
-                isValidMove: this.isValidMove(boardX, boardY)
+                isValidMove: this.isValidMove(boardX, boardY),
+                isGameEnded
             });
             
             if (this.isValidMove(boardX, boardY)) {

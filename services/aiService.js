@@ -619,39 +619,83 @@ class AIService {
                     if (moveResult.autoScoring) {
                         console.log('[AIService] Game ended by auto scoring, delaying game_ended event');
                         setTimeout(async () => {
-                            io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
-                            
-                            const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                            
-                            // Determine win reason based on score
-                            let winReason = 'score';
-                            if (score && score.areaScore) {
-                                const blackScore = score.areaScore.black || 0;
-                                const whiteScore = score.areaScore.white || 0;
-                                const scoreDiff = Math.abs(blackScore - whiteScore);
-                                if (result === 'black_win') {
-                                    winReason = `score_black_${scoreDiff.toFixed(1)}`;
-                                } else if (result === 'white_win') {
-                                    winReason = `score_white_${scoreDiff.toFixed(1)}`;
+                            try {
+                                // 게임이 이미 종료되었는지 확인
+                                const currentGame = await gameService.getGame(gameId);
+                                if (!currentGame.endedAt) {
+                                    console.log('[AIService] Game not yet ended, emitting scoring_started');
+                                    io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
+                                } else {
+                                    console.log('[AIService] Game already ended, skipping scoring_started');
+                                }
+                                
+                                const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                                
+                                console.log('[AIService] endGame completed, emitting game_ended event:', {
+                                    result,
+                                    hasScore: !!score,
+                                    hasRewards: !!rewards,
+                                    hasGame: !!endGameData
+                                });
+                                
+                                // Determine win reason based on score
+                                let winReason = '자동 계가';
+                                if (score && score.areaScore) {
+                                    const blackScore = score.areaScore.black || 0;
+                                    const whiteScore = score.areaScore.white || 0;
+                                    const scoreDiff = Math.abs(blackScore - whiteScore);
+                                    if (result === 'black_win') {
+                                        winReason = `자동 계가 (흑 +${scoreDiff.toFixed(1)}집 승)`;
+                                    } else if (result === 'white_win') {
+                                        winReason = `자동 계가 (백 +${scoreDiff.toFixed(1)}집 승)`;
+                                    } else {
+                                        winReason = '자동 계가 (무승부)';
+                                    }
+                                }
+                                
+                                console.log('[AIService] Emitting game_ended event to game room:', {
+                                    gameId,
+                                    result,
+                                    winReason,
+                                    room: `game-${gameId}`
+                                });
+                                
+                                io.to(`game-${gameId}`).emit('game_ended', { 
+                                    result, 
+                                    score, 
+                                    rewards: {
+                                        black: {
+                                            ...rewards.black,
+                                            currentRating: rewards.black?.currentRating || endGameData.blackRating
+                                        },
+                                        white: {
+                                            ...rewards.white,
+                                            currentRating: rewards.white?.currentRating || endGameData.whiteRating
+                                        }
+                                    },
+                                    reason: winReason,
+                                    game: endGameData
+                                });
+                                
+                                console.log('[AIService] game_ended event emitted successfully');
+                            } catch (error) {
+                                console.error('[AIService] Error in delayed game_ended event handler:', error);
+                                console.error('[AIService] Error stack:', error.stack);
+                                
+                                // 에러가 발생해도 게임 정보를 가져와서 최소한의 정보라도 전송
+                                try {
+                                    const errorGame = await gameService.getGame(gameId);
+                                    io.to(`game-${gameId}`).emit('game_ended', {
+                                        result: errorGame.result || 'draw',
+                                        score: null,
+                                        rewards: { black: {}, white: {} },
+                                        reason: '자동 계가 (에러 발생)',
+                                        game: errorGame
+                                    });
+                                } catch (fallbackError) {
+                                    console.error('[AIService] Fallback game_ended emit also failed:', fallbackError);
                                 }
                             }
-                            
-                            io.to(`game-${gameId}`).emit('game_ended', { 
-                                result, 
-                                score, 
-                                rewards: {
-                                    black: {
-                                        ...rewards.black,
-                                        currentRating: rewards.black.currentRating || endGameData.blackRating
-                                    },
-                                    white: {
-                                        ...rewards.white,
-                                        currentRating: rewards.white.currentRating || endGameData.whiteRating
-                                    }
-                                },
-                                reason: winReason,
-                                game: endGameData
-                            });
                         }, 1500); // 1.5초 지연
                     } else if (moveResult.isDoublePass) {
                         // 더블 패스인 경우에도 지연 처리 (클라이언트가 마지막 패스를 표시할 시간 확보)

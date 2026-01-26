@@ -274,9 +274,10 @@ class WaitingRoomSocket {
                 
                 console.log('Broadcasting chat message:', chatData);
                 
-                // Broadcast to all users in the specific waiting room
-                const targetRoom = `waiting-room-${roomType}`;
-                this.io.to(targetRoom).emit('chat_message', chatData);
+                // Broadcast to all users in all waiting rooms (strategy and casual)
+                // This ensures game room users can also receive global chat
+                this.io.to('waiting-room-strategy').emit('chat_message', chatData);
+                this.io.to('waiting-room-casual').emit('chat_message', chatData);
             } catch (error) {
                 console.error('Error handling chat message:', error);
                 // Fallback to using the provided user name
@@ -287,8 +288,9 @@ class WaitingRoomSocket {
                     timestamp: data.timestamp || Date.now(),
                     roomType: roomType
                 };
-                const targetRoom = `waiting-room-${roomType}`;
-                this.io.to(targetRoom).emit('chat_message', chatData);
+                // Broadcast to all waiting rooms
+                this.io.to('waiting-room-strategy').emit('chat_message', chatData);
+                this.io.to('waiting-room-casual').emit('chat_message', chatData);
             }
         });
 

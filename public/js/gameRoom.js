@@ -65,6 +65,11 @@
             socket.emit('join_game', gameId);
             // 디버깅: join_game 이벤트 전송 확인
             console.log('[Client] join_game event emitted, waiting for server confirmation...');
+            
+            // 전체 채팅을 받기 위해 대기실 룸에도 조인 (strategy와 casual 모두)
+            socket.emit('join_waiting_room', 'strategy');
+            socket.emit('join_waiting_room', 'casual');
+            console.log('[Client] Joined waiting rooms for global chat');
         } else {
             console.error('[Client] Cannot join game: gameId is null or undefined');
             socket.emit('game_error', { error: 'Invalid game ID' });
@@ -514,10 +519,15 @@
                 const blackTime = data.timers.blackTime !== undefined ? data.timers.blackTime : totalTime;
                 const whiteTime = data.timers.whiteTime !== undefined ? data.timers.whiteTime : totalTime;
                 
+                // 제한시간이 0분이거나 모두 소진된 경우 초읽기 모드로 처리
+                const isTimeLimitZero = totalTime === 0;
+                const blackInByoyomi = data.timers.blackInByoyomi || isTimeLimitZero || (blackTime <= 0 && totalTime > 0);
+                const whiteInByoyomi = data.timers.whiteInByoyomi || isTimeLimitZero || (whiteTime <= 0 && totalTime > 0);
+                
                 // 타이머 표시 업데이트
                 if (typeof updateTimerBar === 'function') {
-                    updateTimerBar('black', blackTime, totalTime, data.timers.blackByoyomiTime, data.timers.blackInByoyomi, byoyomiSeconds);
-                    updateTimerBar('white', whiteTime, totalTime, data.timers.whiteByoyomiTime, data.timers.whiteInByoyomi, byoyomiSeconds);
+                    updateTimerBar('black', blackTime, totalTime, data.timers.blackByoyomiTime, blackInByoyomi, byoyomiSeconds);
+                    updateTimerBar('white', whiteTime, totalTime, data.timers.whiteByoyomiTime, whiteInByoyomi, byoyomiSeconds);
                 }
                 
                 // 초읽기 정보 업데이트
@@ -1247,6 +1257,14 @@
         confirmMoveBtn.addEventListener('click', () => {
             if (!pendingMove || !window.game) return;
             
+            // 게임이 종료되었는지 확인 (경쟁 조건 방지)
+            if (gameEnded) {
+                console.log('[Client] Game already ended, ignoring move request');
+                pendingMove = null;
+                confirmMoveBtn.disabled = true;
+                return;
+            }
+            
             // 호버 효과 제거
             window.game.hoverX = null;
             window.game.hoverY = null;
@@ -1534,16 +1552,21 @@
                 // 타이머 업데이트: updateTimers 메서드를 사용하여 currentTurn도 함께 업데이트
                 window.timer.updateTimers(data.timers);
                 
+                // 제한시간이 0분이거나 모두 소진된 경우 초읽기 모드로 처리
+                const isTimeLimitZero = totalTime === 0;
+                const blackInByoyomi = data.timers.blackInByoyomi || isTimeLimitZero || ((data.timers.blackTime || totalTime) <= 0 && totalTime > 0);
+                const whiteInByoyomi = data.timers.whiteInByoyomi || isTimeLimitZero || ((data.timers.whiteTime || totalTime) <= 0 && totalTime > 0);
+                
                 // 타이머 바 업데이트 (중요: 턴 전환 후 타이머 업데이트)
                 if (typeof updateTimerBar === 'function') {
-                    updateTimerBar('black', data.timers.blackTime || totalTime, totalTime, data.timers.blackByoyomiTime, data.timers.blackInByoyomi, byoyomiSeconds);
-                    updateTimerBar('white', data.timers.whiteTime || totalTime, totalTime, data.timers.whiteByoyomiTime, data.timers.whiteInByoyomi, byoyomiSeconds);
+                    updateTimerBar('black', data.timers.blackTime || totalTime, totalTime, data.timers.blackByoyomiTime, blackInByoyomi, byoyomiSeconds);
+                    updateTimerBar('white', data.timers.whiteTime || totalTime, totalTime, data.timers.whiteByoyomiTime, whiteInByoyomi, byoyomiSeconds);
                 }
                 
                 // 초읽기 정보 업데이트
                 if (typeof updateByoyomiDisplay === 'function') {
-                    updateByoyomiDisplay('black', data.timers.blackByoyomiPeriods, data.timers.blackInByoyomi, data.timers.blackByoyomiTime);
-                    updateByoyomiDisplay('white', data.timers.whiteByoyomiPeriods, data.timers.whiteInByoyomi, data.timers.whiteByoyomiTime);
+                    updateByoyomiDisplay('black', data.timers.blackByoyomiPeriods, blackInByoyomi, data.timers.blackByoyomiTime);
+                    updateByoyomiDisplay('white', data.timers.whiteByoyomiPeriods, whiteInByoyomi, data.timers.whiteByoyomiTime);
                 }
                 
                 console.log('[Client] move_made: Timer updated:', {
@@ -1698,16 +1721,21 @@
                 // 타이머 업데이트: updateTimers 메서드를 사용하여 currentTurn도 함께 업데이트
                 window.timer.updateTimers(data.timers);
                 
+                // 제한시간이 0분이거나 모두 소진된 경우 초읽기 모드로 처리
+                const isTimeLimitZero = totalTime === 0;
+                const blackInByoyomi = data.timers.blackInByoyomi || isTimeLimitZero || ((data.timers.blackTime || totalTime) <= 0 && totalTime > 0);
+                const whiteInByoyomi = data.timers.whiteInByoyomi || isTimeLimitZero || ((data.timers.whiteTime || totalTime) <= 0 && totalTime > 0);
+                
                 // 타이머 바 업데이트 (중요: 턴 전환 후 타이머 업데이트)
                 if (typeof updateTimerBar === 'function') {
-                    updateTimerBar('black', data.timers.blackTime || totalTime, totalTime, data.timers.blackByoyomiTime, data.timers.blackInByoyomi, byoyomiSeconds);
-                    updateTimerBar('white', data.timers.whiteTime || totalTime, totalTime, data.timers.whiteByoyomiTime, data.timers.whiteInByoyomi, byoyomiSeconds);
+                    updateTimerBar('black', data.timers.blackTime || totalTime, totalTime, data.timers.blackByoyomiTime, blackInByoyomi, byoyomiSeconds);
+                    updateTimerBar('white', data.timers.whiteTime || totalTime, totalTime, data.timers.whiteByoyomiTime, whiteInByoyomi, byoyomiSeconds);
                 }
                 
                 // 초읽기 정보 업데이트
                 if (typeof updateByoyomiDisplay === 'function') {
-                    updateByoyomiDisplay('black', data.timers.blackByoyomiPeriods, data.timers.blackInByoyomi, data.timers.blackByoyomiTime);
-                    updateByoyomiDisplay('white', data.timers.whiteByoyomiPeriods, data.timers.whiteInByoyomi, data.timers.whiteByoyomiTime);
+                    updateByoyomiDisplay('black', data.timers.blackByoyomiPeriods, blackInByoyomi, data.timers.blackByoyomiTime);
+                    updateByoyomiDisplay('white', data.timers.whiteByoyomiPeriods, whiteInByoyomi, data.timers.whiteByoyomiTime);
                 }
                 
                 console.log('[Client] ai_move: Timer updated:', {
@@ -1813,6 +1841,10 @@
 
     // 타이머 바 업데이트 함수 (제한시간은 항상 유지, 초읽기 모드일 때는 초읽기 시간 표시)
     function updateTimerBar(color, timeLeft, totalTime, byoyomiTime = null, inByoyomi = false, byoyomiSeconds = 30) {
+        // 전역 스코프에서 접근 가능하도록 window에 노출
+        if (typeof window !== 'undefined') {
+            window.updateTimerBar = updateTimerBar;
+        }
         const barId = color === 'black' ? 'blackTimerBar' : 'whiteTimerBar';
         const timerId = color === 'black' ? 'blackTimer' : 'whiteTimer';
         const barElement = document.getElementById(barId);
@@ -1855,37 +1887,85 @@
             ? window.initialTotalTime 
             : (initialTotalTime || totalTime);
         
+        // 제한시간이 0분이거나 모두 소진된 경우 초읽기 모드로 처리
+        const isTimeLimitZero = initialTotal === 0 || totalTime === 0;
+        const isTimeExhausted = !inByoyomi && timeLeft <= 0 && initialTotal > 0;
+        const shouldUseByoyomiMode = inByoyomi || isTimeLimitZero || isTimeExhausted;
+        
         let displayTotalVal, displayTime;
 
-        if (inByoyomi) {
+        if (shouldUseByoyomiMode) {
             // 초읽기 모드: 막대 그래프가 초읽기 시간을 표시 (꽉 찼다가 줄어듦)
             displayTotalVal = byoyomiSeconds; 
-            displayTime = byoyomiTime !== null ? byoyomiTime : byoyomiSeconds;
+            // 초읽기 시간이 null이거나 undefined이면 초읽기 초기값으로 설정 (수를 두면 회복됨)
+            // 하지만 실제로는 서버에서 byoyomiTime이 전달되어야 함
+            if (byoyomiTime !== null && byoyomiTime !== undefined) {
+                displayTime = Math.max(0, byoyomiTime);
+            } else {
+                // 서버에서 전달되지 않은 경우 초읽기 초기값 사용 (Max 상태)
+                console.warn(`[Client] updateTimerBar: byoyomiTime is ${byoyomiTime} for ${color}, using byoyomiSeconds: ${byoyomiSeconds}`);
+                displayTime = byoyomiSeconds;
+            }
         } else {
             // 일반 모드: 막대 그래프가 전체 제한 시간을 표시
             displayTotalVal = initialTotal;
             displayTime = Math.max(0, timeLeft);
         }
         
-        const percent = Math.max(0, Math.min(100, (displayTime / displayTotalVal) * 100));
+        // displayTime이 0 이하이면 0으로 설정 (정확한 퍼센트 계산을 위해)
+        const safeDisplayTime = Math.max(0, displayTime);
+        const percent = Math.max(0, Math.min(100, (safeDisplayTime / displayTotalVal) * 100));
         
         // 타이머 바가 표시되도록 보장
         barFill.style.display = 'block';
         barFill.style.visibility = 'visible';
         barFill.style.opacity = '1';
         
-        // 너비 설정 (최소 1px 보장, 0이면 0)
-        const finalWidth = Math.max(percent, percent > 0 ? 1 : 0);
-        barFill.style.width = finalWidth + '%';
+        // 너비 설정 (0이면 정확히 0%, 0보다 크면 최소 0.1%로 표시)
+        const finalWidth = percent <= 0 ? 0 : Math.max(0.1, percent);
+        
+        // transition이 적용되도록 하기 위해 현재 width를 확인하고 업데이트
+        // getComputedStyle을 사용하여 정확한 현재 width 가져오기
+        let currentWidth = finalWidth;
+        try {
+            const computedStyle = window.getComputedStyle(barFill);
+            const parentComputedStyle = window.getComputedStyle(barFill.parentElement);
+            const currentWidthPx = parseFloat(computedStyle.width);
+            const parentWidthPx = parseFloat(parentComputedStyle.width);
+            if (parentWidthPx > 0) {
+                currentWidth = (currentWidthPx / parentWidthPx) * 100;
+            }
+        } catch (e) {
+            // getComputedStyle 실패 시 style.width 사용
+            const styleWidth = barFill.style.width;
+            if (styleWidth) {
+                currentWidth = parseFloat(styleWidth);
+            }
+        }
+        
+        // width가 변경될 때만 업데이트하여 transition 애니메이션이 작동하도록 함
+        // 0.1% 이상 차이가 날 때만 업데이트 (부드러운 애니메이션을 위해)
+        if (Math.abs(currentWidth - finalWidth) > 0.1) {
+            // transition이 적용되도록 하기 위해 requestAnimationFrame 사용
+            requestAnimationFrame(() => {
+                barFill.style.width = finalWidth + '%';
+            });
+        } else if (Math.abs(currentWidth - finalWidth) > 0.01) {
+            // 작은 차이도 업데이트 (더 정확한 표시)
+            barFill.style.width = finalWidth + '%';
+        }
         
         // 초읽기 모드일 때는 바 색상을 다르게 표시
-        if (inByoyomi) {
+        if (shouldUseByoyomiMode) {
             barFill.classList.add('byoyomi-mode');
             // 초읽기 시간이 얼마 안 남았을 때 색상 변경 (긴박함 표시)
+            // displayTime은 이미 Math.max(0, byoyomiTime)으로 처리됨
             if (displayTime <= 10) {
                 barFill.style.background = 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)'; // 빨간색
-            } else {
+            } else if (displayTime > 0) {
                 barFill.style.background = 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)'; // 노란색
+            } else {
+                barFill.style.background = 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)'; // 빨간색 (시간 초과)
             }
         } else {
             barFill.classList.remove('byoyomi-mode');
@@ -1899,9 +1979,9 @@
         }
         
         // 경고 상태 설정 (제한시간 기준)
-        if (inByoyomi) {
+        if (shouldUseByoyomiMode) {
             // 초읽기 모드: 초읽기 시간으로 경고 상태 결정
-            const currentByoyomiTime = byoyomiTime !== null ? byoyomiTime : byoyomiSeconds;
+            const currentByoyomiTime = byoyomiTime !== null && byoyomiTime !== undefined ? byoyomiTime : byoyomiSeconds;
             if (currentByoyomiTime <= 10) {
                 timer.classList.add('danger');
                 timer.classList.remove('warning');
@@ -3949,49 +4029,8 @@
         }
         console.log('[Client] Game start modal displayed, modal:', modal, 'display:', modal.style.display, 'classList:', modal.classList.toString());
         
-        // AI 게임에서는 드래그 기능 비활성화 (버튼 클릭이 확실히 작동하도록)
-        if (!isAiGame) {
-            makeGameStartModalDraggable(modal);
-        } else {
-            console.log('[Client] Dragging disabled for AI game');
-            
-            // AI 게임일 때 모달 컨텐츠와 헤더의 스타일 및 이벤트 리스너 완전히 제거
-            if (modalContent) {
-                modalContent.style.cursor = 'default';
-                modalContent.style.pointerEvents = 'auto';
-                
-                // 기존 드래그 관련 이벤트 리스너 제거
-                const header = modalContent.querySelector('.game-start-modal-header');
-                if (header) {
-                    header.style.cursor = 'default';
-                    header.style.pointerEvents = 'auto';
-                }
-                
-                const modalBody = modalContent.querySelector('.game-start-modal-body');
-                if (modalBody) {
-                    modalBody.style.pointerEvents = 'auto';
-                    modalBody.style.cursor = 'default';
-                }
-            }
-            
-            // 버튼 컨테이너는 클릭 가능하도록 확실히 설정
-            const buttonContainer = modal.querySelector('.start-button-container');
-            if (buttonContainer) {
-                buttonContainer.style.pointerEvents = 'auto';
-                buttonContainer.style.cursor = 'default';
-                buttonContainer.style.position = 'relative';
-                buttonContainer.style.zIndex = '10001';
-            }
-            
-            // 버튼 자체도 확실히 설정
-            const startButton = modal.querySelector('#startGameButton');
-            if (startButton) {
-                startButton.style.pointerEvents = 'auto';
-                startButton.style.cursor = 'pointer';
-                startButton.style.position = 'relative';
-                startButton.style.zIndex = '10002';
-            }
-        }
+        // 모든 게임에서 드래그 기능 활성화
+        makeGameStartModalDraggable(modal);
         
         // 버튼 이벤트 리스너 설정 (약간의 지연을 두어 DOM이 완전히 준비되도록)
         setTimeout(() => {
@@ -4021,8 +4060,8 @@
         const whiteNickname = document.getElementById('whiteReadyNickname');
         const blackIndicator = document.getElementById('blackReadyIndicator');
         const whiteIndicator = document.getElementById('whiteReadyIndicator');
-        const blackItem = blackIndicator ? blackIndicator.closest('.ready-status-item') : null;
-        const whiteItem = whiteIndicator ? whiteIndicator.closest('.ready-status-item') : null;
+        const blackItem = blackIndicator ? blackIndicator.closest('.player-info-item') : null;
+        const whiteItem = whiteIndicator ? whiteIndicator.closest('.player-info-item') : null;
         
         // 베이스바둑일 때는 흑/백 유저 표시 숨기기
         if (gameData && gameData.game && gameData.game.mode === 'BASE') {
@@ -4070,11 +4109,13 @@
         // 준비 상태 표시
         if (blackIndicator) {
             if (readyStatus.black) {
+                blackIndicator.classList.remove('waiting');
                 blackIndicator.classList.add('ready');
                 blackIndicator.querySelector('.indicator-text').textContent = '준비완료';
                 if (blackItem) blackItem.classList.add('ready');
             } else {
                 blackIndicator.classList.remove('ready');
+                blackIndicator.classList.add('waiting');
                 blackIndicator.querySelector('.indicator-text').textContent = '대기중';
                 if (blackItem) blackItem.classList.remove('ready');
             }
@@ -4082,11 +4123,13 @@
         
         if (whiteIndicator) {
             if (readyStatus.white) {
+                whiteIndicator.classList.remove('waiting');
                 whiteIndicator.classList.add('ready');
                 whiteIndicator.querySelector('.indicator-text').textContent = '준비완료';
                 if (whiteItem) whiteItem.classList.add('ready');
             } else {
                 whiteIndicator.classList.remove('ready');
+                whiteIndicator.classList.add('waiting');
                 whiteIndicator.querySelector('.indicator-text').textContent = '대기중';
                 if (whiteItem) whiteItem.classList.remove('ready');
             }
@@ -5873,8 +5916,14 @@
             }
         }
         
-        // 게임 상태에서 초읽기 설정값 가져오기 (window.gameState 우선, 없으면 data, 없으면 기본값)
-        const byoyomiSeconds = (window.gameState && window.gameState.byoyomiSeconds) || data.byoyomiSeconds || 30;
+        // 게임 상태에서 초읽기 설정값 가져오기 (window.gameState 우선, 없으면 data, 없으면 timer에서, 없으면 기본값)
+        const byoyomiSeconds = (window.gameState && window.gameState.byoyomiSeconds !== undefined && window.gameState.byoyomiSeconds !== null)
+            ? window.gameState.byoyomiSeconds
+            : ((data.byoyomiSeconds !== undefined && data.byoyomiSeconds !== null)
+                ? data.byoyomiSeconds
+                : ((window.timer && window.timer.byoyomiSeconds !== undefined && window.timer.byoyomiSeconds !== null)
+                    ? window.timer.byoyomiSeconds
+                    : 30));
         // timeLimit은 window.gameState에서 가져오거나 data에서 가져오거나 기본값 30분
         const timeLimit = (window.gameState && window.gameState.timeLimit) || data.timeLimit || 30;
         const totalTime = timeLimit * 60;
@@ -5888,11 +5937,14 @@
             window.initialTotalTime = totalTime;
         }
         
-        // 타이머 바 업데이트 (실시간으로 업데이트)
-        if (typeof updateTimerBar === 'function') {
-            updateTimerBar('black', data.blackTime || 0, totalTime, data.blackByoyomiTime, data.blackInByoyomi, byoyomiSeconds);
-            updateTimerBar('white', data.whiteTime || 0, totalTime, data.whiteByoyomiTime, data.whiteInByoyomi, byoyomiSeconds);
-        }
+        // 제한시간이 0분이거나 모두 소진된 경우 초읽기 모드로 처리
+        const isTimeLimitZero = totalTime === 0;
+        const blackInByoyomi = data.blackInByoyomi || isTimeLimitZero || ((data.blackTime || 0) <= 0 && totalTime > 0);
+        const whiteInByoyomi = data.whiteInByoyomi || isTimeLimitZero || ((data.whiteTime || 0) <= 0 && totalTime > 0);
+        
+        // 타이머 바 업데이트는 timer.js의 updateDisplay에서 처리하므로 여기서는 서버 동기화만 수행
+        // timer.js가 100ms마다 업데이트하므로 여기서는 중복 호출하지 않음
+        // 단, 서버에서 받은 값으로 window.timer를 업데이트하여 다음 updateDisplay에서 사용되도록 함
         
         // 초읽기 정보 업데이트
         if (typeof updateByoyomiDisplay === 'function') {
@@ -5913,6 +5965,15 @@
 
     // 게임 종료 이벤트
     socket.on('game_ended', (data) => {
+        console.log('[Client] ========== game_ended event received ==========');
+        console.log('[Client] game_ended data:', {
+            result: data.result,
+            hasRewards: !!data.rewards,
+            hasGame: !!data.game,
+            reason: data.reason,
+            fullData: data
+        });
+        
         gameEnded = true;
         
         // 계가중 오버레이 숨기기
@@ -5926,6 +5987,7 @@
             // 계가 진행 중 모달인지 확인 (제목에 "계가 진행 중"이 포함된 경우)
             const modalTitle = existingScoringModal.querySelector('.result-title');
             if (modalTitle && (modalTitle.textContent.includes('계가 진행 중') || modalTitle.textContent.includes('데모'))) {
+                console.log('[Client] Removing existing scoring modal');
                 existingScoringModal.remove();
             }
         }
@@ -5949,10 +6011,20 @@
             hasGame: !!data.game,
             reason: data.reason
         });
+        
+        // showResultModal 함수가 정의되어 있는지 확인
         if (typeof showResultModal === 'function') {
-            showResultModal(data);
+            console.log('[Client] showResultModal function found, calling it...');
+            try {
+                showResultModal(data);
+                console.log('[Client] showResultModal called successfully');
+            } catch (error) {
+                console.error('[Client] Error in showResultModal:', error);
+                console.error('[Client] Error stack:', error.stack);
+            }
         } else {
             console.error('[Client] showResultModal function not found!');
+            console.error('[Client] Available functions:', Object.keys(window).filter(k => typeof window[k] === 'function' && k.includes('Result')));
         }
         });
 
@@ -5988,12 +6060,12 @@
                     // 내가 기권하여 패배
                     winReasonText = '기권하여 패배했습니다';
                 }
-            } else if (reason === 'time_black' || reason === 'time_white') {
-                const isBlackTimeOut = reason === 'time_black';
+            } else if (reason === 'time_black' || reason === 'time_white' || reason === 'time_loss_black' || reason === 'time_loss_white') {
+                const isBlackTimeOut = reason === 'time_black' || reason === 'time_loss_black';
                 if (isWinner) {
                     winReasonText = isBlackTimeOut ? '상대방(흑)의 시간 초과로 승리했습니다' : '상대방(백)의 시간 초과로 승리했습니다';
                 } else {
-                    winReasonText = isBlackTimeOut ? '시간 초과로 패배했습니다' : '시간 초과로 패배했습니다';
+                    winReasonText = '시간 초과로 패배했습니다';
                 }
             } else if (reason === 'disconnect_black' || reason === 'disconnect_white') {
                 const isBlackDisconnected = reason === 'disconnect_black';
@@ -6159,8 +6231,45 @@
         `;
 
         // 게임 결과 모달 표시
+        console.log('[Client] showResultModal: Attempting to show result modal', {
+            hasShowGameResultModal: typeof showGameResultModal === 'function',
+            modalHtmlLength: modalHtml ? modalHtml.length : 0
+        });
+        
         if (typeof showGameResultModal === 'function') {
-            showGameResultModal(modalHtml);
+            console.log('[Client] showResultModal: Calling showGameResultModal...');
+            try {
+                showGameResultModal(modalHtml);
+                console.log('[Client] showResultModal: showGameResultModal called successfully');
+            } catch (error) {
+                console.error('[Client] showResultModal: Error calling showGameResultModal:', error);
+                console.error('[Client] showResultModal: Error stack:', error.stack);
+                // 대체 방법: 직접 모달 생성
+                const existingModal = document.getElementById('gameResultModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                const modal = document.createElement('div');
+                modal.id = 'gameResultModal';
+                modal.className = 'result-modal';
+                modal.innerHTML = modalHtml;
+                document.body.appendChild(modal);
+                modal.style.display = 'flex';
+            }
+        } else {
+            console.error('[Client] showResultModal: showGameResultModal function not found!');
+            // 대체 방법: 직접 모달 생성
+            const existingModal = document.getElementById('gameResultModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            const modal = document.createElement('div');
+            modal.id = 'gameResultModal';
+            modal.className = 'result-modal';
+            modal.innerHTML = modalHtml;
+            document.body.appendChild(modal);
+            modal.style.display = 'flex';
+            console.log('[Client] showResultModal: Modal created directly, display:', modal.style.display);
         }
         
         // 게임 종료 후 버튼 패널 업데이트
@@ -6288,19 +6397,42 @@
 
     // 게임 결과 모달 표시 함수
     function showGameResultModal(html) {
+        console.log('[Client] showGameResultModal called with html length:', html ? html.length : 0);
+        
         // 기존 모달이 있으면 제거
         const existingModal = document.getElementById('gameResultModal');
         if (existingModal) {
+            console.log('[Client] Removing existing result modal');
             existingModal.remove();
         }
 
         const modal = document.createElement('div');
         modal.id = 'gameResultModal';
         modal.className = 'modal-overlay';
+        modal.style.cssText = `
+            display: flex !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 10000 !important;
+            justify-content: center !important;
+            align-items: center !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        `;
         // 배경 blur 제거하고 투명도 낮춤 (바둑판이 보이도록)
         
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
+        modalContent.style.cssText = `
+            position: relative !important;
+            z-index: 10001 !important;
+            pointer-events: auto !important;
+        `;
         modalContent.innerHTML = html;
         
         // 드래그 기능 추가
@@ -6376,6 +6508,32 @@
         });
         
         document.body.appendChild(modal);
+        console.log('[Client] ========== Result modal appended to body ==========');
+        console.log('[Client] Modal element:', modal);
+        console.log('[Client] Modal display style:', modal.style.display);
+        console.log('[Client] Modal computed style:', window.getComputedStyle(modal).display);
+        console.log('[Client] Modal z-index:', window.getComputedStyle(modal).zIndex);
+        console.log('[Client] Modal visibility:', window.getComputedStyle(modal).visibility);
+        console.log('[Client] Modal opacity:', window.getComputedStyle(modal).opacity);
+        console.log('[Client] Modal position:', window.getComputedStyle(modal).position);
+        console.log('[Client] ModalContent element:', modalContent);
+        console.log('[Client] ModalContent display:', window.getComputedStyle(modalContent).display);
+        console.log('[Client] ResultModalContent element:', resultModalContent);
+        if (resultModalContent) {
+            console.log('[Client] ResultModalContent display:', window.getComputedStyle(resultModalContent).display);
+        }
+        
+        // 모달이 실제로 보이는지 확인
+        setTimeout(() => {
+            const checkModal = document.getElementById('gameResultModal');
+            if (checkModal) {
+                const rect = checkModal.getBoundingClientRect();
+                console.log('[Client] Modal bounding rect:', rect);
+                console.log('[Client] Modal is visible:', rect.width > 0 && rect.height > 0);
+            } else {
+                console.error('[Client] Modal not found in DOM after append!');
+            }
+        }, 100);
         }
 
     // 계가 시작 이벤트
@@ -6573,21 +6731,83 @@
     const chatMessages = document.getElementById('chatMessages');
     const chatInput = document.getElementById('chatInput');
     const chatSendBtn = document.getElementById('chatSendBtn');
+    
+    // 탭별 메시지 저장
+    const gameChatMessages = [];
+    const globalChatMessages = [];
 
-    function addChatMessage(username, message, isSystem = false) {
+    function addChatMessage(username, message, isSystem = false, tab = null) {
+        if (!chatMessages) return;
+        
+        // 탭이 지정되지 않으면 현재 활성 탭 사용
+        const targetTab = tab || activeChatTab;
+        
+        const messageData = {
+            username,
+            message,
+            isSystem,
+            timestamp: Date.now()
+        };
+        
+        // 탭별로 메시지 저장
+        if (targetTab === 'game') {
+            gameChatMessages.push(messageData);
+        } else {
+            globalChatMessages.push(messageData);
+        }
+        
+        // 현재 활성 탭이면 화면에 표시
+        if (targetTab === activeChatTab) {
+            displayMessage(messageData);
+        }
+        }
+    
+    function displayMessage(messageData) {
         if (!chatMessages) return;
         
         const messageDiv = document.createElement('div');
-        messageDiv.className = isSystem ? 'chat-message system' : 'chat-message';
+        messageDiv.className = messageData.isSystem ? 'chat-message chat-message-system' : 'chat-message';
         
-        if (isSystem) {
-            messageDiv.textContent = message;
+        if (messageData.isSystem) {
+            messageDiv.textContent = messageData.message;
         } else {
-            messageDiv.innerHTML = `<span class="chat-username">${escapeHtml(username)}:</span> <span class="chat-text">${escapeHtml(message)}</span>`;
+            messageDiv.innerHTML = `<span class="chat-username">${escapeHtml(messageData.username)}:</span> <span class="chat-text">${escapeHtml(messageData.message)}</span>`;
         }
         
         chatMessages.appendChild(messageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    
+    function switchChatTab(tabName) {
+        if (activeChatTab === tabName) return;
+        
+        activeChatTab = tabName;
+        
+        // 탭 UI 업데이트
+        const chatTabs = document.querySelectorAll('.chat-tab');
+        chatTabs.forEach(tab => {
+            if (tab.getAttribute('data-tab') === tabName) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+        
+        // 메시지 영역 초기화
+        if (chatMessages) {
+            chatMessages.innerHTML = '';
+        }
+        
+        // 선택된 탭의 메시지 표시
+        const messagesToShow = tabName === 'game' ? gameChatMessages : globalChatMessages;
+        messagesToShow.forEach(msg => {
+            displayMessage(msg);
+        });
+        
+        // 플레이스홀더 업데이트
+        if (chatInput) {
+            chatInput.placeholder = tabName === 'game' ? '메시지 입력...' : '전체 채팅 메시지 입력...';
+        }
         }
 
     function escapeHtml(text) {
@@ -6650,9 +6870,16 @@
             return;
         }
         
-        // 서버에 메시지 전송
+        // 서버에 메시지 전송 (활성 탭에 따라 다른 이벤트 전송)
         if (typeof socket !== 'undefined' && socket) {
-            socket.emit('game_chat', { message: message });
+            if (activeChatTab === 'game') {
+                socket.emit('game_chat', { message: message });
+            } else {
+                socket.emit('chat_message', {
+                    message: message,
+                    timestamp: currentTime
+                });
+            }
         }
         
         // 마지막 전송 시간과 메시지 저장
@@ -6679,17 +6906,31 @@
 
     // 대국실 채팅 메시지 수신
     socket.on('game_chat', (data) => {
-        if (typeof addChatMessage === 'function' && data.message && data.nickname) {
-            addChatMessage(data.nickname, data.message);
+        if (typeof addChatMessage === 'function' && data.message) {
+            const username = data.nickname || data.user || 'Unknown';
+            addChatMessage(username, data.message, false, 'game');
         }
         });
 
     // 전체채팅 메시지 수신 (대기실과 동일)
     socket.on('chat_message', (data) => {
-        if (typeof addChatMessage === 'function' && data.message && data.nickname) {
-            addChatMessage(data.nickname, data.message);
+        if (typeof addChatMessage === 'function' && data.message) {
+            const username = data.user || data.nickname || 'Unknown';
+            const isSystem = data.isSystem || false;
+            addChatMessage(username, data.message, isSystem, 'global');
         }
         });
+    
+    // 채팅 탭 전환 이벤트
+    const chatTabs = document.querySelectorAll('.chat-tab');
+    chatTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.getAttribute('data-tab');
+            if (tabName) {
+                switchChatTab(tabName);
+            }
+        });
+    });
 
     // 이모지 버튼 클릭 핸들러
     const emojiBtn = document.getElementById('emojiBtn');

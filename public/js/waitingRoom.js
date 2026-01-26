@@ -510,6 +510,51 @@
             startRequestTimer(30);
         }
 
+        // 제한시간 0분 설정 시 초읽기 횟수 최소값 제어 함수
+        function updateByoyomiPeriodsOptions() {
+            const timeLimitSelect = document.getElementById('timeLimitSelect');
+            const byoyomiPeriodsSelect = document.getElementById('byoyomiPeriodsSelect');
+            
+            if (!timeLimitSelect || !byoyomiPeriodsSelect) return;
+            
+            const timeLimit = parseInt(timeLimitSelect.value) || 0;
+            const currentByoyomiPeriods = parseInt(byoyomiPeriodsSelect.value) || 0;
+            
+            // 제한시간이 0분일 때
+            if (timeLimit === 0) {
+                // 초읽기 횟수 옵션 업데이트: 최소값을 1회로 설정
+                const currentValue = byoyomiPeriodsSelect.value;
+                byoyomiPeriodsSelect.innerHTML = '';
+                for (let i = 1; i <= 10; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `${i}회`;
+                    if (i === parseInt(currentValue) || (currentValue === '0' && i === 1)) {
+                        option.selected = true;
+                    }
+                    byoyomiPeriodsSelect.appendChild(option);
+                }
+                
+                // 현재 선택된 값이 0회이면 자동으로 1회로 변경
+                if (currentByoyomiPeriods === 0) {
+                    byoyomiPeriodsSelect.value = '1';
+                }
+            } else {
+                // 제한시간이 0분이 아닐 때: 0회부터 10회까지 모두 표시
+                const currentValue = byoyomiPeriodsSelect.value;
+                byoyomiPeriodsSelect.innerHTML = '';
+                for (let i = 0; i <= 10; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `${i}회`;
+                    if (i === parseInt(currentValue)) {
+                        option.selected = true;
+                    }
+                    byoyomiPeriodsSelect.appendChild(option);
+                }
+            }
+        }
+
         function openGameRequestModal(targetUser = null, isIncoming = false, requestData = null) {
             console.log('=== openGameRequestModal START ===', targetUser, isIncoming, requestData);
             try {
@@ -677,6 +722,12 @@
                         // 초기 로드시에도 체크
                         updateByoyomiPeriodsOptions();
                     }
+                    
+                    // 초읽기 횟수 변경 시에도 체크 (제한시간이 0분일 때)
+                    const byoyomiPeriodsSelect = document.getElementById('byoyomiPeriodsSelect');
+                    if (byoyomiPeriodsSelect) {
+                        byoyomiPeriodsSelect.addEventListener('change', updateByoyomiPeriodsOptions);
+                    }
                 }, 500);
 
                 // 주석
@@ -737,23 +788,33 @@
                 const colorSelect = document.getElementById('colorSelect');
                 if (colorSelect && data.color) colorSelect.value = data.color;
                 
-                // 주석
+                // AI 레벨 설정 (AI 게임인 경우)
                 const aiLevelSelect = document.getElementById('aiLevelSelect');
-                if (aiLevelSelect && data.aiLevel) aiLevelSelect.value = data.aiLevel;
+                if (aiLevelSelect && data.aiLevel !== undefined && data.aiLevel !== null) {
+                    aiLevelSelect.value = data.aiLevel;
+                }
 
                 const timeLimitSelect = document.getElementById('timeLimitSelect');
-                if (timeLimitSelect && data.timeLimit) timeLimitSelect.value = data.timeLimit;
+                if (timeLimitSelect && data.timeLimit !== undefined && data.timeLimit !== null) {
+                    timeLimitSelect.value = data.timeLimit;
+                }
 
                 const timeIncrementSelect = document.getElementById('timeIncrementSelect');
-                if (timeIncrementSelect && data.timeIncrement) timeIncrementSelect.value = data.timeIncrement;
+                if (timeIncrementSelect && data.timeIncrement !== undefined && data.timeIncrement !== null) {
+                    timeIncrementSelect.value = data.timeIncrement;
+                }
 
                 const byoyomiSecondsSelect = document.getElementById('byoyomiSecondsSelect');
-                if (byoyomiSecondsSelect && data.byoyomiSeconds) byoyomiSecondsSelect.value = data.byoyomiSeconds;
+                if (byoyomiSecondsSelect && data.byoyomiSeconds !== undefined && data.byoyomiSeconds !== null) {
+                    byoyomiSecondsSelect.value = data.byoyomiSeconds;
+                }
 
                 const byoyomiPeriodsSelect = document.getElementById('byoyomiPeriodsSelect');
-                if (byoyomiPeriodsSelect && data.byoyomiPeriods) byoyomiPeriodsSelect.value = data.byoyomiPeriods;
+                if (byoyomiPeriodsSelect && data.byoyomiPeriods !== undefined && data.byoyomiPeriods !== null) {
+                    byoyomiPeriodsSelect.value = data.byoyomiPeriods;
+                }
                 
-                // 주석
+                // 자동 계가 설정
                 const autoScoringMoveSelect = document.getElementById('autoScoringMoveSelect');
                 if (autoScoringMoveSelect && data.autoScoringMove !== undefined && data.autoScoringMove !== null) {
                     // null이면 0으로 설정 (제한없음)
@@ -770,13 +831,38 @@
                     });
                     
                     setTimeout(() => {
-                        if (data.mixCaptureTarget) document.getElementById('mixCaptureTargetSelect').value = data.mixCaptureTarget;
-                        if (data.mixTimeLimit) document.getElementById('mixTimeLimitSelect').value = data.mixTimeLimit;
-                        if (data.mixTimeIncrement) document.getElementById('mixTimeIncrementSelect').value = data.mixTimeIncrement;
-                        if (data.mixBaseCount) document.getElementById('mixBaseCountSelect').value = data.mixBaseCount;
-                        if (data.mixHiddenCount) document.getElementById('mixHiddenCountSelect').value = data.mixHiddenCount;
-                        if (data.mixScanCount) document.getElementById('mixScanCountSelect').value = data.mixScanCount;
-                        if (data.mixMissileMoveLimit) document.getElementById('mixMissileMoveLimitSelect').value = data.mixMissileMoveLimit;
+                        if (data.mixCaptureTarget !== undefined && data.mixCaptureTarget !== null) {
+                            const el = document.getElementById('mixCaptureTargetSelect');
+                            if (el) el.value = data.mixCaptureTarget;
+                        }
+                        if (data.mixTimeLimit !== undefined && data.mixTimeLimit !== null) {
+                            const el = document.getElementById('mixTimeLimitSelect');
+                            if (el) el.value = data.mixTimeLimit;
+                        }
+                        if (data.mixTimeIncrement !== undefined && data.mixTimeIncrement !== null) {
+                            const el = document.getElementById('mixTimeIncrementSelect');
+                            if (el) el.value = data.mixTimeIncrement;
+                        }
+                        if (data.mixBaseCount !== undefined && data.mixBaseCount !== null) {
+                            const el = document.getElementById('mixBaseCountSelect');
+                            if (el) el.value = data.mixBaseCount;
+                        }
+                        if (data.mixHiddenCount !== undefined && data.mixHiddenCount !== null) {
+                            const el = document.getElementById('mixHiddenCountSelect');
+                            if (el) el.value = data.mixHiddenCount;
+                        }
+                        if (data.mixScanCount !== undefined && data.mixScanCount !== null) {
+                            const el = document.getElementById('mixScanCountSelect');
+                            if (el) el.value = data.mixScanCount;
+                        }
+                        if (data.mixMissileMoveLimit !== undefined && data.mixMissileMoveLimit !== null) {
+                            const el = document.getElementById('mixMissileMoveLimitSelect');
+                            if (el) el.value = data.mixMissileMoveLimit;
+                        }
+                        if (data.mixModeSwitchCount !== undefined && data.mixModeSwitchCount !== null) {
+                            const el = document.getElementById('mixModeSwitchCountSelect');
+                            if (el) el.value = data.mixModeSwitchCount;
+                        }
                         
                         isSettingsChanged = false;
                         updateActionButtons();
@@ -2114,7 +2200,37 @@
         // 데스크톱 채팅 전송 함수
         let lastChatTime = 0;
         let lastChatMessage = '';
-        const CHAT_COOLDOWN = 3000; // 3초 쿨타임
+        let chatCooldownInterval = null;
+        const CHAT_COOLDOWN = 5000; // 5초 쿨타임
+
+        // 채팅 쿨타임 카운트다운
+        function startChatCooldown() {
+            const countdownEl = document.getElementById('chatCountdown');
+            if (!countdownEl) return;
+
+            let remaining = 5;
+            countdownEl.textContent = remaining;
+            countdownEl.style.display = 'block';
+            
+            if (chatCooldownInterval) {
+                clearInterval(chatCooldownInterval);
+            }
+            
+            chatCooldownInterval = setInterval(() => {
+                remaining--;
+                if (countdownEl) {
+                    countdownEl.textContent = remaining;
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(chatCooldownInterval);
+                    chatCooldownInterval = null;
+                    if (countdownEl) {
+                        countdownEl.style.display = 'none';
+                    }
+                }
+            }, 1000);
+        }
 
         function sendChatMessageDesktop() {
             const chatInput = document.getElementById('chatInput');
@@ -2132,9 +2248,6 @@
                 if (countdown) {
                     countdown.textContent = remaining;
                     countdown.style.display = 'block';
-                    setTimeout(() => {
-                        if (countdown) countdown.style.display = 'none';
-                    }, 1000);
                 }
                 return;
             }
@@ -2163,6 +2276,9 @@
             lastChatMessage = message;
             
             chatInput.value = '';
+            
+            // 쿨타임 시작
+            startChatCooldown();
             
             // 이모지 팝업 닫기
             const emojiPopup = document.getElementById('emojiPopup');
@@ -2449,11 +2565,12 @@
             if (!timestamp) return '';
             const date = new Date(timestamp);
             
-            // 주석
+            // KST는 UTC+9 (한국 표준시)
+            const kstOffset = 9;
             const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
             const kstDate = new Date(utc + (kstOffset * 60000));
             
-            // ?쒓컙 ?щ㎎: HH:MM
+            // 시간 형식: HH:MM
             const hours = String(kstDate.getHours()).padStart(2, '0');
             const minutes = String(kstDate.getMinutes()).padStart(2, '0');
             
@@ -2464,7 +2581,7 @@
             console.log('[Client] addChatMessage called:', { user, message, timestamp, roomType });
             const list = document.getElementById('chatMessages');
             const mobileList = document.getElementById('mobileSidebarChatMessages');
-            const roomTypeText = roomType === 'casual' ? '[?' : '[?꾨왂]';
+            const roomTypeText = roomType === 'casual' ? '[놀이바둑]' : '[전략바둑]';
             const messageDiv = document.createElement('div');
             messageDiv.className = 'chat-message';
             messageDiv.innerHTML = `
@@ -3447,113 +3564,128 @@
         
         // 전체 전적 초기화 - 전역 스코프에 노출
         window.resetAllStats = async function() {
-            if (!confirm('전체 전적을 초기화하시겠습니까? (300젬 소모)')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/user/reset-all-stats', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
-                    return;
+            showConfirmModal(
+                '전체 전적을 초기화하시겠습니까?\n(300젬 소모)',
+                '전적 초기화',
+                async () => {
+                    try {
+                        const response = await fetch('/api/user/reset-all-stats', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
+                            return;
+                        }
+                        
+                        showAlertModal(data.message || '전체 전적이 초기화되었습니다.', '성공', 'success');
+                        
+                        // 젬 업데이트
+                        if (window.WAITING_ROOM_CONFIG) {
+                            window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 300;
+                        }
+                        
+                        // 전적 새로고침
+                        location.reload();
+                    } catch (error) {
+                        console.error('Reset all stats error:', error);
+                        showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
+                    }
+                },
+                () => {
+                    // 취소 시 아무 작업도 하지 않음
                 }
-                
-                showAlertModal(data.message || '전체 전적이 초기화되었습니다.', '성공', 'success');
-                
-                // 젬 업데이트
-                if (window.WAITING_ROOM_CONFIG) {
-                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 300;
-                }
-                
-                // 전적 새로고침
-                location.reload();
-            } catch (error) {
-                console.error('Reset all stats error:', error);
-                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
-            }
+            );
         };
         
         // 전략바둑 전적 초기화 - 전역 스코프에 노출
         window.resetStrategyStats = async function() {
-            if (!confirm('전략바둑 전적을 초기화하시겠습니까? (200젬 소모)')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/user/reset-strategy-stats', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
-                    return;
+            showConfirmModal(
+                '전략바둑 전적을 초기화하시겠습니까?\n(200젬 소모)',
+                '전적 초기화',
+                async () => {
+                    try {
+                        const response = await fetch('/api/user/reset-strategy-stats', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
+                            return;
+                        }
+                        
+                        showAlertModal(data.message || '전략바둑 전적이 초기화되었습니다.', '성공', 'success');
+                        
+                        // 젬 업데이트
+                        if (window.WAITING_ROOM_CONFIG) {
+                            window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 200;
+                        }
+                        
+                        // 전적 새로고침
+                        location.reload();
+                    } catch (error) {
+                        console.error('Reset strategy stats error:', error);
+                        showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
+                    }
+                },
+                () => {
+                    // 취소 시 아무 작업도 하지 않음
                 }
-                
-                showAlertModal(data.message || '전략바둑 전적이 초기화되었습니다.', '성공', 'success');
-                
-                // 젬 업데이트
-                if (window.WAITING_ROOM_CONFIG) {
-                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 200;
-                }
-                
-                // 전적 새로고침
-                location.reload();
-            } catch (error) {
-                console.error('Reset strategy stats error:', error);
-                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
-            }
+            );
         };
         
         // 놀이바둑 전적 초기화 - 전역 스코프에 노출
         window.resetCasualStats = async function() {
-            if (!confirm('놀이바둑 전적을 초기화하시겠습니까? (200젬 소모)')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/user/reset-casual-stats', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
-                    return;
+            showConfirmModal(
+                '놀이바둑 전적을 초기화하시겠습니까?\n(200젬 소모)',
+                '전적 초기화',
+                async () => {
+                    try {
+                        const response = await fetch('/api/user/reset-casual-stats', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
+                            return;
+                        }
+                        
+                        showAlertModal(data.message || '놀이바둑 전적이 초기화되었습니다.', '성공', 'success');
+                        
+                        // 젬 업데이트
+                        if (window.WAITING_ROOM_CONFIG) {
+                            window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 200;
+                        }
+                        
+                        // 전적 새로고침
+                        location.reload();
+                    } catch (error) {
+                        console.error('Reset casual stats error:', error);
+                        showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
+                    }
+                },
+                () => {
+                    // 취소 시 아무 작업도 하지 않음
                 }
-                
-                showAlertModal(data.message || '놀이바둑 전적이 초기화되었습니다.', '성공', 'success');
-                
-                // 젬 업데이트
-                if (window.WAITING_ROOM_CONFIG) {
-                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 200;
-                }
-                
-                // 전적 새로고침
-                location.reload();
-            } catch (error) {
-                console.error('Reset casual stats error:', error);
-                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
-            }
+            );
         };
         
         // 부분 전적 초기화 - 전역 스코프에 노출
@@ -3576,40 +3708,45 @@
             
             const modeName = modeNames[mode] || mode || '선택한 모드';
             
-            if (!confirm(`${modeName}의 부분 전적을 초기화하시겠습니까? (100젬 소모, 최근 10게임 제외)`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/user/reset-partial-stats', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ mode })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
-                    return;
+            showConfirmModal(
+                `${modeName}의 부분 전적을 초기화하시겠습니까?\n(100젬 소모, 최근 10게임 제외)`,
+                '전적 초기화',
+                async () => {
+                    try {
+                        const response = await fetch('/api/user/reset-partial-stats', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({ mode })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            showAlertModal(data.error || '전적 초기화에 실패했습니다.', '오류', 'error');
+                            return;
+                        }
+                        
+                        showAlertModal(data.message || `${modeName} 부분 전적이 초기화되었습니다.`, '성공', 'success');
+                        
+                        // 젬 업데이트
+                        if (window.WAITING_ROOM_CONFIG) {
+                            window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 100;
+                        }
+                        
+                        // 전적 새로고침
+                        location.reload();
+                    } catch (error) {
+                        console.error('Reset partial stats error:', error);
+                        showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
+                    }
+                },
+                () => {
+                    // 취소 시 아무 작업도 하지 않음
                 }
-                
-                showAlertModal(data.message || `${modeName} 부분 전적이 초기화되었습니다.`, '성공', 'success');
-                
-                // 젬 업데이트
-                if (window.WAITING_ROOM_CONFIG) {
-                    window.WAITING_ROOM_CONFIG.userGem = (window.WAITING_ROOM_CONFIG.userGem || 0) - 100;
-                }
-                
-                // 전적 새로고침
-                location.reload();
-            } catch (error) {
-                console.error('Reset partial stats error:', error);
-                showAlertModal('전적 초기화 중 오류가 발생했습니다.', '오류', 'error');
-            }
+            );
         };
 
         // 주석
@@ -3941,7 +4078,7 @@
             let mobileLastChatTime = 0;
             let mobileLastChatMessage = '';
             let mobileChatCooldownInterval = null;
-            const MOBILE_CHAT_COOLDOWN = 3000;
+            const MOBILE_CHAT_COOLDOWN = 5000; // 5초 쿨타임
             
             // 주석
             function startMobileChatCooldown() {
@@ -3965,7 +4102,7 @@
                     
                     if (!countdownEl) return;
 
-                    let remaining = 3;
+                    let remaining = 5;
                     countdownEl.textContent = remaining;
                     countdownEl.style.display = 'block';
                     
@@ -4030,13 +4167,14 @@
                         });
                     }
                     
-                    // 주석
+                    // 마지막 전송 시간과 메시지 저장
+                    mobileLastChatTime = currentTime;
                     mobileLastChatMessage = message;
                     
                     newChatInput.value = '';
                     if (emojiPopup) emojiPopup.classList.remove('show');
                     
-                    // 주석
+                    // 쿨타임 시작
                     startMobileChatCooldown();
                 }
 

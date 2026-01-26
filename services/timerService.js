@@ -6,18 +6,25 @@ class TimerService {
     }
 
     async initializeTimer(gameId, timePerPlayer = 30 * 60, options = {}) {
+        const byoyomiSeconds = options.byoyomiSeconds !== undefined ? options.byoyomiSeconds : 30;
+        const byoyomiPeriods = options.byoyomiPeriods !== undefined ? options.byoyomiPeriods : 5;
+        
+        // 제한시간이 0이면 처음부터 초읽기 모드로 시작
+        const isTimeLimitZero = timePerPlayer === 0;
+        const shouldStartInByoyomi = isTimeLimitZero && byoyomiPeriods > 0;
+        
         const timerData = {
             gameId: gameId,
             blackTime: timePerPlayer,
             whiteTime: timePerPlayer,
             currentTurn: 'black',
-            blackInByoyomi: false,
-            whiteInByoyomi: false,
-            blackByoyomiPeriods: options.byoyomiPeriods !== undefined ? options.byoyomiPeriods : 5,
-            whiteByoyomiPeriods: options.byoyomiPeriods !== undefined ? options.byoyomiPeriods : 5,
-            blackByoyomiTime: options.byoyomiSeconds !== undefined ? options.byoyomiSeconds : 30,
-            whiteByoyomiTime: options.byoyomiSeconds !== undefined ? options.byoyomiSeconds : 30,
-            byoyomiSeconds: options.byoyomiSeconds !== undefined ? options.byoyomiSeconds : 30,
+            blackInByoyomi: shouldStartInByoyomi,
+            whiteInByoyomi: shouldStartInByoyomi,
+            blackByoyomiPeriods: byoyomiPeriods,
+            whiteByoyomiPeriods: byoyomiPeriods,
+            blackByoyomiTime: shouldStartInByoyomi ? byoyomiSeconds : byoyomiSeconds,
+            whiteByoyomiTime: shouldStartInByoyomi ? byoyomiSeconds : byoyomiSeconds,
+            byoyomiSeconds: byoyomiSeconds,
             isFischer: options.isFischer || false,
             fischerIncrement: options.fischerIncrement || 5,
             isPaused: true, // 초기화 시 일시정지 상태로 시작
@@ -97,11 +104,20 @@ class TimerService {
         const previousTurn = timer.currentTurn;
         const now = Date.now();
         
+        // 제한시간이 0이면 초읽기 모드로 처리
+        const isTimeLimitZero = (timer.blackTime === 0 && timer.whiteTime === 0);
+        
         // 이전 턴의 경과 시간 계산 및 차감
         if (timer.lastUpdate) {
             const elapsed = (now - timer.lastUpdate) / 1000; // 초 단위
             
             if (previousTurn === 'black') {
+                // 제한시간이 0이면 초읽기 모드로 처리
+                if (isTimeLimitZero && timer.blackByoyomiPeriods > 0 && !timer.blackInByoyomi) {
+                    timer.blackInByoyomi = true;
+                    timer.blackByoyomiTime = timer.byoyomiSeconds;
+                }
+                
                 if (timer.blackInByoyomi) {
                     timer.blackByoyomiTime = Math.max(0, timer.blackByoyomiTime - elapsed);
                     if (timer.blackByoyomiTime <= 0) {
@@ -109,6 +125,9 @@ class TimerService {
                         if (timer.blackByoyomiPeriods > 0) {
                             timer.blackByoyomiTime = timer.byoyomiSeconds;
                         }
+                    } else {
+                        // 초읽기 시간 안에 수를 두었으므로 초읽기 시간 회복
+                        timer.blackByoyomiTime = timer.byoyomiSeconds;
                     }
                 } else {
                     timer.blackTime = Math.max(0, timer.blackTime - elapsed);
@@ -118,6 +137,12 @@ class TimerService {
                     }
                 }
             } else {
+                // 제한시간이 0이면 초읽기 모드로 처리
+                if (isTimeLimitZero && timer.whiteByoyomiPeriods > 0 && !timer.whiteInByoyomi) {
+                    timer.whiteInByoyomi = true;
+                    timer.whiteByoyomiTime = timer.byoyomiSeconds;
+                }
+                
                 if (timer.whiteInByoyomi) {
                     timer.whiteByoyomiTime = Math.max(0, timer.whiteByoyomiTime - elapsed);
                     if (timer.whiteByoyomiTime <= 0) {
@@ -125,6 +150,9 @@ class TimerService {
                         if (timer.whiteByoyomiPeriods > 0) {
                             timer.whiteByoyomiTime = timer.byoyomiSeconds;
                         }
+                    } else {
+                        // 초읽기 시간 안에 수를 두었으므로 초읽기 시간 회복
+                        timer.whiteByoyomiTime = timer.byoyomiSeconds;
                     }
                 } else {
                     timer.whiteTime = Math.max(0, timer.whiteTime - elapsed);
@@ -217,7 +245,16 @@ class TimerService {
         let timeExpired = false;
         let expiredColor = null;
 
+        // 제한시간이 0이면 초읽기 모드로 처리
+        const isTimeLimitZero = (timer.blackTime === 0 && timer.whiteTime === 0);
+        
         if (timer.currentTurn === 'black') {
+                // 제한시간이 0이면 초읽기 모드로 처리
+                if (isTimeLimitZero && timer.blackByoyomiPeriods > 0 && !timer.blackInByoyomi) {
+                    timer.blackInByoyomi = true;
+                    timer.blackByoyomiTime = timer.byoyomiSeconds;
+                }
+                
                 if (timer.blackInByoyomi) {
                     timer.blackByoyomiTime = Math.max(0, timer.blackByoyomiTime - delta);
                     if (timer.blackByoyomiTime <= 0) {
@@ -234,18 +271,22 @@ class TimerService {
                     timer.blackTime = Math.max(0, timer.blackTime - delta);
                     if (timer.blackTime <= 0) {
                         if (timer.blackByoyomiPeriods > 0) {
-                            console.log(`[TimerService] Black entered byoyomi in game ${gameId}`);
                             timer.blackInByoyomi = true;
                             timer.blackByoyomiTime = timer.byoyomiSeconds;
                         } else {
                              // 시간 초과 (초읽기 없음)
-                            console.log(`[TimerService] Black time expired (no byoyomi) in game ${gameId}`);
                             timeExpired = true;
                             expiredColor = 'black';
                         }
                     }
                 }
             } else {
+                // 제한시간이 0이면 초읽기 모드로 처리
+                if (isTimeLimitZero && timer.whiteByoyomiPeriods > 0 && !timer.whiteInByoyomi) {
+                    timer.whiteInByoyomi = true;
+                    timer.whiteByoyomiTime = timer.byoyomiSeconds;
+                }
+                
                 if (timer.whiteInByoyomi) {
                     timer.whiteByoyomiTime = Math.max(0, timer.whiteByoyomiTime - delta);
                     if (timer.whiteByoyomiTime <= 0) {
@@ -262,12 +303,10 @@ class TimerService {
                     timer.whiteTime = Math.max(0, timer.whiteTime - delta);
                     if (timer.whiteTime <= 0) {
                         if (timer.whiteByoyomiPeriods > 0) {
-                            console.log(`[TimerService] White entered byoyomi in game ${gameId}`);
                             timer.whiteInByoyomi = true;
                             timer.whiteByoyomiTime = timer.byoyomiSeconds;
                         } else {
-                            // 시간 초과 (초읽기 없음)
-                            console.log(`[TimerService] White time expired (no byoyomi) in game ${gameId}`);
+                             // 시간 초과 (초읽기 없음)
                             timeExpired = true;
                             expiredColor = 'white';
                         }
@@ -371,6 +410,34 @@ class TimerService {
         
         this.timers.set(gameId, timer);
         console.log(`[TimerService] Timer started for game ${gameId}`);
+        return timer;
+    }
+
+    async stopTimer(gameId) {
+        // 타이머를 일시정지 상태로 설정하여 더 이상 업데이트되지 않도록 함
+        const timer = await this.getTimer(gameId);
+        if (!timer) {
+            console.log(`[TimerService] stopTimer: Timer not found for game ${gameId} (may already be stopped)`);
+            return null;
+        }
+        
+        // 일시정지 상태로 설정
+        timer.isPaused = true;
+        timer.pausedAt = Date.now();
+        
+        // Redis에서 삭제 (게임 종료 시 타이머는 더 이상 필요 없음)
+        const redis = getRedisClient();
+        if (redis) {
+            try {
+                await redis.del(`timer:${gameId}`);
+            } catch (error) {
+                console.error('Redis timer delete error:', error);
+            }
+        }
+        
+        // 메모리에서도 제거
+        this.timers.delete(gameId);
+        console.log(`[TimerService] Timer stopped for game ${gameId}`);
         return timer;
     }
 }

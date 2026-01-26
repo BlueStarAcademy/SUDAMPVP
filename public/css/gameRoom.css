@@ -438,7 +438,7 @@
             min-height: 9px;
             width: 100%;
             background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-            transition: width 0.2s linear;
+            transition: width 0.5s linear, background 0.3s ease;
             border-radius: 3px;
             min-width: 1px;
             visibility: visible !important;
@@ -3024,7 +3024,7 @@
                 visibility: visible !important;
                 opacity: 1 !important;
                 background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%) !important;
-                transition: width 0.2s linear !important;
+                transition: width 0.5s linear, background 0.3s ease !important;
                 border-radius: 2px !important;
                 min-width: 1px !important;
             }
@@ -3679,10 +3679,10 @@
 
         .game-start-modal-content {
             background: linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-            border-radius: 24px;
+            border-radius: 20px;
             padding: 0;
-            max-width: 900px;
-            width: 95%;
+            max-width: 650px;
+            width: 90%;
             box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
             border: 2px solid rgba(255, 255, 255, 0.15);
             cursor: move;
@@ -3704,11 +3704,10 @@
         }
 
         .game-start-modal-header {
-            text-align: center;
-            padding: 32px 40px 24px;
+            padding: 12px 24px;
             cursor: move;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+            min-height: 20px;
         }
 
         .game-start-modal-icon {
@@ -3718,10 +3717,9 @@
         }
 
         .game-start-modal-title {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: 800;
             color: #fff;
-            margin-bottom: 8px;
             letter-spacing: -0.5px;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
@@ -3733,10 +3731,66 @@
         }
 
         .game-start-modal-body {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            padding: 32px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 20px 24px;
+        }
+        
+        /* 대국자 정보 섹션 (가로 배치) */
+        .players-info-section {
+            display: flex;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .player-info-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+        }
+        
+        .player-info-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .player-info-nickname {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        
+        .player-info-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .player-info-indicator.ready {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+        
+        .player-info-indicator.waiting {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
         }
 
         .modal-left-section {
@@ -3753,26 +3807,26 @@
 
         .game-description-section {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-            border-radius: 16px;
-            padding: 20px 24px;
+            border-radius: 12px;
+            padding: 14px 18px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 15px;
+            font-size: 14px;
             color: rgba(255, 255, 255, 0.9);
             line-height: 1.6;
             font-weight: 500;
-            min-height: 60px;
+            min-height: 50px;
             display: flex;
             align-items: center;
         }
 
         .game-info-section {
             background: rgba(255, 255, 255, 0.04);
-            border-radius: 16px;
-            padding: 20px 24px;
+            border-radius: 12px;
+            padding: 16px 18px;
             border: 1px solid rgba(255, 255, 255, 0.08);
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px 20px;
+            gap: 10px 16px;
         }
 
         .game-info-item {
@@ -3798,8 +3852,8 @@
 
         .countdown-section {
             background: rgba(255, 255, 255, 0.04);
-            border-radius: 16px;
-            padding: 20px 24px;
+            border-radius: 12px;
+            padding: 14px 18px;
             border: 1px solid rgba(255, 255, 255, 0.08);
             text-align: center;
         }
@@ -3863,20 +3917,9 @@
             transition: all 0.3s;
         }
 
-        .ready-status-item.ready {
+        .player-info-item.ready {
             background: rgba(16, 185, 129, 0.15);
             border-color: rgba(16, 185, 129, 0.3);
-        }
-
-        .ready-status-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .stone-icon {
@@ -3892,44 +3935,25 @@
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
 
-        .ready-status-nickname {
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
-            margin: 4px 0;
-        }
-
-        .ready-status-indicator {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s;
-            width: fit-content;
-        }
-
-        .ready-status-indicator.ready {
+        .player-info-indicator.ready {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             border-color: rgba(16, 185, 129, 0.5);
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .ready-status-indicator .indicator-text {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .ready-status-indicator.ready .indicator-text {
             color: #fff;
+        }
+
+        .player-info-indicator.waiting {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .player-info-indicator .indicator-text {
+            color: inherit;
         }
 
         .start-button-container {
             text-align: center;
-            padding: 24px 40px 32px;
+            padding: 16px 24px 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.03) 100%);
             pointer-events: auto !important;

@@ -57,6 +57,18 @@ class Modal {
 
         overlay.appendChild(modal);
         overlay.classList.add('active');
+        
+        // z-index를 동적으로 증가시켜 항상 최상위에 표시
+        // 현재 열려있는 모든 모달의 최대 z-index를 찾아서 +1
+        const allModals = document.querySelectorAll('.modal-overlay, .stats-modal');
+        let maxZIndex = 100000;
+        allModals.forEach(modalEl => {
+            const zIndex = parseInt(window.getComputedStyle(modalEl).zIndex) || 0;
+            if (zIndex > maxZIndex) {
+                maxZIndex = zIndex;
+            }
+        });
+        overlay.style.zIndex = (maxZIndex + 1).toString();
 
         // Store modal info
         this.modals.set(id, {
@@ -253,6 +265,84 @@ window.showAlertModal = function(message, title = '안내', type = 'info') {
         if (e.key === 'Escape') {
             window.Modal.close(modalId);
             document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // 모달이 닫힐 때 이벤트 리스너 제거
+    const originalClose = window.Modal.close.bind(window.Modal);
+    window.Modal.close = function(id) {
+        if (id === modalId) {
+            document.removeEventListener('keydown', handleEscape);
+        }
+        originalClose(id);
+    };
+};
+
+// 확인 모달 함수 (confirm 대체용)
+window.showConfirmModal = function(message, title = '확인', onConfirm, onCancel) {
+    const modalId = 'confirm-modal-' + Date.now();
+    
+    // 젬 값이 포함된 메시지인지 확인하고 이미지로 변환
+    let processedMessage = escapeHtml(message);
+    // 젬 값 패턴 찾기: (숫자젬 소모) 또는 (숫자젬) 또는 (숫자젬 소모, 추가 텍스트)
+    processedMessage = processedMessage.replace(/\((\d+)젬\s*(소모)?([^)]*)\)/g, (match, gemAmount, hasSomo, additionalText) => {
+        const gemImg = `<img src="/images/Zem.webp" alt="젬" style="width: 16px; height: 16px; vertical-align: middle; margin: 0 2px;">`;
+        const gemValue = `<span style="font-weight: 700; vertical-align: middle;">${gemAmount}</span>`;
+        const somoText = hasSomo ? ' 소모' : '';
+        const additional = additionalText ? additionalText : '';
+        return `(${gemImg}${gemValue}${somoText}${additional})`;
+    });
+    
+    const content = `
+        <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+            <div style="font-size: 16px; line-height: 1.6; color: #374151; white-space: pre-wrap;">${processedMessage}</div>
+        </div>
+    `;
+    
+    const footer = `
+        <button class="modal-btn modal-btn-secondary" id="confirm-cancel-btn-${modalId}" style="min-width: 100px; margin-right: 10px;">취소</button>
+        <button class="modal-btn modal-btn-primary" id="confirm-ok-btn-${modalId}" style="min-width: 100px;">확인</button>
+    `;
+    
+    window.Modal.open(modalId, content, {
+        title: `⚠️ ${title}`,
+        width: '400px',
+        footer: footer,
+        showClose: true
+    });
+    
+    // 확인 버튼 클릭
+    const confirmBtn = document.getElementById(`confirm-ok-btn-${modalId}`);
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            window.Modal.close(modalId);
+            if (typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        });
+    }
+    
+    // 취소 버튼 클릭
+    const cancelBtn = document.getElementById(`confirm-cancel-btn-${modalId}`);
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            window.Modal.close(modalId);
+            if (typeof onCancel === 'function') {
+                onCancel();
+            }
+        });
+    }
+    
+    // ESC 키로 닫기 (취소로 처리)
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            window.Modal.close(modalId);
+            document.removeEventListener('keydown', handleEscape);
+            if (typeof onCancel === 'function') {
+                onCancel();
+            }
         }
     };
     document.addEventListener('keydown', handleEscape);

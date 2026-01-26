@@ -145,6 +145,8 @@ class GameSocket {
                     currentTurn: timer.currentTurn,
                     blackInByoyomi: timer.blackInByoyomi,
                     whiteInByoyomi: timer.whiteInByoyomi,
+                    blackByoyomiTime: timer.blackByoyomiTime,
+                    whiteByoyomiTime: timer.whiteByoyomiTime,
                     blackByoyomiPeriods: timer.blackByoyomiPeriods,
                     whiteByoyomiPeriods: timer.whiteByoyomiPeriods,
                     byoyomiSeconds: timer.byoyomiSeconds
@@ -300,6 +302,14 @@ class GameSocket {
                     return;
                 }
                 
+                // 게임이 실제로 종료되었는지 확인 (무한 루프 방지)
+                const game = await gameService.getGame(gameId);
+                if (game && game.endedAt) {
+                    gameEnded = true;
+                    clearInterval(timerUpdateInterval);
+                    return;
+                }
+                
                 const now = Date.now();
                 
                 // 게임 상태 확인은 5초마다만 수행 (무한루프 방지)
@@ -382,27 +392,63 @@ class GameSocket {
                     if (updatedTimer) {
                         // 시간 초과 확인
                         if (updatedTimer.timeExpired) {
-                            console.log(`[GameSocket] Time expired for ${updatedTimer.expiredColor} in game ${gameId}`);
+                            // 이미 처리 중이면 중복 처리 방지 (무한 루프 방지)
+                            if (gameEnded) {
+                                clearInterval(timerUpdateInterval);
+                                return;
+                            }
+                            
+                            // 게임이 이미 종료되었는지 확인
+                            const gameCheck = await gameService.getGame(gameId);
+                            if (gameCheck && gameCheck.endedAt) {
+                                gameEnded = true;
+                                clearInterval(timerUpdateInterval);
+                                return;
+                            }
+                            
+                            console.log(`[GameSocket] Time expired for ${updatedTimer.expiredColor} in game ${gameId}`, {
+                                timeExpired: updatedTimer.timeExpired,
+                                expiredColor: updatedTimer.expiredColor,
+                                blackByoyomiTime: updatedTimer.blackByoyomiTime,
+                                whiteByoyomiTime: updatedTimer.whiteByoyomiTime,
+                                blackByoyomiPeriods: updatedTimer.blackByoyomiPeriods,
+                                whiteByoyomiPeriods: updatedTimer.whiteByoyomiPeriods
+                            });
+                            
+                            // gameEnded를 먼저 설정하여 중복 처리 방지
                             gameEnded = true;
                             clearInterval(timerUpdateInterval);
                             
                             // 시간패 처리
-                            const { result, rewards } = await gameService.handleTimeExpired(gameId, updatedTimer.expiredColor);
-                            const endedGame = await gameService.getGame(gameId);
-                            
-                            // 종료 이유 설정 (시간패)
-                            const reason = updatedTimer.expiredColor === 'black' ? 'time_loss_black' : 'time_loss_white';
-                            
-                            // 게임 종료 이벤트 전송
-                            this.io.to(`game-${gameId}`).emit('game_ended', {
-                                result,
-                                rewards,
-                                game: endedGame,
-                                reason: reason
-                            });
+                            try {
+                                const { result, rewards } = await gameService.handleTimeExpired(gameId, updatedTimer.expiredColor);
+                                const endedGame = await gameService.getGame(gameId);
+                                
+                                // 종료 이유 설정 (시간패)
+                                const reason = updatedTimer.expiredColor === 'black' ? 'time_loss_black' : 'time_loss_white';
+                                
+                                console.log(`[GameSocket] Emitting game_ended event for time expiration:`, {
+                                    gameId,
+                                    expiredColor: updatedTimer.expiredColor,
+                                    result,
+                                    reason
+                                });
+                                
+                                // 게임 종료 이벤트 전송
+                                this.io.to(`game-${gameId}`).emit('game_ended', {
+                                    result,
+                                    rewards,
+                                    game: endedGame,
+                                    reason: reason
+                                });
+                            } catch (error) {
+                                console.error(`[GameSocket] Error handling time expiration for game ${gameId}:`, error);
+                                // 에러가 발생해도 gameEnded는 true로 유지하여 무한 루프 방지
+                            }
                             return;
                         }
 
+                        // 서버 타임스탬프 포함 (실시간 PVP를 위한 정확한 동기화)
                         this.io.to(`game-${gameId}`).emit('timer_update', {
                             blackTime: updatedTimer.blackTime,
                             whiteTime: updatedTimer.whiteTime,
@@ -413,7 +459,9 @@ class GameSocket {
                             whiteByoyomiTime: updatedTimer.whiteByoyomiTime,
                             blackByoyomiPeriods: updatedTimer.blackByoyomiPeriods,
                             whiteByoyomiPeriods: updatedTimer.whiteByoyomiPeriods,
-                            byoyomiSeconds: updatedTimer.byoyomiSeconds
+                            byoyomiSeconds: updatedTimer.byoyomiSeconds,
+                            serverTimestamp: Date.now(), // 서버 시간 포함
+                            lastUpdate: updatedTimer.lastUpdate // 서버의 마지막 업데이트 시간
                         });
                     } else {
                         // 타이머가 없으면 게임이 종료된 것으로 간주
@@ -427,7 +475,77 @@ class GameSocket {
                     console.error(`[GameSocket] Timer update error for game ${gameId}:`, error.message);
                 }
             }
-        }, 1000); // 1초마다 업데이트
+        }, 2000); // 2초마다 동기화 (PVP 정확도 향상)
+
+        // 클라이언트에서 타이머 동기화 요청
+        socket.on('get_timer_sync', async () => {
+            try {
+                // 게임이 이미 종료되었는지 확인 (무한 루프 방지)
+                const game = await gameService.getGame(gameId);
+                if (game && game.endedAt) {
+                    gameEnded = true;
+                    clearInterval(timerUpdateInterval);
+                    return;
+                }
+                
+                // 게임이 종료되었으면 더 이상 처리하지 않음
+                if (gameEnded) {
+                    return;
+                }
+                
+                const timer = await timerService.getTimer(gameId);
+                if (timer) {
+                    // 시간 초과 확인
+                    const updatedTimer = await timerService.updateTimer(gameId);
+                    if (updatedTimer) {
+                        if (updatedTimer.timeExpired) {
+                            // 이미 처리 중이면 중복 처리 방지
+                            if (gameEnded) {
+                                return;
+                            }
+                            
+                            gameEnded = true;
+                            clearInterval(timerUpdateInterval);
+                            
+                            try {
+                                const { result, rewards } = await gameService.handleTimeExpired(gameId, updatedTimer.expiredColor);
+                                const endedGame = await gameService.getGame(gameId);
+                                const reason = updatedTimer.expiredColor === 'black' ? 'time_loss_black' : 'time_loss_white';
+                                
+                                this.io.to(`game-${gameId}`).emit('game_ended', {
+                                    result,
+                                    rewards,
+                                    game: endedGame,
+                                    reason: reason
+                                });
+                            } catch (error) {
+                                console.error(`[GameSocket] Error handling time expiration for game ${gameId}:`, error);
+                                // 에러가 발생해도 gameEnded는 true로 유지하여 무한 루프 방지
+                            }
+                            return;
+                        }
+                        
+                        // 타이머 상태 전송 (서버 타임스탬프 포함)
+                        socket.emit('timer_update', {
+                            blackTime: updatedTimer.blackTime,
+                            whiteTime: updatedTimer.whiteTime,
+                            currentTurn: updatedTimer.currentTurn,
+                            blackInByoyomi: updatedTimer.blackInByoyomi,
+                            whiteInByoyomi: updatedTimer.whiteInByoyomi,
+                            blackByoyomiTime: updatedTimer.blackByoyomiTime,
+                            whiteByoyomiTime: updatedTimer.whiteByoyomiTime,
+                            blackByoyomiPeriods: updatedTimer.blackByoyomiPeriods,
+                            whiteByoyomiPeriods: updatedTimer.whiteByoyomiPeriods,
+                            byoyomiSeconds: updatedTimer.byoyomiSeconds,
+                            serverTimestamp: Date.now(), // 서버 시간 포함
+                            lastUpdate: updatedTimer.lastUpdate // 서버의 마지막 업데이트 시간
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error(`[GameSocket] Timer sync error for game ${gameId}:`, error);
+            }
+        });
 
         // Clean up interval when socket disconnects
         socket.on('disconnect', () => {
@@ -644,6 +762,20 @@ class GameSocket {
                 return;
             }
             
+            // 게임이 이미 종료되었는지 먼저 확인 (경쟁 조건 방지)
+            try {
+                const gameCheck = await gameService.getGame(gameId);
+                if (gameCheck && gameCheck.endedAt) {
+                    console.log(`[GameSocket] Game already ended, ignoring make_move request`);
+                    this.pendingMoves.delete(moveKey);
+                    socket.emit('move_error', { error: '게임이 이미 종료되었습니다.' });
+                    return;
+                }
+            } catch (error) {
+                console.error(`[GameSocket] Error checking game status:`, error);
+                // 게임 상태 확인 실패 시에도 계속 진행 (게임이 존재하지 않으면 makeMove에서 처리)
+            }
+            
             // 요청 처리 중 플래그 설정
             this.pendingMoves.set(moveKey, true);
             
@@ -677,6 +809,24 @@ class GameSocket {
                     timer = await timerService.getTimer(gameId);
                 } else {
                     timer = await timerService.switchTurn(gameId, updatedGame.mode);
+                }
+                
+                // 타이머 동기화: 수를 둔 후 클라이언트에 타이머 상태 전송 (move_made에 포함되지만 명시적으로도 전송)
+                if (timer) {
+                    this.io.to(`game-${gameId}`).emit('timer_update', {
+                        blackTime: timer.blackTime,
+                        whiteTime: timer.whiteTime,
+                        currentTurn: timer.currentTurn,
+                        blackInByoyomi: timer.blackInByoyomi,
+                        whiteInByoyomi: timer.whiteInByoyomi,
+                        blackByoyomiTime: timer.blackByoyomiTime,
+                        whiteByoyomiTime: timer.whiteByoyomiTime,
+                        blackByoyomiPeriods: timer.blackByoyomiPeriods,
+                        whiteByoyomiPeriods: timer.whiteByoyomiPeriods,
+                        byoyomiSeconds: timer.byoyomiSeconds,
+                        serverTimestamp: Date.now(), // 서버 시간 포함
+                        lastUpdate: timer.lastUpdate // 서버의 마지막 업데이트 시간
+                    });
                 }
                 
                 // Get updated game state for captured stones count
@@ -808,16 +958,28 @@ class GameSocket {
                         const result = endedGame.result || (gameState.capturedBlack >= (gameState.blackCaptureTarget || gameState.captureTarget || 20) ? 'black_win' : 'white_win');
                         
                         // 보상 처리 (endGame 호출하여 레이팅 업데이트)
-                        const { rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                        
-                        // 게임 종료 이벤트 전송 (계가 없이)
-                        this.io.to(`game-${gameId}`).emit('game_ended', {
-                            result,
-                            score: null, // CAPTURE 모드에서는 계가 없음
-                            rewards,
-                            game: endGameData,
-                            reason: '목표 따내기 점수 달성'
-                        });
+                        try {
+                            const { rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                            
+                            // 게임 종료 이벤트 전송 (계가 없이)
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result,
+                                score: null, // CAPTURE 모드에서는 계가 없음
+                                rewards,
+                                game: endGameData,
+                                reason: '목표 따내기 점수 달성'
+                            });
+                        } catch (error) {
+                            console.error('[GameSocket] Error in endGame (CAPTURE):', error);
+                            // 에러가 발생해도 게임 종료 이벤트는 전송
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result,
+                                score: null,
+                                rewards: { black: { ratingChange: 0, gold: 0 }, white: { ratingChange: 0, gold: 0 } },
+                                game: endedGame,
+                                reason: '목표 따내기 점수 달성 - 오류'
+                            });
+                        }
                         return;
                     } else if (moveResult.autoScoring) {
                         // AI 대국 자동 계가: 설정된 수순에 도달하여 자동 계가 진행
@@ -827,16 +989,31 @@ class GameSocket {
                         setTimeout(async () => {
                             this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
                             
-                            const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                            
-                            // 계가 결과 전송
-                            this.io.to(`game-${gameId}`).emit('game_ended', {
-                                result,
-                                score,
-                                rewards,
-                                game: endGameData,
-                                reason: `자동 계가 (${moveResult.moveNumber}수)`
-                            });
+                            try {
+                                // 최신 게임 상태 가져오기 (makeMove 후 상태가 변경되었을 수 있음)
+                                const latestGameState = await gameService.getGameState(gameId);
+                                const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, latestGameState);
+                                
+                                // 계가 결과 전송
+                                this.io.to(`game-${gameId}`).emit('game_ended', {
+                                    result,
+                                    score,
+                                    rewards,
+                                    game: endGameData,
+                                    reason: `자동 계가 (${moveResult.moveNumber}수)`
+                                });
+                            } catch (error) {
+                                console.error('[GameSocket] Error in endGame (autoScoring):', error);
+                                // 에러가 발생해도 게임 종료 이벤트는 전송
+                                const endedGame = await gameService.getGame(gameId);
+                                this.io.to(`game-${gameId}`).emit('game_ended', {
+                                    result: endedGame.result || 'draw',
+                                    score: null,
+                                    rewards: { black: { ratingChange: 0, gold: 0 }, white: { ratingChange: 0, gold: 0 } },
+                                    game: endedGame,
+                                    reason: `자동 계가 (${moveResult.moveNumber}수) - 계가 오류`
+                                });
+                            }
                         }, 1500); // 1.5초 지연
                         return;
                     } else if (moveResult.isDoublePass) {
@@ -848,6 +1025,67 @@ class GameSocket {
                         setTimeout(async () => {
                             this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
                             
+                            try {
+                                const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
+                                
+                                // 계가 결과 전송
+                                this.io.to(`game-${gameId}`).emit('game_ended', {
+                                    result,
+                                    score,
+                                    rewards,
+                                    game: endGameData
+                                });
+                            } catch (error) {
+                                console.error('[GameSocket] Error in endGame (doublePass):', error);
+                                // 에러가 발생해도 게임 종료 이벤트는 전송
+                                const endedGame = await gameService.getGame(gameId);
+                                this.io.to(`game-${gameId}`).emit('game_ended', {
+                                    result: endedGame.result || 'draw',
+                                    score: null,
+                                    rewards: { black: { ratingChange: 0, gold: 0 }, white: { ratingChange: 0, gold: 0 } },
+                                    game: endedGame,
+                                    reason: '양쪽 통과 - 계가 오류'
+                                });
+                            }
+                        }, 500);
+                        return;
+                    } else if (moveResult.isMaxMovesReached) {
+                        // 클래식 바둑: 제한 턴수 도달 시 계가 진행
+                        console.log('[GameSocket] Game ended by max moves reached, starting scoring');
+                        this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
+                        
+                        try {
+                            // 최신 게임 상태 가져오기 (makeMove 후 상태가 변경되었을 수 있음)
+                            const latestGameState = await gameService.getGameState(gameId);
+                            const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, latestGameState);
+                            
+                            // 계가 결과 전송
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result,
+                                score,
+                                rewards,
+                                game: endGameData,
+                                reason: `제한 턴수 도달 (${moveResult.moveNumber}수)`
+                            });
+                        } catch (error) {
+                            console.error('[GameSocket] Error in endGame (maxMovesReached):', error);
+                            // 에러가 발생해도 게임 종료 이벤트는 전송
+                            const endedGame = await gameService.getGame(gameId);
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result: endedGame.result || 'draw',
+                                score: null,
+                                rewards: { black: { ratingChange: 0, gold: 0 }, white: { ratingChange: 0, gold: 0 } },
+                                game: endedGame,
+                                reason: `제한 턴수 도달 (${moveResult.moveNumber}수) - 계가 오류`
+                            });
+                        }
+                        return;
+                    } else {
+                        // 기타 게임 종료 (예: 시간 초과 등)
+                        console.log('[GameSocket] Game ended (other reason), starting scoring');
+                        this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
+                        
+                        try {
                             const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
                             
                             // 계가 결과 전송
@@ -857,38 +1095,18 @@ class GameSocket {
                                 rewards,
                                 game: endGameData
                             });
-                        }, 500);
-                        return;
-                    } else if (moveResult.isMaxMovesReached) {
-                        // 클래식 바둑: 제한 턴수 도달 시 계가 진행
-                        console.log('[GameSocket] Game ended by max moves reached, starting scoring');
-                        this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
-                        
-                        const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                        
-                        // 계가 결과 전송
-                        this.io.to(`game-${gameId}`).emit('game_ended', {
-                            result,
-                            score,
-                            rewards,
-                            game: endGameData,
-                            reason: `제한 턴수 도달 (${moveResult.moveNumber}수)`
-                        });
-                        return;
-                    } else {
-                        // 기타 게임 종료 (예: 시간 초과 등)
-                        console.log('[GameSocket] Game ended (other reason), starting scoring');
-                        this.io.to(`game-${gameId}`).emit('scoring_started', { message: '계가를 진행하고 있습니다...' });
-                        
-                        const { result, score, rewards, game: endGameData } = await gameService.endGame(gameId, gameState);
-                        
-                        // 계가 결과 전송
-                        this.io.to(`game-${gameId}`).emit('game_ended', {
-                            result,
-                            score,
-                            rewards,
-                            game: endGameData
-                        });
+                        } catch (error) {
+                            console.error('[GameSocket] Error in endGame (other reason):', error);
+                            // 에러가 발생해도 게임 종료 이벤트는 전송
+                            const endedGame = await gameService.getGame(gameId);
+                            this.io.to(`game-${gameId}`).emit('game_ended', {
+                                result: endedGame.result || 'draw',
+                                score: null,
+                                rewards: { black: { ratingChange: 0, gold: 0 }, white: { ratingChange: 0, gold: 0 } },
+                                game: endedGame,
+                                reason: '게임 종료 - 계가 오류'
+                            });
+                        }
                         return;
                     }
                 }
