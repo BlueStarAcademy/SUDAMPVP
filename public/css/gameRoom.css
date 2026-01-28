@@ -183,7 +183,17 @@
         }
 
         .turn-indicator-panel .panel-title {
-            display: none; /* 제목 숨기기 */
+            display: block; /* 제목 표시 */
+            margin-bottom: 8px;
+        }
+        
+        .turn-indicator-panel {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .turn-indicator-panel .turn-indicator-sidebar {
+            width: 100%;
         }
 
         /* 사이드바용 수순 표시 - 세로 배치 (흑/백 위, 숫자 아래) */
@@ -951,7 +961,8 @@
             align-self: stretch;
             height: 100%;
             min-height: 0;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
             transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
             position: relative;
         }
@@ -1221,14 +1232,13 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            min-height: 250px;
-            margin-bottom: auto;
+            min-height: 0;
             background: rgba(31, 41, 55, 0.8);
             border-radius: clamp(6px, 1vw, 8px);
             padding: clamp(8px, 1.5vw, 12px);
             border: 1px solid rgba(75, 85, 99, 0.5);
             min-width: 0;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .chat-tabs {
@@ -1260,12 +1270,13 @@
         .chat-messages {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             space-y: 4px;
             margin-bottom: clamp(8px, 1.5vw, 12px);
             background: rgba(17, 24, 39, 0.4);
             padding: clamp(5px, 1vw, 6px) clamp(6px, 1.5vw, 8px);
             border-radius: clamp(4px, 0.8vw, 6px);
-            min-height: 180px;
+            min-height: 0;
             min-width: 0;
             box-sizing: border-box;
         }

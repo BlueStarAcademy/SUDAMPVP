@@ -6837,14 +6837,24 @@
         }
     
     function switchChatTab(tabName) {
-        if (activeChatTab === tabName) return;
+        if (activeChatTab === tabName) {
+            console.log('[Client] switchChatTab: already on tab', tabName);
+            return;
+        }
         
+        console.log('[Client] switchChatTab: switching from', activeChatTab, 'to', tabName);
         activeChatTab = tabName;
         
         // 탭 UI 업데이트
         const chatTabs = document.querySelectorAll('.chat-tab');
+        if (chatTabs.length === 0) {
+            console.warn('[Client] switchChatTab: chat tabs not found');
+            return;
+        }
+        
         chatTabs.forEach(tab => {
-            if (tab.getAttribute('data-tab') === tabName) {
+            const tabData = tab.getAttribute('data-tab');
+            if (tabData === tabName) {
                 tab.classList.add('active');
             } else {
                 tab.classList.remove('active');
@@ -6866,6 +6876,8 @@
         if (chatInput) {
             chatInput.placeholder = tabName === 'game' ? '메시지 입력...' : '전체 채팅 메시지 입력...';
         }
+        
+        console.log('[Client] switchChatTab: switched to', tabName, 'messages count:', messagesToShow.length);
         }
 
     function escapeHtml(text) {
@@ -6911,25 +6923,39 @@
         }
 
     function sendChatMessage() {
-        if (!chatInput) return;
+        if (!chatInput) {
+            console.warn('[Client] sendChatMessage: chatInput not found');
+            return;
+        }
         
         const message = chatInput.value.trim();
-        if (!message) return;
+        if (!message) {
+            console.log('[Client] sendChatMessage: empty message');
+            return;
+        }
 
         const currentTime = Date.now();
         
         // 쿨타임 체크
         if (currentTime - lastChatTime < CHAT_COOLDOWN) {
+            console.log('[Client] sendChatMessage: cooldown active');
             return;
         }
         
         // 같은 말 2회 연속 방지
         if (message === lastChatMessage) {
+            console.log('[Client] sendChatMessage: duplicate message');
             return;
         }
         
         // 서버에 메시지 전송 (활성 탭에 따라 다른 이벤트 전송)
-        if (typeof socket !== 'undefined' && socket) {
+        if (typeof socket !== 'undefined' && socket && socket.connected) {
+            console.log('[Client] sendChatMessage: sending message', { 
+                tab: activeChatTab, 
+                message: message,
+                socketConnected: socket.connected 
+            });
+            
             if (activeChatTab === 'game') {
                 socket.emit('game_chat', { message: message });
             } else {
@@ -6938,16 +6964,22 @@
                     timestamp: currentTime
                 });
             }
+            
+            // 마지막 전송 시간과 메시지 저장
+            lastChatTime = currentTime;
+            lastChatMessage = message;
+            
+            chatInput.value = '';
+            
+            // 쿨타임 시작
+            startChatCooldown();
+        } else {
+            console.error('[Client] sendChatMessage: socket not available or not connected', {
+                socketExists: typeof socket !== 'undefined',
+                socket: socket,
+                socketConnected: socket && socket.connected
+            });
         }
-        
-        // 마지막 전송 시간과 메시지 저장
-        lastChatTime = currentTime;
-        lastChatMessage = message;
-        
-        chatInput.value = '';
-        
-        // 쿨타임 시작
-        startChatCooldown();
         }
 
     if (chatSendBtn) {
@@ -6981,16 +7013,38 @@
         }
         });
     
-    // 채팅 탭 전환 이벤트
-    const chatTabs = document.querySelectorAll('.chat-tab');
-    chatTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabName = tab.getAttribute('data-tab');
-            if (tabName) {
-                switchChatTab(tabName);
-            }
+    // 채팅 탭 전환 이벤트 (DOMContentLoaded 후 실행)
+    function setupChatTabs() {
+        const chatTabs = document.querySelectorAll('.chat-tab');
+        if (chatTabs.length === 0) {
+            // DOM이 아직 로드되지 않았으면 재시도
+            setTimeout(setupChatTabs, 100);
+            return;
+        }
+        
+        chatTabs.forEach(tab => {
+            // 기존 이벤트 리스너 제거 후 새로 추가
+            const newTab = tab.cloneNode(true);
+            tab.parentNode.replaceChild(newTab, tab);
+            
+            newTab.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const tabName = newTab.getAttribute('data-tab');
+                if (tabName) {
+                    console.log('[Client] Switching chat tab to:', tabName);
+                    switchChatTab(tabName);
+                }
+            });
         });
-    });
+    }
+    
+    // DOMContentLoaded 후 실행
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupChatTabs);
+    } else {
+        setupChatTabs();
+    }
 
     // 이모지 버튼 클릭 핸들러
     const emojiBtn = document.getElementById('emojiBtn');
@@ -7105,6 +7159,9 @@
     function showPassConfirmModal() {
         // 기존 모달이 있으면 제거
         const existingModal = document.getElementById('passConfirmModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
 
         const modal = document.createElement('div');
         modal.id = 'passConfirmModal';
@@ -7117,6 +7174,7 @@
                 </div>
                 <div class="modal-body">
                     <p>정말 통과하시겠습니까?</p>
+                    <p style="color: #fbbf24; font-size: 14px; margin-top: 8px;">상대방도 통과하면 계가(집계산)가 진행됩니다.</p>
                     <div class="modal-buttons">
                         <button id="confirmPassBtn" class="btn btn-primary">확인</button>
                         <button id="cancelPassBtn" class="btn btn-secondary">취소</button>
@@ -7388,87 +7446,164 @@
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    // 기권 버튼 설정
-    function setupResignButton() {
-        const resignBtn = document.getElementById('resignBtn');
-        if (resignBtn) {
-            // 기존 이벤트 리스너 제거 후 새로 추가
-            const newResignBtn = resignBtn.cloneNode(true);
-            resignBtn.parentNode.replaceChild(newResignBtn, resignBtn);
-            
-            newResignBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
+    // 기권 확인 모달 표시 함수
+    function showResignConfirmModal() {
+        // 기존 모달이 있으면 제거
+        const existingModal = document.getElementById('resignConfirmModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'resignConfirmModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>기권 확인</h2>
+                    <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p>기권하시겠습니까?</p>
+                    <p style="color: #fbbf24; font-size: 14px; margin-top: 8px;">기권하면 패배 처리됩니다.</p>
+                    <div class="modal-buttons">
+                        <button id="confirmResignBtn" class="btn btn-primary">확인</button>
+                        <button id="cancelResignBtn" class="btn btn-secondary">취소</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 배경 클릭 시 닫기
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // 확인 버튼 클릭
+        const confirmResignBtn = modal.querySelector('#confirmResignBtn');
+        if (confirmResignBtn) {
+            confirmResignBtn.addEventListener('click', () => {
                 // 게임이 시작되지 않았거나 종료되었으면 작동하지 않음
                 const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
                 if (!gameReady || gameEnded) {
-                    console.log('[Client] Cannot resign: game not ready or ended');
+                    alert('기권할 수 없습니다. 게임이 시작되지 않았거나 이미 종료되었습니다.');
+                    modal.remove();
                     return;
                 }
                 
-                if (confirm('정말 기권하시겠습니까? 기권하면 패배 처리됩니다.')) {
-                    if (typeof socket !== 'undefined' && socket && socket.connected) {
-                        socket.emit('resign');
-                        console.log('[Client] Resign event emitted');
-                        // 버튼 비활성화 (중복 요청 방지)
-                        newResignBtn.disabled = true;
-                    } else {
-                        console.error('[Client] Socket not available for resign');
-                        alert('서버에 연결되지 않았습니다.');
+                if (typeof socket !== 'undefined' && socket && socket.connected) {
+                    socket.emit('resign');
+                    console.log('[Client] Resign event emitted from modal');
+                    // 기권 버튼 비활성화 (중복 요청 방지)
+                    const resignBtn = document.getElementById('resignBtn');
+                    if (resignBtn) {
+                        resignBtn.disabled = true;
                     }
+                } else {
+                    console.error('[Client] Socket not available for resign');
+                    alert('서버에 연결되지 않았습니다.');
                 }
+                modal.remove();
             });
-            console.log('[Client] Resign button event listener added');
         }
+        
+        // 취소 버튼 클릭
+        const cancelResignBtn = modal.querySelector('#cancelResignBtn');
+        if (cancelResignBtn) {
+            cancelResignBtn.addEventListener('click', () => {
+                modal.remove();
+            });
+        }
+        
+        document.body.appendChild(modal);
+    }
+
+    // 기권 버튼 설정
+    function setupResignButton() {
+        const resignBtn = document.getElementById('resignBtn');
+        if (!resignBtn) {
+            // DOM이 아직 로드되지 않았으면 재시도
+            setTimeout(setupResignButton, 100);
+            return;
+        }
+        
+        // 기존 이벤트 리스너 제거 후 새로 추가
+        const newResignBtn = resignBtn.cloneNode(true);
+        resignBtn.parentNode.replaceChild(newResignBtn, resignBtn);
+        
+        newResignBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 게임이 시작되지 않았거나 종료되었으면 작동하지 않음
+            const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
+            if (!gameReady || gameEnded) {
+                console.log('[Client] Cannot resign: game not ready or ended');
+                alert('기권할 수 없습니다. 게임이 시작되지 않았거나 이미 종료되었습니다.');
+                return;
+            }
+            
+            // 모달 표시
+            showResignConfirmModal();
+        });
+        console.log('[Client] Resign button event listener added');
     }
 
     // 통과 버튼 설정
     function setupPassButton() {
         const passBtn = document.getElementById('passBtn');
-        if (passBtn) {
-            // 기존 이벤트 리스너 제거 후 새로 추가
-            const newPassBtn = passBtn.cloneNode(true);
-            passBtn.parentNode.replaceChild(newPassBtn, passBtn);
-            
-            newPassBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // 게임이 시작되지 않았거나 종료되었으면 작동하지 않음
-                const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
-                const isMyTurn = window.game && window.game.isMyTurn;
-                if (!gameReady || !isMyTurn || gameEnded) {
-                    console.log('[Client] Cannot pass: game not ready, not my turn, or ended');
-                    return;
-                }
-                
-                if (typeof showPassConfirmModal === 'function') {
-                    showPassConfirmModal();
-                } else {
-                    // showPassConfirmModal이 없으면 직접 확인
-                    if (confirm('정말 통과하시겠습니까? 상대방도 통과하면 계가(집계산)가 진행됩니다.')) {
-                        if (typeof socket !== 'undefined' && socket && socket.connected) {
-                            socket.emit('make_move', { move: { isPass: true } });
-                            console.log('[Client] Pass move emitted');
-                            // 버튼 비활성화 (중복 요청 방지)
-                            newPassBtn.disabled = true;
-                        } else {
-                            console.error('[Client] Socket not available for pass');
-                            alert('서버에 연결되지 않았습니다.');
-                        }
-                    }
-                }
-            });
-            console.log('[Client] Pass button event listener added');
+        if (!passBtn) {
+            // DOM이 아직 로드되지 않았으면 재시도
+            setTimeout(setupPassButton, 100);
+            return;
         }
+        
+        // 기존 이벤트 리스너 제거 후 새로 추가
+        const newPassBtn = passBtn.cloneNode(true);
+        passBtn.parentNode.replaceChild(newPassBtn, passBtn);
+        
+        newPassBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 게임이 시작되지 않았거나 종료되었으면 작동하지 않음
+            const gameReady = window.gameState?.game?.startedAt !== null && window.gameState?.game?.startedAt !== undefined;
+            const isMyTurn = window.game && window.game.isMyTurn;
+            if (!gameReady || !isMyTurn || gameEnded) {
+                console.log('[Client] Cannot pass: game not ready, not my turn, or ended');
+                if (!gameReady) {
+                    alert('게임이 시작되지 않았습니다.');
+                } else if (!isMyTurn) {
+                    alert('내 차례가 아닙니다.');
+                } else if (gameEnded) {
+                    alert('게임이 이미 종료되었습니다.');
+                }
+                return;
+            }
+            
+            // 모달 표시
+            showPassConfirmModal();
+        });
+        console.log('[Client] Pass button event listener added');
     }
 
-    // 초기 설정
-    updateSpecialButtons('standard'); // 기본 모드로 시작, 게임 상태 받으면 업데이트
-    setupLeaveButton();
-    setupResignButton();
-    setupPassButton();
+    // 초기 설정 함수
+    function setupGameButtons() {
+        updateSpecialButtons('standard'); // 기본 모드로 시작, 게임 상태 받으면 업데이트
+        setupLeaveButton();
+        setupResignButton();
+        setupPassButton();
+    }
+    
+    // DOMContentLoaded 후 실행
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupGameButtons);
+    } else {
+        // 이미 로드되었으면 즉시 실행
+        setupGameButtons();
+    }
 
     // Request initial game state (한 번만, 연결 후 즉시)
     // 자동 호출 제거 - 서버에서 join_game 시 자동으로 보내도록 변경 필요

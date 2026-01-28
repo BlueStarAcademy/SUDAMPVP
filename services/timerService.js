@@ -108,6 +108,11 @@ class TimerService {
         const isTimeLimitZero = (timer.blackTime === 0 && timer.whiteTime === 0);
         
         // 이전 턴의 경과 시간 계산 및 차감
+        // 초읽기 시간 회복: 이전 턴의 플레이어가 초읽기 모드에 있었고 시간 내에 두었으면 초읽기 시간 회복
+        // 중요: 수를 두기 전의 초읽기 시간을 확인해야 함 (차감 전 시간)
+        let shouldRecoverBlackByoyomi = false;
+        let shouldRecoverWhiteByoyomi = false;
+        
         if (timer.lastUpdate) {
             const elapsed = (now - timer.lastUpdate) / 1000; // 초 단위
             
@@ -119,14 +124,30 @@ class TimerService {
                 }
                 
                 if (timer.blackInByoyomi) {
+                    // 초읽기 시간 회복 체크: 시간 내에 두었는지 확인 (차감 전에 체크)
+                    // 중요: 수를 두기 전의 초읽기 시간을 확인해야 함
+                    const beforeDeduction = timer.blackByoyomiTime; // 수를 두기 전 초읽기 시간
+                    
+                    // 경과 시간 차감
                     timer.blackByoyomiTime = Math.max(0, timer.blackByoyomiTime - elapsed);
+                    
                     if (timer.blackByoyomiTime <= 0) {
+                        // 초읽기 시간이 0초가 되어서 초읽기 횟수를 사용한 후 회복
                         timer.blackByoyomiPeriods = Math.max(0, timer.blackByoyomiPeriods - 1);
                         if (timer.blackByoyomiPeriods > 0) {
                             timer.blackByoyomiTime = timer.byoyomiSeconds;
                         }
+                    } else {
+                        // 초읽기 시간이 남아있으면 시간 내에 둔 것이므로 회복
+                        // 중요: 수를 두기 전 초읽기 시간(beforeDeduction)이 0초보다 크면 시간 내에 둔 것
+                        // 단, 이미 회복된 상태(byoyomiSeconds와 같음)에서는 회복하지 않음
+                        if (beforeDeduction > 0 && 
+                            beforeDeduction < timer.byoyomiSeconds && // 이미 회복된 상태가 아니어야 함
+                            elapsed > 0) { // 실제로 시간이 경과했어야 함
+                            // 시간 내에 수를 둔 경우: 초읽기 횟수는 차감되지 않고 초읽기 시간만 회복
+                            shouldRecoverBlackByoyomi = true;
+                        }
                     }
-                    // 초읽기 시간이 0보다 크면 리셋하지 않음 (시간이 남아있으면 그대로 유지)
                 } else {
                     timer.blackTime = Math.max(0, timer.blackTime - elapsed);
                     if (timer.blackTime <= 0 && !timer.blackInByoyomi && timer.blackByoyomiPeriods > 0) {
@@ -142,14 +163,30 @@ class TimerService {
                 }
                 
                 if (timer.whiteInByoyomi) {
+                    // 초읽기 시간 회복 체크: 시간 내에 두었는지 확인 (차감 전에 체크)
+                    // 중요: 수를 두기 전의 초읽기 시간을 확인해야 함
+                    const beforeDeduction = timer.whiteByoyomiTime; // 수를 두기 전 초읽기 시간
+                    
+                    // 경과 시간 차감
                     timer.whiteByoyomiTime = Math.max(0, timer.whiteByoyomiTime - elapsed);
+                    
                     if (timer.whiteByoyomiTime <= 0) {
+                        // 초읽기 시간이 0초가 되어서 초읽기 횟수를 사용한 후 회복
                         timer.whiteByoyomiPeriods = Math.max(0, timer.whiteByoyomiPeriods - 1);
                         if (timer.whiteByoyomiPeriods > 0) {
                             timer.whiteByoyomiTime = timer.byoyomiSeconds;
                         }
+                    } else {
+                        // 초읽기 시간이 남아있으면 시간 내에 둔 것이므로 회복
+                        // 중요: 수를 두기 전 초읽기 시간(beforeDeduction)이 0초보다 크면 시간 내에 둔 것
+                        // 단, 이미 회복된 상태(byoyomiSeconds와 같음)에서는 회복하지 않음
+                        if (beforeDeduction > 0 && 
+                            beforeDeduction < timer.byoyomiSeconds && // 이미 회복된 상태가 아니어야 함
+                            elapsed > 0) { // 실제로 시간이 경과했어야 함
+                            // 시간 내에 수를 둔 경우: 초읽기 횟수는 차감되지 않고 초읽기 시간만 회복
+                            shouldRecoverWhiteByoyomi = true;
+                        }
                     }
-                    // 초읽기 시간이 0보다 크면 리셋하지 않음 (시간이 남아있으면 그대로 유지)
                 } else {
                     timer.whiteTime = Math.max(0, timer.whiteTime - elapsed);
                     if (timer.whiteTime <= 0 && !timer.whiteInByoyomi && timer.whiteByoyomiPeriods > 0) {
@@ -185,9 +222,35 @@ class TimerService {
         timer.currentTurn = previousTurn === 'black' ? 'white' : 'black';
         timer.lastUpdate = now;
         
+        // 초읽기 시간 회복: 이전 턴의 플레이어가 초읽기 모드에 있었고 시간 내에 두었으면 초읽기 시간 회복
+        // 회복은 차감 후에 처리 (차감 전에 체크한 결과 사용)
+        // 중요: 회복은 턴 전환 시점에만 일어나야 하며, 현재 턴의 플레이어가 아닌 이전 턴의 플레이어에 대해서만 회복
+        // 초읽기 회복 규칙:
+        // 1. 초읽기 시간이 0초가 되어서 초읽기 횟수를 사용한 후 → 회복 (이미 위에서 처리됨, 133-134줄, 172-173줄)
+        // 2. 시간 내에 수를 둔 경우 → 초읽기 횟수는 차감되지 않고 초읽기 시간만 회복됨 (아래에서 처리)
+        //    단, 초읽기 시간이 거의 0초에 가까울 때만 회복 (1초 이하)
+        if (shouldRecoverBlackByoyomi && timer.blackInByoyomi && previousTurn === 'black') {
+            // 시간 내에 수를 둔 경우: 초읽기 횟수는 차감되지 않고 초읽기 시간만 회복
+            // 회복 전 시간이 byoyomiSeconds와 같거나 더 크면 이미 회복된 상태이므로 회복하지 않음
+            if (timer.blackByoyomiTime > 0 && timer.blackByoyomiTime < timer.byoyomiSeconds) {
+                const beforeRecovery = timer.blackByoyomiTime;
+                timer.blackByoyomiTime = timer.byoyomiSeconds;
+                console.log(`[TimerService] switchTurn: Black byoyomi time recovered from ${beforeRecovery.toFixed(2)}s to ${timer.byoyomiSeconds}s (time remaining, no period deduction)`);
+            }
+        }
+        if (shouldRecoverWhiteByoyomi && timer.whiteInByoyomi && previousTurn === 'white') {
+            // 시간 내에 수를 둔 경우: 초읽기 횟수는 차감되지 않고 초읽기 시간만 회복
+            // 회복 전 시간이 byoyomiSeconds와 같거나 더 크면 이미 회복된 상태이므로 회복하지 않음
+            if (timer.whiteByoyomiTime > 0 && timer.whiteByoyomiTime < timer.byoyomiSeconds) {
+                const beforeRecovery = timer.whiteByoyomiTime;
+                timer.whiteByoyomiTime = timer.byoyomiSeconds;
+                console.log(`[TimerService] switchTurn: White byoyomi time recovered from ${beforeRecovery.toFixed(2)}s to ${timer.byoyomiSeconds}s (time remaining, no period deduction)`);
+            }
+        }
+        
         // 중요: 제한시간(blackTime, whiteTime)은 절대 리셋하지 않음 - 턴이 바뀌어도 유지
         // 초읽기는 초읽기 모드에 들어갔을 때만 리셋됨 (위의 로직에서 이미 처리됨)
-        // 초읽기 모드가 아닐 때는 초읽기 시간을 변경하지 않음
+        // 초읽기 시간 회복: 시간 내에 두면 다음 턴에 초읽기 시간이 회복됨 (위에서 처리)
         
         // Redis에 저장
         const redis = getRedisClient();
